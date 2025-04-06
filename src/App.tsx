@@ -3,22 +3,45 @@ import { useState } from "react";
 import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [history, setHistory] = useState<chrome.history.HistoryItem[]>([]);
+
+  const getHistory = () => {
+    chrome.history.search(
+      {
+        text: "", // 空文字で全件取得対象
+        startTime: 0, // 1970年から現在まで全部
+        maxResults: 999999, // 上限を必要なだけ大きくする
+      },
+      (results) => {
+        setHistory(results);
+      },
+    );
+  };
 
   return (
     <>
       <h1>Vite + React</h1>
       <div className='card'>
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <button onClick={getHistory}>get history</button>
+        <p>{history.length} histories</p>
       </div>
-      <p className='read-the-docs'>
-        Click on the Vite and React logos to learn more
-      </p>
+      <div>
+        {history.map((item) => {
+          const domain = new URL(item.url || "").hostname;
+          const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
+          return (
+            <div
+              key={item.id}
+              className='card'
+              style={{ display: "flex", gap: "8px", flexDirection: "row" }}
+            >
+              <p>{new Date(item.lastVisitTime || 0).toLocaleDateString()}</p>
+              <img src={favicon} />
+              <a href={item.url}>{item.title}</a>
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }
