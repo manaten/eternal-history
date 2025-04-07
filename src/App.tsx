@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import "./App.css";
+import styles from "./App.module.css";
 
 function App() {
   const [history, setHistory] = useState<chrome.history.HistoryItem[]>([]);
@@ -18,31 +18,43 @@ function App() {
     );
   };
 
+  useEffect(() => {
+    getHistory();
+  }, []);
+
   return (
-    <>
-      <h1>Vite + React</h1>
-      <div className='card'>
-        <button onClick={getHistory}>get history</button>
-        <p>{history.length} histories</p>
-      </div>
+    <main className={styles.Root}>
       <div>
+        <h1 className={styles.Title}>Infinite History</h1>
+        <div className={styles.SubTitle}>
+          <p>{history.length} histories</p>
+        </div>
+      </div>
+
+      <div className={styles.Histories}>
         {history.map((item) => {
           const domain = new URL(item.url || "").hostname;
           const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
           return (
             <div
               key={item.id}
-              className='card'
+              className={styles.HistoryItem}
               style={{ display: "flex", gap: "8px", flexDirection: "row" }}
             >
-              <p>{new Date(item.lastVisitTime || 0).toLocaleDateString()}</p>
-              <img src={favicon} />
-              <a href={item.url}>{item.title}</a>
+              <span className={styles.HistoryItem__Date}>
+                {new Date(item.lastVisitTime || 0).toLocaleDateString()}
+              </span>
+              <img src={favicon} className={styles.HistoryItem__Icon} />
+              <div className={styles.HistoryItem__LinkContainer}>
+                <a href={item.url} className={styles.HistoryItem__Link}>
+                  {item.title}
+                </a>
+              </div>
             </div>
           );
         })}
       </div>
-    </>
+    </main>
   );
 }
 
