@@ -46,9 +46,16 @@ function App() {
               </span>
               <img src={favicon} className={styles.HistoryItem__Icon} />
               <div className={styles.HistoryItem__LinkContainer}>
-                <a href={item.url} className={styles.HistoryItem__Link}>
-                  {item.title}
+                <a
+                  href={item.url}
+                  className={styles.HistoryItem__Link}
+                  title={item.title || item.url}
+                >
+                  {item.title?.slice(0, 100) || item.url?.slice(0, 100)}
                 </a>
+                <span className={styles.HistoryItem__Url} title={item.url}>
+                  {item.url?.slice(0, 100)}
+                </span>
               </div>
             </div>
           );

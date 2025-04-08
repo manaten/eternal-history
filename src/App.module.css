@@ -54,10 +54,20 @@
 }
 
 .HistoryItem__LinkContainer {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.125rem;
+  flex-direction: column;
   flex-grow: 1;
   text-align: left;
 }
 
 .HistoryItem__Link {
   word-break: break-all;
+}
+
+.HistoryItem__Url {
+  word-break: break-all;
+  color: #999;
+  font-size: 0.625rem;
 }
