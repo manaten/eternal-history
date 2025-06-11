@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
 
 import styles from "./App.module.css";
+import { search, initializeStorage } from "./lib/storage";
+import { HistoryItem } from "./types/HistoryItem";
 
 function App() {
-  const [history, setHistory] = useState<chrome.history.HistoryItem[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getHistory = () => {
-    chrome.history.search(
-      {
-        text: "", // 空文字で全件取得対象
-        startTime: 0, // 1970年から現在まで全部
-        maxResults: 999999, // 上限を必要なだけ大きくする
-      },
-      (results) => {
-        setHistory(results);
-      },
-    );
+  const getHistory = async (query = "") => {
+    setIsLoading(true);
+    try {
+      await initializeStorage();
+      const results = await search(query);
+      setHistory(results);
+    } catch (error) {
+      console.error("Failed to get history:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -25,41 +29,81 @@ function App() {
   return (
     <main className={styles.Root}>
       <div>
-        <h1 className={styles.Title}>Infinite History</h1>
+        <h1 className={styles.Title}>Eternal History</h1>
         <div className={styles.SubTitle}>
           <p>{history.length} histories</p>
+        </div>
+
+        <div style={{ margin: "16px 0" }}>
+          <input
+            type='text'
+            placeholder='Search history...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                getHistory(searchQuery);
+              }
+            }}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              fontSize: "16px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+            }}
+          />
+          <button
+            onClick={() => getHistory(searchQuery)}
+            disabled={isLoading}
+            style={{
+              marginTop: "8px",
+              padding: "8px 16px",
+              fontSize: "16px",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: isLoading ? "not-allowed" : "pointer",
+            }}
+          >
+            {isLoading ? "Searching..." : "Search"}
+          </button>
         </div>
       </div>
 
       <div className={styles.Histories}>
-        {history.map((item) => {
-          const domain = new URL(item.url || "").hostname;
-          const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
-          return (
-            <div
-              key={item.id}
-              className={styles.HistoryItem}
-              style={{ display: "flex", gap: "8px", flexDirection: "row" }}
-            >
-              <span className={styles.HistoryItem__Date}>
-                {new Date(item.lastVisitTime || 0).toLocaleDateString()}
-              </span>
-              <img src={favicon} className={styles.HistoryItem__Icon} />
-              <div className={styles.HistoryItem__LinkContainer}>
-                <a
-                  href={item.url}
-                  className={styles.HistoryItem__Link}
-                  title={item.title || item.url}
-                >
-                  {item.title?.slice(0, 100) || item.url?.slice(0, 100)}
-                </a>
-                <span className={styles.HistoryItem__Url} title={item.url}>
-                  {item.url?.slice(0, 100)}
+        {isLoading ? (
+          <div>Loading...</div>
+        ) : (
+          history.map((item) => {
+            const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
+            return (
+              <div
+                key={item.id}
+                className={styles.HistoryItem}
+                style={{ display: "flex", gap: "8px", flexDirection: "row" }}
+              >
+                <span className={styles.HistoryItem__Date}>
+                  {new Date(item.lastVisitTime).toLocaleDateString()}
                 </span>
+                <img src={favicon} className={styles.HistoryItem__Icon} />
+                <div className={styles.HistoryItem__LinkContainer}>
+                  <a
+                    href={item.url}
+                    className={styles.HistoryItem__Link}
+                    title={item.title || item.url}
+                  >
+                    {item.title?.slice(0, 100) || item.url?.slice(0, 100)}
+                  </a>
+                  <span className={styles.HistoryItem__Url} title={item.url}>
+                    {item.url?.slice(0, 100)}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </main>
   );

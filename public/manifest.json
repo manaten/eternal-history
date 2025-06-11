@@ -2,9 +2,10 @@
   "manifest_version": 3,
   "name": "Eternal History",
   "version": "1.0",
-  "permissions": ["history", "storage", "scripting"],
+  "permissions": ["history", "scripting", "bookmarks"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "chrome_url_overrides": {
     "newtab": "index.html"

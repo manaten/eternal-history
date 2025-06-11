@@ -1,41 +1,130 @@
-import initSqlJs, { Database } from "sql.js";
+import { HistoryItem } from "../types/HistoryItem";
 
-let db: Database;
+const ROOT_FOLDER_NAME = "Eternal History";
 
-function saveDb() {
-  const binaryArray = db.export();
-  chrome.storage.local.set({ sqliteDb: Array.from(binaryArray) });
+let rootFolderId: string | null = null;
+
+export async function initializeStorage() {
+  rootFolderId = await getOrCreateRootFolder();
 }
 
-export async function initDb() {
-  const SQL = await initSqlJs({
-    locateFile: (file) => `https://sql.js.org/dist/${file}`, // wasmの場所
-  });
+async function getOrCreateRootFolder(): Promise<string> {
+  const bookmarks = await chrome.bookmarks.search({ title: ROOT_FOLDER_NAME });
+  const existing = bookmarks.find(
+    (b) => !b.url && b.title === ROOT_FOLDER_NAME,
+  );
 
-  // 初回なら新規作成、保存済みがあれば読み込み
-  const saved = await chrome.storage.local.get(["sqliteDb"]);
-  if (saved.sqliteDb) {
-    db = new SQL.Database(new Uint8Array(saved.sqliteDb));
-  } else {
-    db = new SQL.Database();
-    db.run(`
-      CREATE TABLE IF NOT EXISTS history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        url TEXT,
-        title TEXT,
-        visited_at DATETIME
-      );
-    `);
-    saveDb();
+  if (existing) {
+    return existing.id;
   }
+
+  const folder = await chrome.bookmarks.create({
+    title: ROOT_FOLDER_NAME,
+  });
+  return folder.id;
 }
 
-export function saveHistory(title: string, url: string) {
-  const now = new Date().toISOString();
-  db.run("INSERT INTO history (title, url, visited_at) VALUES (?, ?, ?)", [
+async function getOrCreateFolder(
+  parentId: string,
+  title: string,
+): Promise<string> {
+  const children = await chrome.bookmarks.getChildren(parentId);
+  const existing = children.find(
+    (child) => !child.url && child.title === title,
+  );
+
+  if (existing) {
+    return existing.id;
+  }
+
+  const folder = await chrome.bookmarks.create({
+    parentId,
     title,
-    url,
-    now,
-  ]);
-  saveDb();
+  });
+  return folder.id;
+}
+
+export async function insertHistories(data: HistoryItem[]) {
+  if (!rootFolderId) {
+    throw new Error("Storage not initialized");
+  }
+
+  for (const item of data) {
+    console.log("Adding item:", item);
+    await insertHistoryAsBookmark(item);
+  }
+  console.log("Inserted histories:", data.length);
+}
+
+async function insertHistoryAsBookmark(history: HistoryItem) {
+  if (!rootFolderId) {
+    throw new Error("Storage not initialized");
+  }
+
+  const date = new Date(history.lastVisitTime);
+  const year = date.getFullYear().toString();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const hour = date.getHours().toString().padStart(2, "0");
+
+  const yearFolderId = await getOrCreateFolder(rootFolderId, year);
+  const monthFolderId = await getOrCreateFolder(yearFolderId, month);
+  const dayFolderId = await getOrCreateFolder(monthFolderId, day);
+  const hourFolderId = await getOrCreateFolder(dayFolderId, hour);
+
+  await chrome.bookmarks.create({
+    parentId: hourFolderId,
+    title: history.title,
+    url: history.url,
+  });
+}
+
+export async function search(query: string): Promise<HistoryItem[]> {
+  if (!rootFolderId) {
+    return [];
+  }
+
+  const bookmarks = await chrome.bookmarks.search({ query });
+  const historyBookmarks: HistoryItem[] = [];
+
+  for (const bookmark of bookmarks) {
+    if (bookmark.url && (await isUnderFolder(bookmark, rootFolderId))) {
+      historyBookmarks.push({
+        id: bookmark.id,
+        url: bookmark.url,
+        title: bookmark.title,
+        visitCount: 1,
+        lastVisitTime: bookmark.dateAdded || Date.now(),
+        domain: new URL(bookmark.url).hostname,
+      });
+    }
+  }
+
+  return historyBookmarks;
+}
+
+async function isUnderFolder(
+  bookmark: chrome.bookmarks.BookmarkTreeNode,
+  folderId: string,
+): Promise<boolean> {
+  let currentId = bookmark.parentId;
+
+  while (currentId) {
+    if (currentId === folderId) {
+      return true;
+    }
+
+    try {
+      const parent = await chrome.bookmarks.get(currentId);
+      currentId = parent[0]?.parentId;
+    } catch {
+      break;
+    }
+  }
+
+  return false;
+}
+
+export async function save() {
+  // ブックマークベースの場合、保存は自動的に行われる
 }

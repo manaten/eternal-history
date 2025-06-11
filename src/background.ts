@@ -1,75 +1,54 @@
-import initSqlJs, { Database } from "sql.js";
+import {
+  initializeStorage,
+  insertHistories,
+  save,
+  search,
+} from "./lib/storage";
+import { HistoryItem } from "./types/HistoryItem";
 
-// SQLiteまわりの状態
-let db: Database;
-let saveTimer: ReturnType<typeof setTimeout> | null = null;
+async function initialize() {
+  await initializeStorage();
 
-// IndexedDBのキー名
-const DB_STORAGE_KEY = "sqlite_backup";
-
-async function loadDatabase(): Promise<void> {
-  const SQL = await initSqlJs({
-    locateFile: (file) => `https://sql.js.org/dist/${file}`,
+  const currentHistory = await chrome.history.search({
+    text: "", // 空文字で全件取得対象
+    startTime: 0, // 1970年から現在まで全部
+    maxResults: 999999, // 上限を必要なだけ大きくする
   });
 
-  const saved = await chrome.storage.local.get([DB_STORAGE_KEY]);
-  if (saved[DB_STORAGE_KEY]) {
-    const data = new Uint8Array(saved[DB_STORAGE_KEY]);
-    db = new SQL.Database(data);
-    console.log("SQLite DB を復元したのだ");
-  } else {
-    db = new SQL.Database();
-    console.log("新しいSQLite DBを作成したのだ");
-    db.run(`
-      CREATE TABLE IF NOT EXISTS history (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        url TEXT,
-        title TEXT,
-        visited_at DATETIME
-      );
-      CREATE VIRTUAL TABLE IF NOT EXISTS history_fts USING fts5(title, url, content='history', content_rowid='id');
-    `);
-  }
-}
+  console.log("current history:", currentHistory.length);
 
-function saveHistoryEntry(url: string, title: string) {
-  const now = new Date().toISOString();
-
-  db.run("INSERT INTO history (url, title, visited_at) VALUES (?, ?, ?);", [
-    url,
-    title,
-    now,
-  ]);
-  db.run(
-    "INSERT INTO history_fts (rowid, title, url) VALUES (last_insert_rowid(), ?, ?);",
-    [title, url],
+  await insertHistories(
+    currentHistory.map(
+      (historyItem): HistoryItem => ({
+        id: historyItem.id || "",
+        url: historyItem.url ?? "",
+        title: historyItem.title ?? "",
+        visitCount: historyItem.visitCount ?? 0,
+        lastVisitTime: historyItem.lastVisitTime ?? 0,
+        domain: new URL(historyItem.url || "").hostname,
+      }),
+    ),
   );
+  console.log("inserted histories:", currentHistory.length);
 
-  scheduleSave();
-}
-
-function scheduleSave() {
-  if (saveTimer !== null) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    const binaryArray = db.export();
-    chrome.storage.local.set({
-      [DB_STORAGE_KEY]: Array.from(binaryArray),
-    });
-    console.log("SQLite DB を保存したのだ");
-  }, 3000);
-}
-
-chrome.runtime.onInstalled.addListener(async () => {
-  await loadDatabase();
-
-  chrome.history.onVisited.addListener(({ url, title }) => {
-    if (url && title) saveHistoryEntry(url, title);
+  chrome.history.onVisited.addListener(async (historyItem) => {
+    console.log("add new history:", historyItem);
+    await insertHistories([
+      {
+        id: historyItem.id || "",
+        url: historyItem.url ?? "",
+        title: historyItem.title ?? "",
+        visitCount: historyItem.visitCount ?? 0,
+        lastVisitTime: historyItem.lastVisitTime ?? 0,
+        domain: new URL(historyItem.url || "").hostname,
+      },
+    ]);
   });
 
-  console.log("background.ts が初期化されたのだ");
-});
+  console.log(await search("local"));
+  await save();
+}
 
-chrome.history.onVisited.addListener((historyItem) => {
-  console.log("訪問した履歴:", historyItem);
-  // SQLiteに保存とかやる処理を書くのだ
+initialize().catch((e) => {
+  console.error("Failed to initialize:", e);
 });

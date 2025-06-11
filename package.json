@@ -1,5 +1,5 @@
 {
-  "name": "eternal-history",
+  "name": "infinite-history",
   "author": "manaten@manaten.net",
   "private": true,
   "license": "MIT",
@@ -20,9 +20,9 @@
     "fix:prettier": "prettier --write --ignore-unknown ."
   },
   "dependencies": {
+    "flexsearch": "^0.8.158",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "sql.js": "^1.13.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.7",
