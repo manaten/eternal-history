@@ -97,12 +97,13 @@ export async function search(query: string): Promise<HistoryItem[]> {
 
   for (const bookmark of bookmarks) {
     if (bookmark.url && (await isUnderFolder(bookmark, rootFolderId))) {
+      const lastVisitTime = await getLastVisitTimeFromPath(bookmark);
       historyBookmarks.push({
         id: bookmark.id,
         url: bookmark.url,
         title: bookmark.title,
         visitCount: 1,
-        lastVisitTime: bookmark.dateAdded || Date.now(),
+        lastVisitTime,
         domain: new URL(bookmark.url).hostname,
       });
     }
@@ -174,12 +175,13 @@ async function getAllBookmarksInFolder(
 
   for (const child of children) {
     if (child.url) {
+      const lastVisitTime = await getLastVisitTimeFromPath(child);
       bookmarks.push({
         id: child.id,
         url: child.url,
         title: child.title,
         visitCount: 1,
-        lastVisitTime: child.dateAdded || Date.now(),
+        lastVisitTime,
         domain: new URL(child.url).hostname,
       });
     } else {
@@ -189,4 +191,45 @@ async function getAllBookmarksInFolder(
   }
 
   return bookmarks;
+}
+
+async function getLastVisitTimeFromPath(
+  bookmark: chrome.bookmarks.BookmarkTreeNode,
+): Promise<number> {
+  try {
+    const pathParts: string[] = [];
+    let currentId = bookmark.parentId;
+
+    // ディレクトリ階層を逆順で取得 (hour -> day -> month -> year)
+    while (currentId) {
+      const parent = await chrome.bookmarks.get(currentId);
+      const parentNode = parent[0];
+      if (!parentNode) break;
+
+      // ルートフォルダに到達したら停止
+      if (parentNode.title === ROOT_FOLDER_NAME) {
+        break;
+      }
+
+      pathParts.unshift(parentNode.title);
+      currentId = parentNode.parentId;
+    }
+
+    // pathParts は [year, month, day, hour] の順番
+    if (pathParts.length >= 4) {
+      const [year, month, day, hour] = pathParts;
+      const date = new Date(
+        parseInt(year),
+        parseInt(month) - 1, // monthは0ベース
+        parseInt(day),
+        parseInt(hour),
+      );
+      return date.getTime();
+    }
+  } catch (error) {
+    console.warn("Failed to parse date from bookmark path:", error);
+  }
+
+  // フォールバック: dateAddedを使用
+  return bookmark.dateAdded || Date.now();
 }
