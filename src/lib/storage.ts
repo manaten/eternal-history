@@ -72,11 +72,19 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
   const dayFolderId = await getOrCreateFolder(monthFolderId, day);
   const hourFolderId = await getOrCreateFolder(dayFolderId, hour);
 
-  await chrome.bookmarks.create({
-    parentId: hourFolderId,
-    title: history.title,
-    url: history.url,
-  });
+  // 同じURLのブックマークが既に存在するかチェック
+  const existingBookmarks = await chrome.bookmarks.getChildren(hourFolderId);
+  const isDuplicate = existingBookmarks.some(
+    (bookmark) => bookmark.url === history.url,
+  );
+
+  if (!isDuplicate) {
+    await chrome.bookmarks.create({
+      parentId: hourFolderId,
+      title: history.title,
+      url: history.url,
+    });
+  }
 }
 
 export async function search(query: string): Promise<HistoryItem[]> {
