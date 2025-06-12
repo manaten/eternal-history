@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import styles from "./App.module.css";
-import { search, initializeStorage } from "./lib/storage";
+import { search, initializeStorage, getRecentHistories } from "./lib/storage";
 import { HistoryItem } from "./types/HistoryItem";
 
 function App() {
@@ -13,7 +13,12 @@ function App() {
     setIsLoading(true);
     try {
       await initializeStorage();
-      const results = await search(query);
+      let results: HistoryItem[];
+      if (query.trim()) {
+        results = await search(query);
+      } else {
+        results = await getRecentHistories(3);
+      }
       setHistory(results);
     } catch (error) {
       console.error("Failed to get history:", error);
@@ -36,10 +41,13 @@ function App() {
 
         <div style={{ margin: "16px 0" }}>
           <input
+            ref={(e) => e?.focus()}
             type='text'
             placeholder='Search history...'
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 getHistory(searchQuery);

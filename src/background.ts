@@ -1,9 +1,4 @@
-import {
-  initializeStorage,
-  insertHistories,
-  save,
-  search,
-} from "./lib/storage";
+import { initializeStorage, insertHistories } from "./lib/storage";
 import { HistoryItem } from "./types/HistoryItem";
 
 async function initialize() {
@@ -44,9 +39,6 @@ async function initialize() {
       },
     ]);
   });
-
-  console.log(await search("local"));
-  await save();
 }
 
 initialize().catch((e) => {

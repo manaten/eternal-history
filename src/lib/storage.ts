@@ -125,6 +125,60 @@ async function isUnderFolder(
   return false;
 }
 
-export async function save() {
-  // ブックマークベースの場合、保存は自動的に行われる
+export async function getRecentHistories(
+  days: number = 3,
+): Promise<HistoryItem[]> {
+  if (!rootFolderId) {
+    return [];
+  }
+
+  const historyBookmarks: HistoryItem[] = [];
+  const today = new Date();
+
+  for (let i = 0; i < days; i++) {
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() - i);
+
+    const year = targetDate.getFullYear().toString();
+    const month = (targetDate.getMonth() + 1).toString().padStart(2, "0");
+    const day = targetDate.getDate().toString().padStart(2, "0");
+
+    try {
+      const yearFolderId = await getOrCreateFolder(rootFolderId, year);
+      const monthFolderId = await getOrCreateFolder(yearFolderId, month);
+      const dayFolderId = await getOrCreateFolder(monthFolderId, day);
+
+      const dayBookmarks = await getAllBookmarksInFolder(dayFolderId);
+      historyBookmarks.push(...dayBookmarks);
+    } catch (error) {
+      console.log(`No bookmarks found for ${year}/${month}/${day}`, error);
+    }
+  }
+
+  return historyBookmarks.sort((a, b) => b.lastVisitTime - a.lastVisitTime);
+}
+
+async function getAllBookmarksInFolder(
+  folderId: string,
+): Promise<HistoryItem[]> {
+  const children = await chrome.bookmarks.getChildren(folderId);
+  const bookmarks: HistoryItem[] = [];
+
+  for (const child of children) {
+    if (child.url) {
+      bookmarks.push({
+        id: child.id,
+        url: child.url,
+        title: child.title,
+        visitCount: 1,
+        lastVisitTime: child.dateAdded || Date.now(),
+        domain: new URL(child.url).hostname,
+      });
+    } else {
+      const subBookmarks = await getAllBookmarksInFolder(child.id);
+      bookmarks.push(...subBookmarks);
+    }
+  }
+
+  return bookmarks;
 }

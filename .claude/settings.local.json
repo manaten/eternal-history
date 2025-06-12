@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": ["Bash(npm run build:*)", "Bash(git add:*)"],
+    "allow": ["Bash(npm run build:*)", "Bash(git add:*)", "Bash(git push:*)"],
     "deny": []
   }
 }
