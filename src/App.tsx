@@ -9,6 +9,23 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  const groupHistoriesByDate = (histories: HistoryItem[]) => {
+    const groups: { [key: string]: HistoryItem[] } = {};
+    histories.forEach((item) => {
+      const date = new Date(item.lastVisitTime);
+      const dateKey = date.toLocaleDateString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(item);
+    });
+    return groups;
+  };
+
   const getHistory = async (query = "") => {
     setIsLoading(true);
     try {
@@ -61,22 +78,6 @@ function App() {
               borderRadius: "4px",
             }}
           />
-          <button
-            onClick={() => getHistory(searchQuery)}
-            disabled={isLoading}
-            style={{
-              marginTop: "8px",
-              padding: "8px 16px",
-              fontSize: "16px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: isLoading ? "not-allowed" : "pointer",
-            }}
-          >
-            {isLoading ? "Searching..." : "Search"}
-          </button>
         </div>
       </div>
 
@@ -84,33 +85,45 @@ function App() {
         {isLoading ? (
           <div>Loading...</div>
         ) : (
-          history.map((item) => {
-            const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
-            return (
-              <div
-                key={item.id}
-                className={styles.HistoryItem}
-                style={{ display: "flex", gap: "8px", flexDirection: "row" }}
-              >
-                <span className={styles.HistoryItem__Date}>
-                  {new Date(item.lastVisitTime).toLocaleDateString()}
-                </span>
-                <img src={favicon} className={styles.HistoryItem__Icon} />
-                <div className={styles.HistoryItem__LinkContainer}>
-                  <a
-                    href={item.url}
-                    className={styles.HistoryItem__Link}
-                    title={item.title || item.url}
-                  >
-                    {item.title?.slice(0, 100) || item.url?.slice(0, 100)}
-                  </a>
-                  <span className={styles.HistoryItem__Url} title={item.url}>
-                    {item.url?.slice(0, 100)}
-                  </span>
-                </div>
+          Object.entries(groupHistoriesByDate(history)).map(([date, items]) => (
+            <div key={date} className={styles.DateGroup}>
+              <div className={styles.DateHeader}>{date}</div>
+              <div className={styles.DateItems}>
+                {items.map((item) => {
+                  const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
+                  const time = new Date(item.lastVisitTime).toLocaleTimeString(
+                    "ja-JP",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    },
+                  );
+                  return (
+                    <a
+                      key={item.id}
+                      href={item.url}
+                      className={styles.HistoryItem}
+                      title={item.title || item.url}
+                    >
+                      <span className={styles.HistoryItem__Time}>{time}</span>
+                      <img src={favicon} className={styles.HistoryItem__Icon} />
+                      <div className={styles.HistoryItem__LinkContainer}>
+                        <span className={styles.HistoryItem__Title}>
+                          {item.title?.slice(0, 100) || item.url?.slice(0, 100)}
+                        </span>
+                        <span
+                          className={styles.HistoryItem__Url}
+                          title={item.url}
+                        >
+                          {item.url?.slice(0, 100)}
+                        </span>
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
-            );
-          })
+            </div>
+          ))
         )}
       </div>
     </main>
