@@ -26,5 +26,5 @@
     "allowUnusedLabels": true,
     "allowUnreachableCode": true
   },
-  "include": ["src"]
+  "include": ["src", ".storybook/*.ts"]
 }

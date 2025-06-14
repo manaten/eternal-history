@@ -13,12 +13,9 @@ function App() {
     setIsLoading(true);
     try {
       await initializeStorage();
-      let results: HistoryItem[];
-      if (query.trim()) {
-        results = await search(query);
-      } else {
-        results = await getRecentHistories(3);
-      }
+      const results: HistoryItem[] = query.trim()
+        ? await search(query)
+        : await getRecentHistories(3);
       setHistory(results);
     } catch (error) {
       console.error("Failed to get history:", error);
