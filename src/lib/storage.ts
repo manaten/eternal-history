@@ -225,8 +225,8 @@ async function getLastVisitTimeFromPath(
     }
 
     // pathParts は [year, month, day, hour] の順番
-    if (pathParts.length >= 4) {
-      const [year, month, day, hour] = pathParts;
+    const [year, month, day, hour] = pathParts;
+    if (year && month && day && hour) {
       const date = new Date(
         parseInt(year),
         parseInt(month) - 1, // monthは0ベース
