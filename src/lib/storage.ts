@@ -20,34 +20,18 @@ async function convertBookmarkToHistoryItem(
 }
 
 export async function initializeStorage() {
-  rootFolderId = await getOrCreateRootFolder();
-}
-
-async function getOrCreateRootFolder(): Promise<string> {
-  const bookmarks = await chrome.bookmarks.search({ title: ROOT_FOLDER_NAME });
-  const existing = bookmarks.find(
-    (b) => !b.url && b.title === ROOT_FOLDER_NAME,
-  );
-
-  if (existing) {
-    return existing.id;
-  }
-
-  const folder = await chrome.bookmarks.create({
-    title: ROOT_FOLDER_NAME,
-  });
-  return folder.id;
+  rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
 }
 
 async function getOrCreateFolder(
-  parentId: string,
+  parentId: string | undefined,
   title: string,
 ): Promise<string> {
-  const children = await chrome.bookmarks.getChildren(parentId);
-  const existing = children.find(
-    (child) => !child.url && child.title === title,
-  );
+  const bookmarks = parentId
+    ? await chrome.bookmarks.getChildren(parentId)
+    : await chrome.bookmarks.search({ title: ROOT_FOLDER_NAME });
 
+  const existing = bookmarks.find((b) => !b.url && b.title === title);
   if (existing) {
     return existing.id;
   }
