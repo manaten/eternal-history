@@ -2,6 +2,7 @@ import { HistoryItem } from "../types/HistoryItem";
 
 const ROOT_FOLDER_NAME = "Eternal History";
 
+// eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
 
 export async function initializeStorage() {
@@ -133,45 +134,54 @@ async function filterAndConvertBookmarks(
     return [];
   }
 
-  const historyBookmarks: HistoryItem[] = [];
+  const validBookmarks = await Promise.all(
+    bookmarks.map(async (bookmark) => {
+      if (
+        bookmark.url &&
+        rootFolderId &&
+        (await isUnderFolder(bookmark, rootFolderId))
+      ) {
+        const lastVisitTime = await getLastVisitTimeFromPath(bookmark);
+        return {
+          id: bookmark.id,
+          url: bookmark.url,
+          title: bookmark.title,
+          visitCount: 1,
+          lastVisitTime,
+          domain: new URL(bookmark.url).hostname,
+        };
+      }
+      return null;
+    }),
+  );
 
-  for (const bookmark of bookmarks) {
-    if (bookmark.url && (await isUnderFolder(bookmark, rootFolderId))) {
-      const lastVisitTime = await getLastVisitTimeFromPath(bookmark);
-      historyBookmarks.push({
-        id: bookmark.id,
-        url: bookmark.url,
-        title: bookmark.title,
-        visitCount: 1,
-        lastVisitTime,
-        domain: new URL(bookmark.url).hostname,
-      });
-    }
-  }
-
-  return historyBookmarks;
+  return validBookmarks.filter((item): item is HistoryItem => item !== null);
 }
 
 async function isUnderFolder(
   bookmark: chrome.bookmarks.BookmarkTreeNode,
   folderId: string,
 ): Promise<boolean> {
-  let currentId = bookmark.parentId;
+  const checkParent = async (
+    currentId: string | undefined,
+  ): Promise<boolean> => {
+    if (!currentId) {
+      return false;
+    }
 
-  while (currentId) {
     if (currentId === folderId) {
       return true;
     }
 
     try {
       const parent = await chrome.bookmarks.get(currentId);
-      currentId = parent[0]?.parentId;
+      return await checkParent(parent[0]?.parentId);
     } catch {
-      break;
+      return false;
     }
-  }
+  };
 
-  return false;
+  return await checkParent(bookmark.parentId);
 }
 
 export async function getRecentHistories(
@@ -181,10 +191,9 @@ export async function getRecentHistories(
     return [];
   }
 
-  const historyBookmarks: HistoryItem[] = [];
   const today = new Date();
 
-  for (let i = 0; i < days; i++) {
+  const promises = Array.from({ length: days }, async (_, i) => {
     const targetDate = new Date(today);
     targetDate.setDate(today.getDate() - i);
 
@@ -193,67 +202,74 @@ export async function getRecentHistories(
     const day = targetDate.getDate().toString().padStart(2, "0");
 
     try {
-      const yearFolderId = await getOrCreateFolder(rootFolderId, year);
+      const yearFolderId = await getOrCreateFolder(rootFolderId!, year);
       const monthFolderId = await getOrCreateFolder(yearFolderId, month);
       const dayFolderId = await getOrCreateFolder(monthFolderId, day);
 
-      const dayBookmarks = await getAllBookmarksInFolder(dayFolderId);
-      historyBookmarks.push(...dayBookmarks);
+      return await getAllBookmarksInFolder(dayFolderId);
     } catch (error) {
       console.log(`No bookmarks found for ${year}/${month}/${day}`, error);
+      return [];
     }
-  }
+  });
 
-  return historyBookmarks.sort((a, b) => b.lastVisitTime - a.lastVisitTime);
+  const dayBookmarksArrays = await Promise.all(promises);
+  const historyBookmarks = dayBookmarksArrays.flat();
+
+  return [...historyBookmarks].sort(
+    (a, b) => b.lastVisitTime - a.lastVisitTime,
+  );
 }
 
 async function getAllBookmarksInFolder(
   folderId: string,
 ): Promise<HistoryItem[]> {
   const children = await chrome.bookmarks.getChildren(folderId);
-  const bookmarks: HistoryItem[] = [];
 
-  for (const child of children) {
+  const bookmarksPromises = children.map(async (child) => {
     if (child.url) {
       const lastVisitTime = await getLastVisitTimeFromPath(child);
-      bookmarks.push({
-        id: child.id,
-        url: child.url,
-        title: child.title,
-        visitCount: 1,
-        lastVisitTime,
-        domain: new URL(child.url).hostname,
-      });
+      return [
+        {
+          id: child.id,
+          url: child.url,
+          title: child.title,
+          visitCount: 1,
+          lastVisitTime,
+          domain: new URL(child.url).hostname,
+        },
+      ];
     } else {
-      const subBookmarks = await getAllBookmarksInFolder(child.id);
-      bookmarks.push(...subBookmarks);
+      return await getAllBookmarksInFolder(child.id);
     }
-  }
+  });
 
-  return bookmarks;
+  const bookmarksArrays = await Promise.all(bookmarksPromises);
+  return bookmarksArrays.flat();
 }
 
 async function getLastVisitTimeFromPath(
   bookmark: chrome.bookmarks.BookmarkTreeNode,
 ): Promise<number> {
   try {
-    const pathParts: string[] = [];
-    let currentId = bookmark.parentId;
-
-    // ディレクトリ階層を逆順で取得 (hour -> day -> month -> year)
-    while (currentId) {
-      const parent = await chrome.bookmarks.get(currentId);
-      const parentNode = parent[0];
-      if (!parentNode) break;
-
-      // ルートフォルダに到達したら停止
-      if (parentNode.title === ROOT_FOLDER_NAME) {
-        break;
+    const getPathParts = async (
+      currentId: string | undefined,
+    ): Promise<string[]> => {
+      if (!currentId) {
+        return [];
       }
 
-      pathParts.unshift(parentNode.title);
-      currentId = parentNode.parentId;
-    }
+      const parent = await chrome.bookmarks.get(currentId);
+      const parentNode = parent[0];
+      if (!parentNode || parentNode.title === ROOT_FOLDER_NAME) {
+        return [];
+      }
+
+      const restPath = await getPathParts(parentNode.parentId);
+      return [...restPath, parentNode.title];
+    };
+
+    const pathParts = await getPathParts(bookmark.parentId);
 
     // pathParts は [year, month, day, hour] の順番
     const [year, month, day, hour] = pathParts;

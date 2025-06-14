@@ -13,30 +13,35 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
   history,
   isLoading,
 }) {
-  const groupHistoriesByDate = (histories: HistoryItemType[]) => {
-    const groups: { [key: string]: HistoryItemType[] } = {};
-    histories.forEach((item) => {
-      const date = new Date(item.lastVisitTime);
-      const dateKey = date.toLocaleDateString("ja-JP", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      });
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
-      groups[dateKey].push(item);
-    });
-    return groups;
-  };
-
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
   }
 
+  const groupHistoriesByDate = (histories: HistoryItemType[]) => {
+    return histories.reduce<Record<string, HistoryItemType[]>>(
+      (groups, item) => {
+        const date = new Date(item.lastVisitTime);
+        const dateKey = date.toLocaleDateString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        });
+        return {
+          ...groups,
+          [dateKey]: [...(groups[dateKey] ?? []), item],
+        };
+      },
+      {},
+    );
+  };
+
+  const entries = Object.entries(groupHistoriesByDate(history)).sort(
+    ([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime(),
+  );
+
   return (
     <div className={styles.histories}>
-      {Object.entries(groupHistoriesByDate(history)).map(([date, items]) => (
+      {entries.map(([date, items]) => (
         <div key={date} className={styles.dateGroup}>
           <div className={styles.dateHeader}>{date}</div>
           <div className={styles.dateItems}>
