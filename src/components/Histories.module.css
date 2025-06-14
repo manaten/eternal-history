@@ -1,0 +1,35 @@
+.histories {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 0.5rem;
+}
+
+.loading {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+}
+
+.dateGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dateHeader {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 0.75rem;
+}
+
+.dateItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
