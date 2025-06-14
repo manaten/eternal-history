@@ -5,6 +5,20 @@ const ROOT_FOLDER_NAME = "Eternal History";
 // eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
 
+async function convertBookmarkToHistoryItem(
+  bookmark: chrome.bookmarks.BookmarkTreeNode,
+): Promise<HistoryItem> {
+  const lastVisitTime = await getLastVisitTimeFromPath(bookmark);
+  return {
+    id: bookmark.id,
+    url: bookmark.url!,
+    title: bookmark.title,
+    visitCount: 1,
+    lastVisitTime,
+    domain: new URL(bookmark.url!).hostname,
+  };
+}
+
 export async function initializeStorage() {
   rootFolderId = await getOrCreateRootFolder();
 }
@@ -141,15 +155,7 @@ async function filterAndConvertBookmarks(
         rootFolderId &&
         (await isUnderFolder(bookmark, rootFolderId))
       ) {
-        const lastVisitTime = await getLastVisitTimeFromPath(bookmark);
-        return {
-          id: bookmark.id,
-          url: bookmark.url,
-          title: bookmark.title,
-          visitCount: 1,
-          lastVisitTime,
-          domain: new URL(bookmark.url).hostname,
-        };
+        return await convertBookmarkToHistoryItem(bookmark);
       }
       return null;
     }),
@@ -228,17 +234,7 @@ async function getAllBookmarksInFolder(
 
   const bookmarksPromises = children.map(async (child) => {
     if (child.url) {
-      const lastVisitTime = await getLastVisitTimeFromPath(child);
-      return [
-        {
-          id: child.id,
-          url: child.url,
-          title: child.title,
-          visitCount: 1,
-          lastVisitTime,
-          domain: new URL(child.url).hostname,
-        },
-      ];
+      return [await convertBookmarkToHistoryItem(child)];
     } else {
       return await getAllBookmarksInFolder(child.id);
     }
