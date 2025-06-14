@@ -44,7 +44,7 @@ async function getOrCreateFolder(
   return folder.id;
 }
 
-export async function insertHistories(data: HistoryItem[]) {
+export async function insertHistories(...data: HistoryItem[]) {
   if (!rootFolderId) {
     throw new Error("Storage not initialized");
   }
@@ -74,11 +74,20 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
 
   // 同じURLのブックマークが既に存在するかチェック
   const existingBookmarks = await chrome.bookmarks.getChildren(hourFolderId);
-  const isDuplicate = existingBookmarks.some(
+  const existingBookmark = existingBookmarks.find(
     (bookmark) => bookmark.url === history.url,
   );
 
-  if (!isDuplicate) {
+  if (existingBookmark) {
+    // 既存のブックマークがあり、タイトルが異なる場合は更新
+    if (existingBookmark.title !== history.title && history.title) {
+      await chrome.bookmarks.update(existingBookmark.id, {
+        title: history.title,
+      });
+      console.log("Updated bookmark title:", history.url, "->", history.title);
+    }
+  } else {
+    // 新規作成
     await chrome.bookmarks.create({
       parentId: hourFolderId,
       title: history.title,
