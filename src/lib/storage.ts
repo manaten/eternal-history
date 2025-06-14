@@ -101,7 +101,38 @@ export async function search(query: string): Promise<HistoryItem[]> {
     return [];
   }
 
-  const bookmarks = await chrome.bookmarks.search({ query });
+  const queryTerms = query
+    .trim()
+    .split(/\s+/)
+    .filter((term) => term.length > 0)
+    .map((term) => term.toLowerCase())
+    .sort((a, b) => b.length - a.length);
+
+  if (queryTerms.length === 0) {
+    return [];
+  }
+
+  // 最初の語で検索して候補を絞り込み
+  const bookmarks = await filterAndConvertBookmarks(
+    await chrome.bookmarks.search({
+      query: queryTerms[0],
+    }),
+  );
+
+  // 残りの語で絞り込み
+  return bookmarks.filter((bookmark) => {
+    const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
+    return queryTerms.slice(1).every((term) => searchText.includes(term));
+  });
+}
+
+async function filterAndConvertBookmarks(
+  bookmarks: chrome.bookmarks.BookmarkTreeNode[],
+): Promise<HistoryItem[]> {
+  if (!rootFolderId) {
+    return [];
+  }
+
   const historyBookmarks: HistoryItem[] = [];
 
   for (const bookmark of bookmarks) {
