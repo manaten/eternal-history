@@ -35,9 +35,18 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
     );
   };
 
-  const entries = Object.entries(groupHistoriesByDate(history)).sort(
-    ([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime(),
-  );
+  const entries = Object.entries(groupHistoriesByDate(history))
+    .sort(
+      ([dateA], [dateB]) =>
+        new Date(dateB).getTime() - new Date(dateA).getTime(),
+    )
+    .map(
+      ([date, items]) =>
+        [
+          date,
+          [...items].sort((a, b) => b.lastVisitTime - a.lastVisitTime),
+        ] as const,
+    );
 
   return (
     <div className={styles.histories}>
