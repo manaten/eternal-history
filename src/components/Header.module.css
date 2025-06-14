@@ -1,0 +1,11 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.count {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #666;
+}

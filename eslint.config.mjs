@@ -1,10 +1,12 @@
 // @ts-check
-
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import eslintConfigPrettier from "eslint-config-prettier";
 // @ts-expect-error 型定義がないため
 import importPlugin from "eslint-plugin-import";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import storybook from "eslint-plugin-storybook";
 import globals from "globals";
 import tsEslint from "typescript-eslint";
 
@@ -17,6 +19,7 @@ export default tsEslint.config(
   tsEslint.configs.recommended,
   tsEslint.configs.eslintRecommended,
   eslintConfigPrettier,
+  storybook.configs["flat/recommended"],
 
   {
     languageOptions: {
@@ -36,7 +39,13 @@ export default tsEslint.config(
       },
     },
 
+    plugins: {
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
+    },
+
     rules: {
+      ...reactHooks.configs.recommended.rules,
       "import/order": [
         "error",
         {
