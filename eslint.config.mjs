@@ -2,6 +2,7 @@
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import eslintConfigPrettier from "eslint-config-prettier";
+import functionalPlugin from "eslint-plugin-functional";
 // @ts-expect-error 型定義がないため
 import importPlugin from "eslint-plugin-import";
 import reactHooks from "eslint-plugin-react-hooks";
@@ -18,6 +19,7 @@ export default tsEslint.config(
   importPlugin.flatConfigs.recommended,
   tsEslint.configs.recommended,
   tsEslint.configs.eslintRecommended,
+  functionalPlugin.configs.noMutations,
   eslintConfigPrettier,
   storybook.configs["flat/recommended"],
 
@@ -36,6 +38,7 @@ export default tsEslint.config(
         ecmaFeatures: {
           jsx: true,
         },
+        project: "./tsconfig.node.json",
       },
     },
 
@@ -76,12 +79,27 @@ export default tsEslint.config(
         },
       ],
 
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          args: "all",
+          argsIgnorePattern: "^_",
+          caughtErrors: "all",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+
       "import/named": 0,
       "import/no-unresolved": 0,
       "no-undef": 0,
       "no-unused-vars": 0,
       "no-var": 2,
+      "object-shorthand": 2,
       "compat/compat": 0,
+      "functional/prefer-immutable-types": 0,
     },
   },
 );
