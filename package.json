@@ -1,5 +1,5 @@
 {
-  "name": "infinite-history",
+  "name": "eternal-history",
   "author": "manaten@manaten.net",
   "private": true,
   "license": "MIT",
@@ -19,10 +19,11 @@
     "fix:js": "run-s \"lint:js -- --fix\"",
     "fix:prettier": "prettier --write --ignore-unknown .",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "vitest run"
   },
   "dependencies": {
-    "flexsearch": "^0.8.158",
+    "p-map": "^7.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -57,6 +58,7 @@
     "tsx": "^4.19.3",
     "typescript": "5.8.3",
     "typescript-eslint": "^8.31.0",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^3.2.3"
   }
 }
