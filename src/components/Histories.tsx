@@ -7,11 +7,13 @@ import { HistoryItem as HistoryItemType } from "../types/HistoryItem";
 interface HistoriesProps {
   history: HistoryItemType[];
   isLoading: boolean;
+  searchQuery?: string;
 }
 
 export const Histories: FC<HistoriesProps> = memo(function Histories({
   history,
   isLoading,
+  searchQuery = "",
 }) {
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -55,7 +57,11 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
           <div className={styles.dateHeader}>{date}</div>
           <div className={styles.dateItems}>
             {items.map((item) => (
-              <HistoryItem key={item.id} item={item} />
+              <HistoryItem
+                key={item.id}
+                item={item}
+                searchQuery={searchQuery}
+              />
             ))}
           </div>
         </div>

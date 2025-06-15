@@ -119,3 +119,60 @@ export const InContainer: Story = {
     ),
   ],
 };
+
+export const WithSearchHighlight: Story = {
+  args: {
+    item: {
+      id: "5",
+      url: "https://github.com/facebook/react",
+      title:
+        "GitHub - facebook/react: The library for web and native user interfaces",
+      visitCount: 15,
+      lastVisitTime: Date.now() - 30 * 60 * 1000, // 30 minutes ago
+      domain: "github.com",
+    },
+    searchQuery: "github react",
+  },
+};
+
+export const WithJapaneseHighlight: Story = {
+  args: {
+    item: {
+      id: "6",
+      url: "https://ja.wikipedia.org/wiki/プログラミング",
+      title: "プログラミング - Wikipedia",
+      visitCount: 8,
+      lastVisitTime: Date.now() - 60 * 60 * 1000, // 1 hour ago
+      domain: "ja.wikipedia.org",
+    },
+    searchQuery: "プログラミング wiki",
+  },
+};
+
+export const WithPartialHighlight: Story = {
+  args: {
+    item: {
+      id: "7",
+      url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference",
+      title: "JavaScript reference - JavaScript | MDN",
+      visitCount: 12,
+      lastVisitTime: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
+      domain: "developer.mozilla.org",
+    },
+    searchQuery: "script mdn",
+  },
+};
+
+export const WithMultipleMatches: Story = {
+  args: {
+    item: {
+      id: "8",
+      url: "https://react.dev/learn/react-developer-tools",
+      title: "React Developer Tools – React",
+      visitCount: 5,
+      lastVisitTime: Date.now() - 45 * 60 * 1000, // 45 minutes ago
+      domain: "react.dev",
+    },
+    searchQuery: "react developer",
+  },
+};

@@ -11,7 +11,6 @@ const meta: Meta<typeof Root> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    onSearchQueryChange: { action: "search query changed" },
     onSearch: { action: "search executed" },
   },
 };

@@ -11,6 +11,7 @@ function App() {
 
   const getHistory = async (query = "") => {
     setIsLoading(true);
+    setSearchQuery(query);
     try {
       await initializeStorage();
       const results: HistoryItem[] = query.trim()
@@ -32,7 +33,6 @@ function App() {
     <Root
       history={history}
       searchQuery={searchQuery}
-      onSearchQueryChange={setSearchQuery}
       onSearch={getHistory}
       isLoading={isLoading}
     />
