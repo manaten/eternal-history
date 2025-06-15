@@ -8,9 +8,12 @@
 
 A Chrome extension that makes your browser history unlimited and searchable by storing it in bookmarks with a hierarchical folder structure.
 
+<img src="docs/eternal-history.png" style="width: 600px; height: auto;" >
+
 ## ✨ Features
 
 - **📚 Unlimited History Storage**: Store your browsing history permanently using Chrome bookmarks
+- **🖼️ New Tab Search UI**: Replace New Tab with history search UI.
 - **🔍 Fast Search**: Search through your entire history with real-time filtering
 
 ## 🎯 Why Eternal History?
