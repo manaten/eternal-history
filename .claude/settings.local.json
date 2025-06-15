@@ -9,7 +9,12 @@
       "Bash(git push:*)",
       "Bash(mkdir:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(npm test)"
+      "Bash(npm test)",
+      "Bash(git commit:*)",
+      "Bash(ls:*)",
+      "Bash(touch:*)",
+      "Bash(npm test:*)",
+      "Bash(gh pr create:*)"
     ],
     "deny": []
   }
