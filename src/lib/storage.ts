@@ -12,6 +12,31 @@ export const ROOT_FOLDER_NAME = "Eternal History";
 
 // eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
+
+// Test helper function to reset storage state
+export function resetStorageForTesting() {
+  rootFolderId = null;
+}
+
+/**
+ * ストレージシステムを初期化します。
+ * ルートフォルダ（"Eternal History"）を取得または作成し、以降の操作で使用するために保存します。
+ * この関数は他のストレージ操作を行う前に必ず呼び出す必要があります。
+ *
+ * @returns 初期化完了を示すPromise
+ * @throws {Error} ルートフォルダの作成に失敗した場合
+ *
+ * @example
+ * ```typescript
+ * // アプリケーション起動時に初期化
+ * try {
+ *   await initializeStorage();
+ *   console.log("Storage initialized successfully");
+ * } catch (error) {
+ *   console.error("Failed to initialize storage:", error);
+ * }
+ * ```
+ */
 export async function initializeStorage() {
   rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
 }
@@ -72,6 +97,33 @@ async function convertBookmarkToHistoryItem(
   };
 }
 
+/**
+ * 履歴アイテムをブックマークとして保存します。
+ * 各履歴アイテムは日時に基づいた階層フォルダ（年/月/日/時）に整理されて保存されます。
+ * 同じURLの既存ブックマークがある場合は、タイトルが異なる場合のみ更新されます。
+ *
+ * @param data - 保存する履歴アイテムの配列
+ * @throws {Error} ストレージが初期化されていない場合
+ *
+ * @example
+ * ```typescript
+ * // 単一の履歴アイテムを保存
+ * await insertHistories({
+ *   id: "1",
+ *   url: "https://example.com",
+ *   title: "Example Site",
+ *   visitCount: 1,
+ *   lastVisitTime: Date.now(),
+ *   domain: "example.com"
+ * });
+ *
+ * // 複数の履歴アイテムを一括保存
+ * await insertHistories(
+ *   { id: "1", url: "https://site1.com", title: "Site 1", ... },
+ *   { id: "2", url: "https://site2.com", title: "Site 2", ... }
+ * );
+ * ```
+ */
 export async function insertHistories(...data: HistoryItem[]) {
   if (!rootFolderId) {
     throw new Error("Storage not initialized");
@@ -122,6 +174,31 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
   }
 }
 
+/**
+ * 保存された履歴アイテムを検索します。
+ * クエリ文字列をスペースで分割し、すべての単語がタイトルまたはURLに含まれるアイテムを返します。
+ * 検索対象は "Eternal History" フォルダ配下のブックマークのみです。
+ *
+ * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能）
+ * @returns マッチした履歴アイテムの配列を返すPromise
+ *
+ * @example
+ * ```typescript
+ * // 単一単語での検索
+ * const results1 = await search("google");
+ *
+ * // 複数単語での検索（AND検索）
+ * const results2 = await search("google search engine");
+ *
+ * // 検索結果を表示
+ * results2.forEach(item => {
+ *   console.log(`${item.title}: ${item.url}`);
+ * });
+ *
+ * // 空のクエリは空配列を返す
+ * const empty = await search("   "); // []
+ * ```
+ */
 export async function search(query: string): Promise<HistoryItem[]> {
   if (!rootFolderId) {
     return [];
@@ -168,6 +245,32 @@ async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {
   ).filter((item) => item !== null);
 }
 
+/**
+ * 指定された日数分の最近の履歴アイテムを取得します。
+ * 今日から過去に向かって指定日数分のフォルダを検索し、見つかったブックマークを
+ * 最終訪問時刻の降順（新しい順）でソートして返します。
+ *
+ * @param days - 取得する日数（デフォルト: 3日）
+ * @returns 最近の履歴アイテムの配列を返すPromise（最終訪問時刻の降順）
+ *
+ * @example
+ * ```typescript
+ * // デフォルト（3日間）の履歴を取得
+ * const recent = await getRecentHistories();
+ *
+ * // 過去7日間の履歴を取得
+ * const weeklyHistory = await getRecentHistories(7);
+ *
+ * // 結果を表示
+ * recent.forEach(item => {
+ *   const date = new Date(item.lastVisitTime);
+ *   console.log(`${date.toLocaleString()}: ${item.title}`);
+ * });
+ *
+ * // 最新の10件のみ取得
+ * const latest = (await getRecentHistories(7)).slice(0, 10);
+ * ```
+ */
 export async function getRecentHistories(
   days: number = 3,
 ): Promise<HistoryItem[]> {
