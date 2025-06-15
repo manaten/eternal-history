@@ -1,14 +1,61 @@
+import pMap from "p-map";
+
 import {
   ROOT_FOLDER_NAME,
   getOrCreateFolder,
   isUnderFolder,
   getAllBookmarksInFolder,
-  getLastVisitTimeFromPath,
 } from "./bookmark";
+import { dateToFolderNames, getDateArray } from "./date";
 import { HistoryItem } from "../types/HistoryItem";
 
 // eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
+export async function initializeStorage() {
+  rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
+}
+
+async function getLastVisitTimeFromPath(
+  bookmark: chrome.bookmarks.BookmarkTreeNode,
+): Promise<number> {
+  try {
+    const getPathParts = async (
+      currentId: string | undefined,
+    ): Promise<string[]> => {
+      if (!currentId) {
+        return [];
+      }
+
+      const parent = await chrome.bookmarks.get(currentId);
+      const parentNode = parent[0];
+      if (!parentNode || parentNode.title === ROOT_FOLDER_NAME) {
+        return [];
+      }
+
+      const restPath = await getPathParts(parentNode.parentId);
+      return [...restPath, parentNode.title];
+    };
+
+    const pathParts = await getPathParts(bookmark.parentId);
+
+    // pathParts は [year, month, day, hour] の順番
+    const [year, month, day, hour] = pathParts;
+    if (year && month && day && hour) {
+      const date = new Date(
+        parseInt(year),
+        parseInt(month) - 1, // monthは0ベース
+        parseInt(day),
+        parseInt(hour),
+      );
+      return date.getTime();
+    }
+  } catch (error) {
+    console.warn("Failed to parse date from bookmark path:", error);
+  }
+
+  // フォールバック: dateAddedを使用
+  return bookmark.dateAdded || Date.now();
+}
 
 async function convertBookmarkToHistoryItem(
   bookmark: chrome.bookmarks.BookmarkTreeNode,
@@ -16,16 +63,12 @@ async function convertBookmarkToHistoryItem(
   const lastVisitTime = await getLastVisitTimeFromPath(bookmark);
   return {
     id: bookmark.id,
-    url: bookmark.url!,
+    url: bookmark.url ?? "",
     title: bookmark.title,
     visitCount: 1,
     lastVisitTime,
-    domain: new URL(bookmark.url!).hostname,
+    domain: bookmark.url ? new URL(bookmark.url).hostname : "",
   };
-}
-
-export async function initializeStorage() {
-  rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
 }
 
 export async function insertHistories(...data: HistoryItem[]) {
@@ -45,11 +88,9 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
     throw new Error("Storage not initialized");
   }
 
-  const date = new Date(history.lastVisitTime);
-  const year = date.getFullYear().toString();
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  const hour = date.getHours().toString().padStart(2, "0");
+  const { year, month, day, hour } = dateToFolderNames(
+    new Date(history.lastVisitTime),
+  );
 
   const yearFolderId = await getOrCreateFolder(rootFolderId, year);
   const monthFolderId = await getOrCreateFolder(yearFolderId, month);
@@ -92,16 +133,12 @@ export async function search(query: string): Promise<HistoryItem[]> {
     .map((term) => term.toLowerCase())
     .sort((a, b) => b.length - a.length);
 
-  if (queryTerms.length === 0) {
+  if (!queryTerms[0]) {
     return [];
   }
 
-  // 最初の語で検索して候補を絞り込み
-  const bookmarks = await filterAndConvertBookmarks(
-    await chrome.bookmarks.search({
-      query: queryTerms[0],
-    }),
-  );
+  // 最初の語で検索
+  const bookmarks = await searchHistoriesByQuery(queryTerms[0]);
 
   // 残りの語で絞り込み
   return bookmarks.filter((bookmark) => {
@@ -110,15 +147,14 @@ export async function search(query: string): Promise<HistoryItem[]> {
   });
 }
 
-async function filterAndConvertBookmarks(
-  bookmarks: chrome.bookmarks.BookmarkTreeNode[],
-): Promise<HistoryItem[]> {
+async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {
   if (!rootFolderId) {
     return [];
   }
 
-  const validBookmarks = await Promise.all(
-    bookmarks.map(async (bookmark) => {
+  const bookmarks = await chrome.bookmarks.search({ query });
+  return (
+    await pMap(bookmarks, async (bookmark) => {
       if (
         bookmark.url &&
         rootFolderId &&
@@ -127,10 +163,8 @@ async function filterAndConvertBookmarks(
         return await convertBookmarkToHistoryItem(bookmark);
       }
       return null;
-    }),
-  );
-
-  return validBookmarks.filter((item): item is HistoryItem => item !== null);
+    })
+  ).filter((item) => item !== null);
 }
 
 export async function getRecentHistories(
@@ -140,34 +174,26 @@ export async function getRecentHistories(
     return [];
   }
 
-  const today = new Date();
+  const dayBookmarksArrays = await pMap(
+    getDateArray(new Date(), -days),
+    async (targetDate) => {
+      const { year, month, day } = dateToFolderNames(targetDate);
 
-  const promises = Array.from({ length: days }, async (_, i) => {
-    const targetDate = new Date(today);
-    targetDate.setDate(today.getDate() - i);
+      try {
+        const yearFolderId = await getOrCreateFolder(rootFolderId!, year);
+        const monthFolderId = await getOrCreateFolder(yearFolderId, month);
+        const dayFolderId = await getOrCreateFolder(monthFolderId, day);
 
-    const year = targetDate.getFullYear().toString();
-    const month = (targetDate.getMonth() + 1).toString().padStart(2, "0");
-    const day = targetDate.getDate().toString().padStart(2, "0");
+        const bookmarks = await getAllBookmarksInFolder(dayFolderId);
+        return await pMap(bookmarks, convertBookmarkToHistoryItem);
+      } catch (error) {
+        console.log(`No bookmarks found for ${year}/${month}/${day}`, error);
+        return [];
+      }
+    },
+  );
 
-    try {
-      const yearFolderId = await getOrCreateFolder(rootFolderId!, year);
-      const monthFolderId = await getOrCreateFolder(yearFolderId, month);
-      const dayFolderId = await getOrCreateFolder(monthFolderId, day);
-
-      const bookmarks = await getAllBookmarksInFolder(dayFolderId);
-      return await Promise.all(
-        bookmarks.map((bookmark) => convertBookmarkToHistoryItem(bookmark)),
-      );
-    } catch (error) {
-      console.log(`No bookmarks found for ${year}/${month}/${day}`, error);
-      return [];
-    }
-  });
-
-  const dayBookmarksArrays = await Promise.all(promises);
   const historyBookmarks = dayBookmarksArrays.flat();
-
   return [...historyBookmarks].sort(
     (a, b) => b.lastVisitTime - a.lastVisitTime,
   );

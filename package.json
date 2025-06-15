@@ -1,5 +1,5 @@
 {
-  "name": "infinite-history",
+  "name": "eternal-history",
   "author": "manaten@manaten.net",
   "private": true,
   "license": "MIT",
@@ -22,7 +22,7 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "flexsearch": "^0.8.158",
+    "p-map": "^7.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
