@@ -8,7 +8,7 @@
 
 A Chrome extension that makes your browser history unlimited and searchable by storing it in bookmarks with a hierarchical folder structure.
 
-<img src="docs/eternal-history.png" style="width: 600px; height: auto;" >
+<img src="docs/eternal-history.gif" style="width: 600px; height: auto;" >
 
 ## ✨ Features
 
