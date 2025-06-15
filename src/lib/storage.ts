@@ -1,13 +1,14 @@
 import pMap from "p-map";
 
 import {
-  ROOT_FOLDER_NAME,
   getOrCreateFolder,
   isUnderFolder,
   getAllBookmarksInFolder,
 } from "./bookmark";
 import { dateToFolderNames, getDateArray } from "./date";
 import { HistoryItem } from "../types/HistoryItem";
+
+export const ROOT_FOLDER_NAME = "Eternal History";
 
 // eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
