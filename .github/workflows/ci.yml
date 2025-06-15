@@ -42,3 +42,6 @@ jobs:
 
       - name: 🐷 Run Typecheck
         run: npm run typecheck
+
+      - name: 🐢 Run Test
+        run: npm run test
