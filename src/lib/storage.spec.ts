@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterAll } from "vitest";
 
 import {
   setupChromeBookmarksMock,
@@ -15,30 +15,27 @@ import {
 } from "./storage";
 import { HistoryItem } from "../types/HistoryItem";
 
-// Mock console methods to avoid noise in tests
-vi.mock("console", () => ({
-  log: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-}));
-
 describe("storage", () => {
   beforeEach(() => {
     setupChromeBookmarksMock();
     resetChromeBookmarksMock();
   });
 
+  afterAll(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("initializeStorage", () => {
     it("should create root folder when it doesn't exist", async () => {
+      expect(mockBookmarkUtils.getAllMockBookmarks()).toEqual([]);
       await initializeStorage();
-
-      expect(chrome.bookmarks.search).toHaveBeenCalledWith({
-        title: ROOT_FOLDER_NAME,
-      });
-      expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-        parentId: undefined,
-        title: ROOT_FOLDER_NAME,
-      });
+      expect(mockBookmarkUtils.getAllMockBookmarks()).toEqual([
+        expect.objectContaining({
+          title: ROOT_FOLDER_NAME,
+          id: expect.any(String),
+          parentId: undefined,
+        }),
+      ]);
     });
 
     it("should use existing root folder when it exists", async () => {
@@ -48,12 +45,17 @@ describe("storage", () => {
         title: ROOT_FOLDER_NAME,
       });
 
+      const bookmarksBeforeInit = mockBookmarkUtils.getAllMockBookmarks();
       await initializeStorage();
+      const bookmarksAfterInit = mockBookmarkUtils.getAllMockBookmarks();
 
-      expect(chrome.bookmarks.search).toHaveBeenCalledWith({
+      // Should not create new bookmarks, existing root folder should be used
+      expect(bookmarksAfterInit).toEqual(bookmarksBeforeInit);
+      expect(bookmarksAfterInit).toHaveLength(1);
+      expect(bookmarksAfterInit[0]).toMatchObject({
+        id: "existing-root",
         title: ROOT_FOLDER_NAME,
       });
-      expect(chrome.bookmarks.create).not.toHaveBeenCalled();
     });
   });
 
@@ -92,36 +94,87 @@ describe("storage", () => {
 
       await insertHistories(historyItem);
 
-      // Verify folder hierarchy creation
-      expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-        parentId: "1", // root folder
-        title: "2024",
-      });
-      expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-        parentId: "2", // year folder
-        title: "01",
-      });
-      expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-        parentId: "3", // month folder
-        title: "15",
-      });
-      expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-        parentId: "4", // day folder
-        title: "10",
-      });
+      const bookmarks = mockBookmarkUtils.getAllMockBookmarks();
 
-      // Verify bookmark creation
-      expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-        parentId: "5", // hour folder
+      // Should have: root folder + year + month + day + hour + bookmark = 6 items
+      expect(bookmarks).toHaveLength(6);
+
+      // Check root folder exists
+      const rootFolder = bookmarks.find((b) => b.title === ROOT_FOLDER_NAME);
+      expect(rootFolder).toBeDefined();
+
+      // Check year folder (2024)
+      const yearFolder = bookmarks.find(
+        (b) => b.title === "2024" && b.parentId === rootFolder?.id,
+      );
+      expect(yearFolder).toBeDefined();
+
+      // Check month folder (01)
+      const monthFolder = bookmarks.find(
+        (b) => b.title === "01" && b.parentId === yearFolder?.id,
+      );
+      expect(monthFolder).toBeDefined();
+
+      // Check day folder (15)
+      const dayFolder = bookmarks.find(
+        (b) => b.title === "15" && b.parentId === monthFolder?.id,
+      );
+      expect(dayFolder).toBeDefined();
+
+      // Check hour folder (10)
+      const hourFolder = bookmarks.find(
+        (b) => b.title === "10" && b.parentId === dayFolder?.id,
+      );
+      expect(hourFolder).toBeDefined();
+
+      // Check bookmark
+      const bookmark = bookmarks.find(
+        (b) => b.url === "https://example.com" && b.parentId === hourFolder?.id,
+      );
+      expect(bookmark).toBeDefined();
+      expect(bookmark).toMatchObject({
         title: "Example Site",
         url: "https://example.com",
       });
     });
 
     it("should update existing bookmark title when URL matches", async () => {
-      // TODO: This test needs more complex mock setup to properly simulate
-      // the bookmark hierarchy and existing bookmark detection
-      expect(true).toBe(true);
+      // First, create a bookmark with the same URL but different title
+      const initialItem: HistoryItem = {
+        id: "1",
+        url: "https://example.com",
+        title: "Old Title",
+        visitCount: 1,
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        domain: "example.com",
+      };
+
+      await insertHistories(initialItem);
+      const bookmarksAfterFirst = mockBookmarkUtils.getAllMockBookmarks();
+      const initialBookmarkCount = bookmarksAfterFirst.length;
+
+      // Now insert the same URL with a different title
+      const updatedItem: HistoryItem = {
+        id: "2",
+        url: "https://example.com",
+        title: "Updated Title",
+        visitCount: 1,
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        domain: "example.com",
+      };
+
+      await insertHistories(updatedItem);
+      const bookmarksAfterUpdate = mockBookmarkUtils.getAllMockBookmarks();
+
+      // Should not create new bookmarks, just update the existing one
+      expect(bookmarksAfterUpdate).toHaveLength(initialBookmarkCount);
+
+      // Check that the bookmark title was updated
+      const updatedBookmark = bookmarksAfterUpdate.find(
+        (b) => b.url === "https://example.com",
+      );
+      expect(updatedBookmark).toBeDefined();
+      expect(updatedBookmark?.title).toBe("Updated Title");
     });
 
     it("should handle multiple history items", async () => {
@@ -146,17 +199,34 @@ describe("storage", () => {
 
       await insertHistories(...historyItems);
 
-      // Should create bookmarks for both items
-      expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-        parentId: expect.any(String),
-        title: "Site 1",
-        url: "https://site1.com",
-      });
-      expect(chrome.bookmarks.create).toHaveBeenCalledWith({
-        parentId: expect.any(String),
-        title: "Site 2",
-        url: "https://site2.com",
-      });
+      const bookmarks = mockBookmarkUtils.getAllMockBookmarks();
+
+      // Check that both bookmarks were created
+      const site1Bookmark = bookmarks.find(
+        (b) => b.url === "https://site1.com",
+      );
+      expect(site1Bookmark).toBeDefined();
+      expect(site1Bookmark?.title).toBe("Site 1");
+
+      const site2Bookmark = bookmarks.find(
+        (b) => b.url === "https://site2.com",
+      );
+      expect(site2Bookmark).toBeDefined();
+      expect(site2Bookmark?.title).toBe("Site 2");
+
+      // Should have appropriate folder hierarchy for both items
+      // Both items are on same day but different hours, so they should share some folders
+      const yearFolder = bookmarks.find((b) => b.title === "2024");
+      const monthFolder = bookmarks.find((b) => b.title === "01");
+      const dayFolder = bookmarks.find((b) => b.title === "15");
+      const hour10Folder = bookmarks.find((b) => b.title === "10");
+      const hour11Folder = bookmarks.find((b) => b.title === "11");
+
+      expect(yearFolder).toBeDefined();
+      expect(monthFolder).toBeDefined();
+      expect(dayFolder).toBeDefined();
+      expect(hour10Folder).toBeDefined();
+      expect(hour11Folder).toBeDefined();
     });
   });
 
@@ -181,20 +251,91 @@ describe("storage", () => {
     });
 
     it("should search bookmarks by single term", async () => {
-      // TODO: This test needs proper mock setup for the search functionality
-      // including the isUnderFolder check and bookmark retrieval
+      // Create some test bookmarks
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://google.com",
+          title: "Google Search",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "2",
+          url: "https://yahoo.com",
+          title: "Yahoo Search",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          domain: "yahoo.com",
+        },
+      ];
+
+      await insertHistories(...historyItems);
+
       const result = await search("google");
-      expect(Array.isArray(result)).toBe(true);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        url: "https://google.com",
+        title: "Google Search",
+        domain: "google.com",
+      });
     });
 
     it("should filter results by multiple terms (AND search)", async () => {
-      // TODO: This test needs proper mock setup for multi-term search
+      // Create test bookmarks
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://google.com",
+          title: "Google Search Engine",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "2",
+          url: "https://google.com/maps",
+          title: "Google Maps",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "3",
+          url: "https://yahoo.com",
+          title: "Yahoo Search Engine",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "yahoo.com",
+        },
+      ];
+
+      await insertHistories(...historyItems);
+
       const result = await search("google search");
-      expect(Array.isArray(result)).toBe(true);
+
+      // Should only return the Google Search Engine, not Google Maps or Yahoo
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        url: "https://google.com",
+        title: "Google Search Engine",
+      });
     });
 
     it("should only return bookmarks under root folder", async () => {
-      // Setup bookmark outside of root folder
+      // Add a bookmark inside the root folder structure
+      await insertHistories({
+        id: "1",
+        url: "https://inside.com",
+        title: "Inside Bookmark",
+        visitCount: 1,
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        domain: "inside.com",
+      });
+
+      // Add a bookmark outside of root folder structure
       mockBookmarkUtils.addMockBookmark({
         id: "outside",
         title: "Outside Bookmark",
@@ -202,9 +343,18 @@ describe("storage", () => {
         parentId: "other-parent",
       });
 
-      const result = await search("outside");
+      const resultInside = await search("inside");
+      const resultOutside = await search("outside");
 
-      expect(result).toEqual([]);
+      // Should find the bookmark under root folder
+      expect(resultInside).toHaveLength(1);
+      expect(resultInside[0]).toMatchObject({
+        url: "https://inside.com",
+        title: "Inside Bookmark",
+      });
+
+      // Should not find the bookmark outside root folder
+      expect(resultOutside).toEqual([]);
     });
   });
 
@@ -223,18 +373,70 @@ describe("storage", () => {
     });
 
     it("should get recent histories for default 3 days", async () => {
-      // TODO: This test needs proper date-based folder hierarchy setup
+      const today = new Date();
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+
+      // Add bookmarks for today and yesterday
+      await insertHistories(
+        {
+          id: "1",
+          url: "https://today.com",
+          title: "Today Site",
+          visitCount: 1,
+          lastVisitTime: today.getTime(),
+          domain: "today.com",
+        },
+        {
+          id: "2",
+          url: "https://yesterday.com",
+          title: "Yesterday Site",
+          visitCount: 1,
+          lastVisitTime: yesterday.getTime(),
+          domain: "yesterday.com",
+        },
+      );
+
       const result = await getRecentHistories();
-      expect(Array.isArray(result)).toBe(true);
+
+      // Should return both bookmarks
+      expect(result).toHaveLength(2);
+
+      // Should be sorted by lastVisitTime descending (newest first)
+      expect(result[0]?.lastVisitTime).toBeGreaterThan(
+        result[1]?.lastVisitTime ?? 0,
+      );
+
+      // Check the actual items
+      const todayItem = result.find((item) => item.url === "https://today.com");
+      const yesterdayItem = result.find(
+        (item) => item.url === "https://yesterday.com",
+      );
+
+      expect(todayItem).toBeDefined();
+      expect(yesterdayItem).toBeDefined();
     });
 
     it("should get recent histories for specified number of days", async () => {
-      mockBookmarkUtils.createMockHierarchy(ROOT_FOLDER_NAME);
+      const today = new Date();
+
+      // Add a bookmark for today
+      await insertHistories({
+        id: "1",
+        url: "https://recent.com",
+        title: "Recent Site",
+        visitCount: 1,
+        lastVisitTime: today.getTime(),
+        domain: "recent.com",
+      });
 
       const result = await getRecentHistories(7);
 
-      // Should call getDateArray with 7 days
-      expect(result).toBeDefined();
+      // Should find the bookmark within 7 days
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        url: "https://recent.com",
+        title: "Recent Site",
+      });
     });
 
     it("should handle folders that don't exist gracefully", async () => {
@@ -245,9 +447,59 @@ describe("storage", () => {
     });
 
     it("should sort results by lastVisitTime descending", async () => {
-      // TODO: This test needs proper date-based folder hierarchy and sorting setup
+      // Use today's date to ensure the getRecentHistories function can find the folders
+      const today = new Date();
+      const baseTime = today.getTime();
+
+      // Use specific times that will result in different hour folders on the same day
+      const newest = baseTime;
+      const middle = baseTime - 60 * 60 * 1000; // 1 hour ago
+      const oldest = baseTime - 2 * 60 * 60 * 1000; // 2 hours ago
+
+      // Add bookmarks in different order than expected result
+      await insertHistories(
+        {
+          id: "1",
+          url: "https://middle.com",
+          title: "Middle Site",
+          visitCount: 1,
+          lastVisitTime: middle,
+          domain: "middle.com",
+        },
+        {
+          id: "2",
+          url: "https://newest.com",
+          title: "Newest Site",
+          visitCount: 1,
+          lastVisitTime: newest,
+          domain: "newest.com",
+        },
+        {
+          id: "3",
+          url: "https://oldest.com",
+          title: "Oldest Site",
+          visitCount: 1,
+          lastVisitTime: oldest,
+          domain: "oldest.com",
+        },
+      );
+
       const result = await getRecentHistories();
-      expect(Array.isArray(result)).toBe(true);
+
+      expect(result).toHaveLength(3);
+
+      // Should be sorted by lastVisitTime descending (newest first)
+      expect(result[0]?.url).toBe("https://newest.com");
+      expect(result[1]?.url).toBe("https://middle.com");
+      expect(result[2]?.url).toBe("https://oldest.com");
+
+      // Verify timestamps are in descending order
+      expect(result[0]?.lastVisitTime).toBeGreaterThan(
+        result[1]?.lastVisitTime ?? 0,
+      );
+      expect(result[1]?.lastVisitTime).toBeGreaterThan(
+        result[2]?.lastVisitTime ?? 0,
+      );
     });
   });
 });
