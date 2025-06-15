@@ -1,20 +1,15 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 
 import styles from "./SearchBox.module.css";
 
 interface SearchBoxProps {
-  searchQuery: string;
-  onSearchQueryChange: (query: string) => void;
   onSearch: (query: string) => void;
   isLoading: boolean;
 }
 
-export const SearchBox: FC<SearchBoxProps> = ({
-  searchQuery,
-  onSearchQueryChange,
-  onSearch,
-  isLoading,
-}) => {
+export const SearchBox: FC<SearchBoxProps> = ({ onSearch, isLoading }) => {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
     <div className={styles.searchBox}>
       <input
@@ -23,7 +18,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
         placeholder='Search history...'
         value={searchQuery}
         onChange={(e) => {
-          onSearchQueryChange(e.target.value);
+          setSearchQuery(e.target.value);
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {

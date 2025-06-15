@@ -17,7 +17,8 @@
       "Bash(gh pr create:*)",
       "Bash(npm run dev:*)",
       "Bash(gh pr edit:*)",
-      "Bash(npm run storybook:*)"
+      "Bash(npm run storybook:*)",
+      "mcp__ide__executeCode"
     ],
     "deny": []
   }
