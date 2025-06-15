@@ -35,16 +35,26 @@
   flex-direction: column;
   flex-grow: 1;
   text-align: left;
+  min-width: 0;
+  width: 100%;
 }
 
 .title {
-  word-break: break-all;
   font-weight: 500;
   color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  min-width: 0;
 }
 
 .url {
-  word-break: break-all;
   color: #9ca3af;
   font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  min-width: 0;
 }

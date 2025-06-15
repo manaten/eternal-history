@@ -25,11 +25,11 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
       <span className={styles.time}>{time}</span>
       <img src={favicon} className={styles.icon} />
       <div className={styles.linkContainer}>
-        <span className={styles.title}>
-          {item.title?.slice(0, 100) || item.url?.slice(0, 100)}
+        <span className={styles.title} title={item.title || item.url}>
+          {item.title || item.url}
         </span>
         <span className={styles.url} title={item.url}>
-          {item.url?.slice(0, 100)}
+          {item.url}
         </span>
       </div>
     </a>
