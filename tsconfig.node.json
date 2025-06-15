@@ -23,7 +23,14 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
     "allowUnusedLabels": true,
-    "allowUnreachableCode": true
+    "allowUnreachableCode": true,
+
+    "types": ["vitest/importMeta"]
   },
-  "include": ["vite.config.ts", "eslint.config.mjs", "lint-staged.config.mjs"]
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "eslint.config.mjs",
+    "lint-staged.config.mjs"
+  ]
 }

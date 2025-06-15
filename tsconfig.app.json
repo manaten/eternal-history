@@ -24,7 +24,9 @@
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
     "allowUnusedLabels": true,
-    "allowUnreachableCode": true
+    "allowUnreachableCode": true,
+
+    "types": ["vitest/importMeta", "@types/chrome"]
   },
   "include": ["src", ".storybook/*.ts"]
 }

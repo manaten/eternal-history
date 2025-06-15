@@ -7,6 +7,10 @@ export default defineConfig({
 
   plugins: [react()],
 
+  define: {
+    "import.meta.vitest": "undefined",
+  },
+
   build: {
     outDir: "../dist",
     rollupOptions: {
