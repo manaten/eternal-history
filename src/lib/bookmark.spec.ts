@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   setupChromeBookmarksMock,
@@ -17,6 +17,11 @@ describe("getOrCreateFolder", () => {
   beforeEach(() => {
     setupChromeBookmarksMock();
     resetChromeBookmarksMock();
+    vi.useFakeTimers();
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
   });
 
   it("should create a new folder when it doesn't exist", async () => {
