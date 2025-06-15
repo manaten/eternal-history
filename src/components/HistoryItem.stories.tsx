@@ -80,3 +80,42 @@ export const GitHubExample: Story = {
     },
   },
 };
+
+export const ExtremelyLongText: Story = {
+  args: {
+    item: {
+      id: "3",
+      url: "https://this-is-an-extremely-long-domain-name-that-should-definitely-overflow-and-cause-layout-issues-if-not-handled-properly.example.com/and/this/is/a/very/long/path/with/many/segments/that/could/also/cause/problems/if/the/css/is/not/working/correctly",
+      title:
+        "これは非常に長いタイトルのテストケースです。このタイトルは確実にコンポーネントの幅を超えて、レイアウトに問題を引き起こす可能性があります。省略記号が正しく表示されるかテストするためのものです。",
+      visitCount: 1,
+      lastVisitTime: Date.now(),
+      domain:
+        "this-is-an-extremely-long-domain-name-that-should-definitely-overflow-and-cause-layout-issues-if-not-handled-properly.example.com",
+    },
+  },
+};
+
+export const InContainer: Story = {
+  args: {
+    item: {
+      id: "4",
+      url: "https://very-long-url-that-might-overflow-container-width.example.com/path/to/resource",
+      title:
+        "コンテナ内での省略表示テスト - 長いタイトルがコンテナ幅に制限されて正しく省略されるかテスト",
+      visitCount: 3,
+      lastVisitTime: Date.now(),
+      domain: "very-long-url-that-might-overflow-container-width.example.com",
+    },
+  },
+  decorators: [
+    (Story) => (
+      <div
+        style={{ width: "400px", border: "1px solid #ccc", padding: "1rem" }}
+      >
+        <h3>400px幅のコンテナ</h3>
+        <Story />
+      </div>
+    ),
+  ],
+};

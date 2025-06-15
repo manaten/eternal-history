@@ -35,6 +35,8 @@
   flex-direction: column;
   flex-grow: 1;
   text-align: left;
+  min-width: 0;
+  width: 100%;
 }
 
 .title {
@@ -43,7 +45,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
+  width: 100%;
+  min-width: 0;
 }
 
 .url {
@@ -52,5 +55,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 100%;
+  width: 100%;
+  min-width: 0;
 }

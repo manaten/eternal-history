@@ -16,7 +16,8 @@
       "Bash(npm test:*)",
       "Bash(gh pr create:*)",
       "Bash(npm run dev:*)",
-      "Bash(gh pr edit:*)"
+      "Bash(gh pr edit:*)",
+      "Bash(npm run storybook:*)"
     ],
     "deny": []
   }
