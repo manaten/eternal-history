@@ -133,10 +133,9 @@ describe("storage", () => {
         (b) => b.url === "https://example.com" && b.parentId === hourFolder?.id,
       );
       expect(bookmark).toBeDefined();
-      expect(bookmark).toMatchObject({
-        title: "Example Site",
-        url: "https://example.com",
-      });
+      expect(bookmark?.url).toBe("https://example.com");
+      // Title should contain metadata, so we check it contains the original title
+      expect(bookmark?.title).toContain("Example Site");
     });
 
     it("should update existing bookmark title when URL matches", async () => {
@@ -170,12 +169,12 @@ describe("storage", () => {
       // Should not create new bookmarks, just update the existing one
       expect(bookmarksAfterUpdate).toHaveLength(initialBookmarkCount);
 
-      // Check that the bookmark title was updated
+      // Check that the bookmark title was updated (should contain the new title)
       const updatedBookmark = bookmarksAfterUpdate.find(
         (b) => b.url === "https://example.com",
       );
       expect(updatedBookmark).toBeDefined();
-      expect(updatedBookmark?.title).toBe("Updated Title");
+      expect(updatedBookmark?.title).toContain("Updated Title");
     });
 
     it("should handle multiple history items", async () => {
@@ -203,18 +202,18 @@ describe("storage", () => {
       const bookmarks = mockBookmarkUtils.getAllMockBookmarks();
       expect(bookmarks).toHaveLength(8); // 2 bookmarks + year + month + day + 2 hours + root
 
-      // Check that both bookmarks were created
+      // Check that both bookmarks were created (titles should contain the original titles)
       const site1Bookmark = bookmarks.find(
         (b) => b.url === "https://site1.com",
       );
       expect(site1Bookmark).toBeDefined();
-      expect(site1Bookmark?.title).toBe("Site 1");
+      expect(site1Bookmark?.title).toContain("Site 1");
 
       const site2Bookmark = bookmarks.find(
         (b) => b.url === "https://site2.com",
       );
       expect(site2Bookmark).toBeDefined();
-      expect(site2Bookmark?.title).toBe("Site 2");
+      expect(site2Bookmark?.title).toContain("Site 2");
 
       // Should have appropriate folder hierarchy for both items
       // Both items are on same day but different hours, so they should share some folders
