@@ -34,7 +34,7 @@ async function initialize() {
     // 即座に保存
     await insertHistories(chromeHistoryToHistoryItem(historyItem));
 
-    // JSでタイトルが設定される可能性がらうた目、3秒待って再取得・更新
+    // JSでタイトルが設定される可能性があるため、10秒待って再取得・更新
     setTimeout(async () => {
       try {
         const updatedHistory = await chrome.history.search({
@@ -55,7 +55,7 @@ async function initialize() {
       } catch (error) {
         console.warn("Failed to update history title:", error);
       }
-    }, 3000);
+    }, 1000 * 10);
   });
 }
 

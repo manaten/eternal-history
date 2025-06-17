@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeEach, vi, afterAll } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  afterAll,
+} from "vitest";
 
 import {
   setupChromeBookmarksMock,
@@ -20,6 +28,15 @@ describe("storage", () => {
     setupChromeBookmarksMock();
     resetChromeBookmarksMock();
     vi.useFakeTimers();
+    // Set a fixed date for all tests
+    vi.setSystemTime(new Date(2024, 0, 15, 23, 46, 40)); // 2024-01-15 23:46:40
+
+    // Fix timezone to UTC for consistent testing across environments
+    vi.stubEnv("TZ", "UTC");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   afterAll(() => {
@@ -74,7 +91,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Example",
         visitCount: 1,
-        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
         domain: "example.com",
       };
 
@@ -89,7 +106,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Example Site",
         visitCount: 1,
-        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
         domain: "example.com",
       };
 
@@ -122,9 +139,9 @@ describe("storage", () => {
       );
       expect(dayFolder).toBeDefined();
 
-      // Check hour folder (10)
+      // Check hour folder - should be UTC time now
       const hourFolder = bookmarks.find(
-        (b) => b.title === "10" && b.parentId === dayFolder?.id,
+        (b) => b.title === "10" && b.parentId === dayFolder?.id, // UTC time
       );
       expect(hourFolder).toBeDefined();
 
@@ -133,10 +150,13 @@ describe("storage", () => {
         (b) => b.url === "https://example.com" && b.parentId === hourFolder?.id,
       );
       expect(bookmark).toBeDefined();
-      expect(bookmark).toMatchObject({
-        title: "Example Site",
-        url: "https://example.com",
-      });
+      expect(bookmark?.url).toBe("https://example.com");
+      // Title should have exact metadata format
+      expect(bookmark?.title).toBe(
+        'Example Site 💾{"v":1,"t":' +
+          new Date(2024, 0, 15, 10, 30, 0).getTime() +
+          ',"vc":1}',
+      );
     });
 
     it("should update existing bookmark title when URL matches", async () => {
@@ -146,7 +166,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Old Title",
         visitCount: 1,
-        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
         domain: "example.com",
       };
 
@@ -160,7 +180,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Updated Title",
         visitCount: 1,
-        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
         domain: "example.com",
       };
 
@@ -170,12 +190,16 @@ describe("storage", () => {
       // Should not create new bookmarks, just update the existing one
       expect(bookmarksAfterUpdate).toHaveLength(initialBookmarkCount);
 
-      // Check that the bookmark title was updated
+      // Check that the bookmark title was updated (should contain the new title)
       const updatedBookmark = bookmarksAfterUpdate.find(
         (b) => b.url === "https://example.com",
       );
       expect(updatedBookmark).toBeDefined();
-      expect(updatedBookmark?.title).toBe("Updated Title");
+      expect(updatedBookmark?.title).toBe(
+        'Updated Title 💾{"v":1,"t":' +
+          new Date(2024, 0, 15, 10, 30, 0).getTime() +
+          ',"vc":1}',
+      );
     });
 
     it("should handle multiple history items", async () => {
@@ -185,7 +209,7 @@ describe("storage", () => {
           url: "https://site1.com",
           title: "Site 1",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00 UTC
           domain: "site1.com",
         },
         {
@@ -193,7 +217,7 @@ describe("storage", () => {
           url: "https://site2.com",
           title: "Site 2",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 11, 15, 0).getTime(),
+          lastVisitTime: new Date(2024, 0, 15, 11, 15, 0).getTime(), // 2024-01-15 11:15:00 UTC
           domain: "site2.com",
         },
       ];
@@ -203,26 +227,61 @@ describe("storage", () => {
       const bookmarks = mockBookmarkUtils.getAllMockBookmarks();
       expect(bookmarks).toHaveLength(8); // 2 bookmarks + year + month + day + 2 hours + root
 
-      // Check that both bookmarks were created
+      // Check that both bookmarks were created with exact metadata format
       const site1Bookmark = bookmarks.find(
         (b) => b.url === "https://site1.com",
       );
       expect(site1Bookmark).toBeDefined();
-      expect(site1Bookmark?.title).toBe("Site 1");
+      expect(site1Bookmark?.title).toBe(
+        'Site 1 💾{"v":1,"t":' +
+          new Date(2024, 0, 15, 10, 30, 0).getTime() +
+          ',"vc":1}',
+      );
 
       const site2Bookmark = bookmarks.find(
         (b) => b.url === "https://site2.com",
       );
       expect(site2Bookmark).toBeDefined();
-      expect(site2Bookmark?.title).toBe("Site 2");
+      expect(site2Bookmark?.title).toBe(
+        'Site 2 💾{"v":1,"t":' +
+          new Date(2024, 0, 15, 11, 15, 0).getTime() +
+          ',"vc":1}',
+      );
 
       // Should have appropriate folder hierarchy for both items
       // Both items are on same day but different hours, so they should share some folders
       expect(bookmarks.find((b) => b.title === "2024")).toBeDefined();
       expect(bookmarks.find((b) => b.title === "01")).toBeDefined();
       expect(bookmarks.find((b) => b.title === "15")).toBeDefined();
-      expect(bookmarks.find((b) => b.title === "10")).toBeDefined();
-      expect(bookmarks.find((b) => b.title === "11")).toBeDefined();
+      expect(bookmarks.find((b) => b.title === "10")).toBeDefined(); // First item: 10:30 UTC
+      expect(bookmarks.find((b) => b.title === "11")).toBeDefined(); // Second item: 11:15 UTC
+    });
+
+    it("should embed correct metadata format in bookmark titles", async () => {
+      const testItem: HistoryItem = {
+        id: "test-id",
+        url: "https://test.example.com",
+        title: "Test Site Title",
+        visitCount: 3,
+        lastVisitTime: new Date(2009, 1, 13, 23, 31, 30, 123).getTime(),
+        domain: "test.example.com",
+      };
+
+      await insertHistories(testItem);
+      const bookmarks = mockBookmarkUtils.getAllMockBookmarks();
+
+      const testBookmark = bookmarks.find(
+        (b) => b.url === "https://test.example.com",
+      );
+
+      expect(testBookmark).toBeDefined();
+
+      // Should have correct metadata format
+      expect(testBookmark?.title).toBe(
+        'Test Site Title 💾{"v":1,"t":' +
+          new Date(2009, 1, 13, 23, 31, 30, 123).getTime() +
+          ',"vc":3}',
+      );
     });
   });
 
@@ -249,7 +308,7 @@ describe("storage", () => {
           url: "https://google.com",
           title: "Google Search",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00 UTC
           domain: "google.com",
         },
         {
@@ -257,7 +316,7 @@ describe("storage", () => {
           url: "https://google.com/maps",
           title: "Google Maps",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(), // 2024-01-15 11:00:00 UTC
           domain: "google.com",
         },
         {
@@ -265,7 +324,7 @@ describe("storage", () => {
           url: "https://yahoo.com",
           title: "Yahoo Search Engine",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(), // 2024-01-15 12:00:00 UTC
           domain: "yahoo.com",
         },
       ];
@@ -373,9 +432,10 @@ describe("storage", () => {
     });
 
     it("should get recent histories for default 3 days", async () => {
-      const today = new Date();
-      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-      const olderDay = new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000);
+      // Use fixed timestamps for predictable testing
+      const today = new Date(2024, 0, 15, 23, 46, 40).getTime(); // 2024-01-15 23:46:40 UTC
+      const yesterday = today - 24 * 60 * 60 * 1000; // 1 day ago
+      const olderDay = today - 5 * 24 * 60 * 60 * 1000; // 5 days ago
 
       // Add bookmarks for today and yesterday
       await insertHistories(
@@ -384,7 +444,7 @@ describe("storage", () => {
           url: "https://today.com",
           title: "Today Site",
           visitCount: 1,
-          lastVisitTime: today.getTime(),
+          lastVisitTime: today,
           domain: "today.com",
         },
         {
@@ -392,15 +452,15 @@ describe("storage", () => {
           url: "https://yesterday.com",
           title: "Yesterday Site",
           visitCount: 1,
-          lastVisitTime: yesterday.getTime(),
+          lastVisitTime: yesterday,
           domain: "yesterday.com",
         },
         {
           id: "2",
-          url: "https://olderday.com",
+          url: "https://older-day.com",
           title: "Older Site",
           visitCount: 1,
-          lastVisitTime: olderDay.getTime(),
+          lastVisitTime: olderDay,
           domain: "olderday.com",
         },
       );
@@ -426,7 +486,7 @@ describe("storage", () => {
     });
 
     it("should get recent histories for specified number of days", async () => {
-      const today = new Date();
+      const today = new Date(2024, 0, 15, 23, 46, 40).getTime(); // Fixed timestamp
 
       // Add a bookmark for today
       await insertHistories({
@@ -434,7 +494,7 @@ describe("storage", () => {
         url: "https://recent.com",
         title: "Recent Site",
         visitCount: 1,
-        lastVisitTime: today.getTime(),
+        lastVisitTime: today,
         domain: "recent.com",
       });
 
@@ -449,9 +509,8 @@ describe("storage", () => {
     });
 
     it("should sort results by lastVisitTime descending", async () => {
-      // Use today's date to ensure the getRecentHistories function can find the folders
-      const today = new Date();
-      const baseTime = today.getTime();
+      // Use fixed timestamps for predictable testing
+      const baseTime = new Date(2024, 0, 15, 23, 46, 40).getTime(); // Fixed timestamp
 
       // Use specific times that will result in different hour folders on the same day
       const newest = baseTime;
