@@ -50,6 +50,7 @@ describe("bookmark-serializer", () => {
         title: 'Example Site 💾{"v":1,"t":1234567890123,"vc":5}',
         url: "https://example.com",
         dateAdded: 1234567890000,
+        syncing: true,
       };
 
       const result = deserializeBookmarkToHistoryItem(bookmark);
@@ -70,6 +71,7 @@ describe("bookmark-serializer", () => {
         title: "Legacy Site",
         url: "https://legacy.com",
         dateAdded: 1234567890000,
+        syncing: true,
       };
 
       const result = deserializeBookmarkToHistoryItem(bookmark);
@@ -90,6 +92,7 @@ describe("bookmark-serializer", () => {
         title: "Site with 💾{invalid json}",
         url: "https://malformed.com",
         dateAdded: 1234567890000,
+        syncing: true,
       };
 
       const result = deserializeBookmarkToHistoryItem(bookmark);
@@ -110,6 +113,7 @@ describe("bookmark-serializer", () => {
         title: 'Partial Metadata 💾{"v":1,"t":1234567890123}',
         url: "https://partial.com",
         dateAdded: 1234567890000,
+        syncing: true,
       };
 
       const result = deserializeBookmarkToHistoryItem(bookmark);
@@ -131,6 +135,7 @@ describe("bookmark-serializer", () => {
           'Site with 💾 emoji and another 💾{"v":1,"t":1234567890123,"vc":3}',
         url: "https://multiple.com",
         dateAdded: 1234567890000,
+        syncing: true,
       };
 
       const result = deserializeBookmarkToHistoryItem(bookmark);
@@ -151,6 +156,7 @@ describe("bookmark-serializer", () => {
         title: 'Invalid Version 💾{"v":"not-a-number","t":1234567890123}',
         url: "https://invalid.com",
         dateAdded: 1234567890000,
+        syncing: true,
       };
 
       const result = deserializeBookmarkToHistoryItem(bookmark);

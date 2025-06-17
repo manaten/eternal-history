@@ -10,7 +10,7 @@
     "dev": "vite build --watch",
     "build": "tsc -b && vite build --emptyOutDir",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "prepare": "husky",
     "lint": "run-p lint:*",
     "lint:js": "eslint **/*.{js,jsx,mjs,ts,tsx,vue}",
