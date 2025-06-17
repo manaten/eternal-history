@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeEach, vi, afterAll } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  afterAll,
+} from "vitest";
 
 import {
   setupChromeBookmarksMock,
@@ -22,6 +30,13 @@ describe("storage", () => {
     vi.useFakeTimers();
     // Set a fixed date for all tests
     vi.setSystemTime(new Date(1705350000000)); // 2024-01-15 23:46:40 UTC
+
+    // Fix timezone to UTC for consistent testing across environments
+    vi.stubEnv("TZ", "UTC");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   afterAll(() => {
@@ -76,7 +91,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Example",
         visitCount: 1,
-        lastVisitTime: 1705282200000, // Fixed timestamp
+        lastVisitTime: 1705314600000, // Fixed timestamp: 2024-01-15 10:30:00 UTC
         domain: "example.com",
       };
 
@@ -91,7 +106,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Example Site",
         visitCount: 1,
-        lastVisitTime: 1705282200000, // Fixed timestamp: 2024-01-15 10:30:00 UTC
+        lastVisitTime: 1705314600000, // Fixed timestamp: 2024-01-15 10:30:00 UTC: 2024-01-15 10:30:00 UTC
         domain: "example.com",
       };
 
@@ -124,9 +139,9 @@ describe("storage", () => {
       );
       expect(dayFolder).toBeDefined();
 
-      // Check hour folder (10)
+      // Check hour folder - should be UTC time now
       const hourFolder = bookmarks.find(
-        (b) => b.title === "10" && b.parentId === dayFolder?.id,
+        (b) => b.title === "10" && b.parentId === dayFolder?.id, // UTC time
       );
       expect(hourFolder).toBeDefined();
 
@@ -138,7 +153,7 @@ describe("storage", () => {
       expect(bookmark?.url).toBe("https://example.com");
       // Title should have exact metadata format
       expect(bookmark?.title).toBe(
-        'Example Site 💾{"v":1,"t":1705282200000,"vc":1}',
+        'Example Site 💾{"v":1,"t":1705314600000,"vc":1}',
       );
     });
 
@@ -149,7 +164,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Old Title",
         visitCount: 1,
-        lastVisitTime: 1705282200000, // Fixed timestamp
+        lastVisitTime: 1705314600000, // Fixed timestamp: 2024-01-15 10:30:00 UTC
         domain: "example.com",
       };
 
@@ -163,7 +178,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Updated Title",
         visitCount: 1,
-        lastVisitTime: 1705282200000, // Fixed timestamp
+        lastVisitTime: 1705314600000, // Fixed timestamp: 2024-01-15 10:30:00 UTC
         domain: "example.com",
       };
 
@@ -179,7 +194,7 @@ describe("storage", () => {
       );
       expect(updatedBookmark).toBeDefined();
       expect(updatedBookmark?.title).toBe(
-        'Updated Title 💾{"v":1,"t":1705282200000,"vc":1}',
+        'Updated Title 💾{"v":1,"t":1705314600000,"vc":1}',
       );
     });
 
@@ -190,7 +205,7 @@ describe("storage", () => {
           url: "https://site1.com",
           title: "Site 1",
           visitCount: 1,
-          lastVisitTime: 1705282200000, // 2024-01-15 10:30:00 UTC
+          lastVisitTime: 1705314600000, // 2024-01-15 10:30:00 UTC
           domain: "site1.com",
         },
         {
@@ -198,7 +213,7 @@ describe("storage", () => {
           url: "https://site2.com",
           title: "Site 2",
           visitCount: 1,
-          lastVisitTime: 1705284900000, // 2024-01-15 11:15:00 UTC
+          lastVisitTime: 1705317300000, // 2024-01-15 11:15:00 UTC
           domain: "site2.com",
         },
       ];
@@ -214,7 +229,7 @@ describe("storage", () => {
       );
       expect(site1Bookmark).toBeDefined();
       expect(site1Bookmark?.title).toBe(
-        'Site 1 💾{"v":1,"t":1705282200000,"vc":1}',
+        'Site 1 💾{"v":1,"t":1705314600000,"vc":1}',
       );
 
       const site2Bookmark = bookmarks.find(
@@ -222,7 +237,7 @@ describe("storage", () => {
       );
       expect(site2Bookmark).toBeDefined();
       expect(site2Bookmark?.title).toBe(
-        'Site 2 💾{"v":1,"t":1705284900000,"vc":1}',
+        'Site 2 💾{"v":1,"t":1705317300000,"vc":1}',
       );
 
       // Should have appropriate folder hierarchy for both items
@@ -230,8 +245,8 @@ describe("storage", () => {
       expect(bookmarks.find((b) => b.title === "2024")).toBeDefined();
       expect(bookmarks.find((b) => b.title === "01")).toBeDefined();
       expect(bookmarks.find((b) => b.title === "15")).toBeDefined();
-      expect(bookmarks.find((b) => b.title === "10")).toBeDefined();
-      expect(bookmarks.find((b) => b.title === "11")).toBeDefined();
+      expect(bookmarks.find((b) => b.title === "10")).toBeDefined(); // First item: 10:30 UTC
+      expect(bookmarks.find((b) => b.title === "11")).toBeDefined(); // Second item: 11:15 UTC
     });
 
     it("should embed correct metadata format in bookmark titles", async () => {
@@ -283,7 +298,7 @@ describe("storage", () => {
           url: "https://google.com",
           title: "Google Search",
           visitCount: 1,
-          lastVisitTime: 1705282200000, // 2024-01-15 10:30:00 UTC
+          lastVisitTime: 1705314600000, // 2024-01-15 10:30:00 UTC
           domain: "google.com",
         },
         {
@@ -291,7 +306,7 @@ describe("storage", () => {
           url: "https://google.com/maps",
           title: "Google Maps",
           visitCount: 1,
-          lastVisitTime: 1705284000000, // 2024-01-15 11:00:00 UTC
+          lastVisitTime: 1705316400000, // 2024-01-15 11:00:00 UTC
           domain: "google.com",
         },
         {
@@ -299,7 +314,7 @@ describe("storage", () => {
           url: "https://yahoo.com",
           title: "Yahoo Search Engine",
           visitCount: 1,
-          lastVisitTime: 1705287600000, // 2024-01-15 12:00:00 UTC
+          lastVisitTime: 1705320000000, // 2024-01-15 12:00:00 UTC
           domain: "yahoo.com",
         },
       ];
@@ -331,7 +346,7 @@ describe("storage", () => {
           url: "https://google.com",
           title: "Google Search Engine",
           visitCount: 1,
-          lastVisitTime: 1705282200000,
+          lastVisitTime: 1705314600000,
           domain: "google.com",
         },
         {
@@ -339,7 +354,7 @@ describe("storage", () => {
           url: "https://google.com/maps",
           title: "Google Maps",
           visitCount: 1,
-          lastVisitTime: 1705284000000,
+          lastVisitTime: 1705316400000,
           domain: "google.com",
         },
         {
@@ -347,7 +362,7 @@ describe("storage", () => {
           url: "https://yahoo.com",
           title: "Yahoo Search Engine",
           visitCount: 1,
-          lastVisitTime: 1705287600000,
+          lastVisitTime: 1705320000000,
           domain: "yahoo.com",
         },
       ];
@@ -369,7 +384,7 @@ describe("storage", () => {
         url: "https://inside.com",
         title: "Inside Bookmark",
         visitCount: 1,
-        lastVisitTime: 1705282200000,
+        lastVisitTime: 1705314600000,
         domain: "inside.com",
       });
 
@@ -432,7 +447,7 @@ describe("storage", () => {
         },
         {
           id: "2",
-          url: "https://olderday.com",
+          url: "https://older-day.com",
           title: "Older Site",
           visitCount: 1,
           lastVisitTime: olderDay,
