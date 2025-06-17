@@ -29,7 +29,7 @@ describe("storage", () => {
     resetChromeBookmarksMock();
     vi.useFakeTimers();
     // Set a fixed date for all tests
-    vi.setSystemTime(new Date(1705350000000)); // 2024-01-15 23:46:40 UTC
+    vi.setSystemTime(new Date(2024, 0, 15, 23, 46, 40)); // 2024-01-15 23:46:40
 
     // Fix timezone to UTC for consistent testing across environments
     vi.stubEnv("TZ", "UTC");
@@ -91,7 +91,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Example",
         visitCount: 1,
-        lastVisitTime: 1705314600000, // Fixed timestamp: 2024-01-15 10:30:00 UTC
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
         domain: "example.com",
       };
 
@@ -106,7 +106,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Example Site",
         visitCount: 1,
-        lastVisitTime: 1705314600000, // Fixed timestamp: 2024-01-15 10:30:00 UTC: 2024-01-15 10:30:00 UTC
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
         domain: "example.com",
       };
 
@@ -153,7 +153,9 @@ describe("storage", () => {
       expect(bookmark?.url).toBe("https://example.com");
       // Title should have exact metadata format
       expect(bookmark?.title).toBe(
-        'Example Site 💾{"v":1,"t":1705314600000,"vc":1}',
+        'Example Site 💾{"v":1,"t":' +
+          new Date(2024, 0, 15, 10, 30, 0).getTime() +
+          ',"vc":1}',
       );
     });
 
@@ -164,7 +166,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Old Title",
         visitCount: 1,
-        lastVisitTime: 1705314600000, // Fixed timestamp: 2024-01-15 10:30:00 UTC
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
         domain: "example.com",
       };
 
@@ -178,7 +180,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Updated Title",
         visitCount: 1,
-        lastVisitTime: 1705314600000, // Fixed timestamp: 2024-01-15 10:30:00 UTC
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
         domain: "example.com",
       };
 
@@ -194,7 +196,9 @@ describe("storage", () => {
       );
       expect(updatedBookmark).toBeDefined();
       expect(updatedBookmark?.title).toBe(
-        'Updated Title 💾{"v":1,"t":1705314600000,"vc":1}',
+        'Updated Title 💾{"v":1,"t":' +
+          new Date(2024, 0, 15, 10, 30, 0).getTime() +
+          ',"vc":1}',
       );
     });
 
@@ -205,7 +209,7 @@ describe("storage", () => {
           url: "https://site1.com",
           title: "Site 1",
           visitCount: 1,
-          lastVisitTime: 1705314600000, // 2024-01-15 10:30:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00 UTC
           domain: "site1.com",
         },
         {
@@ -213,7 +217,7 @@ describe("storage", () => {
           url: "https://site2.com",
           title: "Site 2",
           visitCount: 1,
-          lastVisitTime: 1705317300000, // 2024-01-15 11:15:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 11, 15, 0).getTime(), // 2024-01-15 11:15:00 UTC
           domain: "site2.com",
         },
       ];
@@ -229,7 +233,9 @@ describe("storage", () => {
       );
       expect(site1Bookmark).toBeDefined();
       expect(site1Bookmark?.title).toBe(
-        'Site 1 💾{"v":1,"t":1705314600000,"vc":1}',
+        'Site 1 💾{"v":1,"t":' +
+          new Date(2024, 0, 15, 10, 30, 0).getTime() +
+          ',"vc":1}',
       );
 
       const site2Bookmark = bookmarks.find(
@@ -237,7 +243,9 @@ describe("storage", () => {
       );
       expect(site2Bookmark).toBeDefined();
       expect(site2Bookmark?.title).toBe(
-        'Site 2 💾{"v":1,"t":1705317300000,"vc":1}',
+        'Site 2 💾{"v":1,"t":' +
+          new Date(2024, 0, 15, 11, 15, 0).getTime() +
+          ',"vc":1}',
       );
 
       // Should have appropriate folder hierarchy for both items
@@ -255,7 +263,7 @@ describe("storage", () => {
         url: "https://test.example.com",
         title: "Test Site Title",
         visitCount: 3,
-        lastVisitTime: 1234567890123,
+        lastVisitTime: new Date(2009, 1, 13, 23, 31, 30, 123).getTime(),
         domain: "test.example.com",
       };
 
@@ -270,7 +278,9 @@ describe("storage", () => {
 
       // Should have correct metadata format
       expect(testBookmark?.title).toBe(
-        'Test Site Title 💾{"v":1,"t":1234567890123,"vc":3}',
+        'Test Site Title 💾{"v":1,"t":' +
+          new Date(2009, 1, 13, 23, 31, 30, 123).getTime() +
+          ',"vc":3}',
       );
     });
   });
@@ -298,7 +308,7 @@ describe("storage", () => {
           url: "https://google.com",
           title: "Google Search",
           visitCount: 1,
-          lastVisitTime: 1705314600000, // 2024-01-15 10:30:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00 UTC
           domain: "google.com",
         },
         {
@@ -306,7 +316,7 @@ describe("storage", () => {
           url: "https://google.com/maps",
           title: "Google Maps",
           visitCount: 1,
-          lastVisitTime: 1705316400000, // 2024-01-15 11:00:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(), // 2024-01-15 11:00:00 UTC
           domain: "google.com",
         },
         {
@@ -314,7 +324,7 @@ describe("storage", () => {
           url: "https://yahoo.com",
           title: "Yahoo Search Engine",
           visitCount: 1,
-          lastVisitTime: 1705320000000, // 2024-01-15 12:00:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(), // 2024-01-15 12:00:00 UTC
           domain: "yahoo.com",
         },
       ];
@@ -346,7 +356,7 @@ describe("storage", () => {
           url: "https://google.com",
           title: "Google Search Engine",
           visitCount: 1,
-          lastVisitTime: 1705314600000,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
           domain: "google.com",
         },
         {
@@ -354,7 +364,7 @@ describe("storage", () => {
           url: "https://google.com/maps",
           title: "Google Maps",
           visitCount: 1,
-          lastVisitTime: 1705316400000,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
           domain: "google.com",
         },
         {
@@ -362,7 +372,7 @@ describe("storage", () => {
           url: "https://yahoo.com",
           title: "Yahoo Search Engine",
           visitCount: 1,
-          lastVisitTime: 1705320000000,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
           domain: "yahoo.com",
         },
       ];
@@ -384,7 +394,7 @@ describe("storage", () => {
         url: "https://inside.com",
         title: "Inside Bookmark",
         visitCount: 1,
-        lastVisitTime: 1705314600000,
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
         domain: "inside.com",
       });
 
@@ -423,7 +433,7 @@ describe("storage", () => {
 
     it("should get recent histories for default 3 days", async () => {
       // Use fixed timestamps for predictable testing
-      const today = 1705350000000; // 2024-01-15 23:46:40 UTC
+      const today = new Date(2024, 0, 15, 23, 46, 40).getTime(); // 2024-01-15 23:46:40 UTC
       const yesterday = today - 24 * 60 * 60 * 1000; // 1 day ago
       const olderDay = today - 5 * 24 * 60 * 60 * 1000; // 5 days ago
 
@@ -476,7 +486,7 @@ describe("storage", () => {
     });
 
     it("should get recent histories for specified number of days", async () => {
-      const today = 1705350000000; // Fixed timestamp
+      const today = new Date(2024, 0, 15, 23, 46, 40).getTime(); // Fixed timestamp
 
       // Add a bookmark for today
       await insertHistories({
@@ -500,7 +510,7 @@ describe("storage", () => {
 
     it("should sort results by lastVisitTime descending", async () => {
       // Use fixed timestamps for predictable testing
-      const baseTime = 1705350000000; // Fixed timestamp
+      const baseTime = new Date(2024, 0, 15, 23, 46, 40).getTime(); // Fixed timestamp
 
       // Use specific times that will result in different hour folders on the same day
       const newest = baseTime;
