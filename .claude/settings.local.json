@@ -18,7 +18,9 @@
       "Bash(npm run dev:*)",
       "Bash(gh pr edit:*)",
       "Bash(npm run storybook:*)",
-      "mcp__ide__executeCode"
+      "mcp__ide__executeCode",
+      "WebFetch(domain:developer.chrome.com)",
+      "Bash(npm run typecheck:*)"
     ],
     "deny": []
   }

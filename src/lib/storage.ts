@@ -5,6 +5,10 @@ import {
   isUnderFolder,
   getAllBookmarksInFolder,
 } from "./bookmark";
+import {
+  deserializeBookmarkToHistoryItem,
+  serializeHistoryItemToBookmark,
+} from "./bookmark-serializer";
 import { dateToFolderNames, getDateArray } from "./date";
 import { HistoryItem } from "../types/HistoryItem";
 
@@ -86,14 +90,15 @@ async function getLastVisitTimeFromPath(
 async function convertBookmarkToHistoryItem(
   bookmark: chrome.bookmarks.BookmarkTreeNode,
 ): Promise<HistoryItem> {
-  const lastVisitTime = await getLastVisitTimeFromPath(bookmark);
+  const item = deserializeBookmarkToHistoryItem(bookmark);
+
+  // If no precise timestamp from metadata, fall back to folder-based calculation
+  const lastVisitTime =
+    item.lastVisitTime || (await getLastVisitTimeFromPath(bookmark));
+
   return {
-    id: bookmark.id,
-    url: bookmark.url ?? "",
-    title: bookmark.title,
-    visitCount: 1,
+    ...item,
     lastVisitTime,
-    domain: bookmark.url ? new URL(bookmark.url).hostname : "",
   };
 }
 
@@ -156,20 +161,23 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
     (bookmark) => bookmark.url === history.url,
   );
 
+  // Serialize to bookmark format
+  const { title, url } = serializeHistoryItemToBookmark(history);
+
   if (existingBookmark) {
     // 既存のブックマークがあり、タイトルが異なる場合は更新
-    if (existingBookmark.title !== history.title && history.title) {
+    if (existingBookmark.title !== title && title) {
       await chrome.bookmarks.update(existingBookmark.id, {
-        title: history.title,
+        title,
       });
-      console.log("Updated bookmark title:", history.url, "->", history.title);
+      console.log("Updated bookmark title:", history.url, "->", title);
     }
   } else {
     // 新規作成
     await chrome.bookmarks.create({
       parentId: hourFolderId,
-      title: history.title,
-      url: history.url,
+      title,
+      url,
     });
   }
 }
