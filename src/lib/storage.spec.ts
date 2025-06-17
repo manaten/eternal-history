@@ -136,6 +136,11 @@ describe("storage", () => {
       expect(bookmark?.url).toBe("https://example.com");
       // Title should contain metadata, so we check it contains the original title
       expect(bookmark?.title).toContain("Example Site");
+      // Title should contain metadata in JSON format
+      expect(bookmark?.title).toContain("💾{");
+      expect(bookmark?.title).toMatch(/💾\{"v":1,"t":\d+,"vc":1\}$/);
+      // Should have precise timestamp metadata
+      expect(bookmark?.title).toContain('"t":1705282200000');
     });
 
     it("should update existing bookmark title when URL matches", async () => {
@@ -175,6 +180,11 @@ describe("storage", () => {
       );
       expect(updatedBookmark).toBeDefined();
       expect(updatedBookmark?.title).toContain("Updated Title");
+      // Updated title should also contain metadata
+      expect(updatedBookmark?.title).toContain("💾{");
+      expect(updatedBookmark?.title).toMatch(/💾\{"v":1,"t":\d+,"vc":1\}$/);
+      // Should preserve the same timestamp since it's the same time
+      expect(updatedBookmark?.title).toContain('"t":1705282200000');
     });
 
     it("should handle multiple history items", async () => {
@@ -208,12 +218,18 @@ describe("storage", () => {
       );
       expect(site1Bookmark).toBeDefined();
       expect(site1Bookmark?.title).toContain("Site 1");
+      // Site 1 should have metadata with precise timestamp
+      expect(site1Bookmark?.title).toContain("💾{");
+      expect(site1Bookmark?.title).toContain('"t":1705282200000');
 
       const site2Bookmark = bookmarks.find(
         (b) => b.url === "https://site2.com",
       );
       expect(site2Bookmark).toBeDefined();
       expect(site2Bookmark?.title).toContain("Site 2");
+      // Site 2 should have metadata with different timestamp (45 minutes later)
+      expect(site2Bookmark?.title).toContain("💾{");
+      expect(site2Bookmark?.title).toContain('"t":1705284900000');
 
       // Should have appropriate folder hierarchy for both items
       // Both items are on same day but different hours, so they should share some folders
@@ -222,6 +238,36 @@ describe("storage", () => {
       expect(bookmarks.find((b) => b.title === "15")).toBeDefined();
       expect(bookmarks.find((b) => b.title === "10")).toBeDefined();
       expect(bookmarks.find((b) => b.title === "11")).toBeDefined();
+    });
+
+    it("should embed correct metadata format in bookmark titles", async () => {
+      const testItem: HistoryItem = {
+        id: "test-id",
+        url: "https://test.example.com",
+        title: "Test Site Title",
+        visitCount: 3,
+        lastVisitTime: 1234567890123,
+        domain: "test.example.com",
+      };
+
+      await insertHistories(testItem);
+      const bookmarks = mockBookmarkUtils.getAllMockBookmarks();
+
+      const testBookmark = bookmarks.find(
+        (b) => b.url === "https://test.example.com",
+      );
+
+      expect(testBookmark).toBeDefined();
+
+      // Should have correct metadata format
+      expect(testBookmark?.title).toBe(
+        'Test Site Title 💾{"v":1,"t":1234567890123,"vc":3}',
+      );
+
+      // Verify each metadata field
+      expect(testBookmark?.title).toContain('"v":1'); // version
+      expect(testBookmark?.title).toContain('"t":1234567890123'); // timestamp
+      expect(testBookmark?.title).toContain('"vc":3'); // visit count
     });
   });
 
