@@ -1,35 +1,53 @@
 .histories {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   padding: 1.5rem;
-  background-color: #fff;
-  border-radius: 0.5rem;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  flex: 1;
 }
 
 .loading {
   text-align: center;
-  color: #666;
-  padding: 2rem;
+  color: var(--color-text-secondary);
+  padding: 3rem;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .dateGroup {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.75rem;
 }
 
 .dateHeader {
   font-size: 0.875rem;
   font-weight: 600;
   color: #374151;
-  padding: 0.5rem 0;
+  padding: 0.5rem 0.25rem;
   border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 0.75rem;
+  font-weight: 500;
 }
 
 .dateItems {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 2px;
+}
+
+@media (max-width: 768px) {
+  .histories {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .dateHeader {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
 }

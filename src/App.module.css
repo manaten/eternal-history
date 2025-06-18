@@ -1,16 +1,18 @@
 .root {
   width: 100%;
-  max-width: 1024px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 1.5rem;
   display: flex;
   align-items: stretch;
   flex-direction: column;
-  gap: 3rem;
+  gap: 1.5rem;
+  min-height: 100vh;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+@media (max-width: 768px) {
+  .root {
+    padding: 1rem;
+    gap: 1rem;
   }
 }
