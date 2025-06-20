@@ -12,22 +12,24 @@ export const SearchBox: FC<SearchBoxProps> = ({ onSearch, isLoading }) => {
 
   return (
     <div className={styles.searchBox}>
-      <input
-        ref={(e) => e?.focus()}
-        type='text'
-        placeholder='Search history...'
-        value={searchQuery}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSearch(searchQuery);
         }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            onSearch(searchQuery);
-          }
-        }}
-        className={styles.searchInput}
-        disabled={isLoading}
-      />
+      >
+        <input
+          ref={(e) => e?.focus()}
+          type='text'
+          placeholder='Search history...'
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+          }}
+          className={styles.searchInput}
+          disabled={isLoading}
+        />
+      </form>
     </div>
   );
 };
