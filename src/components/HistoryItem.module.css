@@ -81,6 +81,39 @@
   border-radius: var(--radius-sm);
 }
 
+.deleteButton {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  opacity: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.deleteButton:hover {
+  background: var(--color-danger);
+  opacity: 0.6;
+  transform: scale(1.1);
+}
+
+.deleteButton:active {
+  transform: scale(0.95);
+}
+
+.historyItem:hover .deleteButton {
+  opacity: 1;
+}
+
 @media (max-width: 768px) {
   .historyItem {
     padding: 0.5rem;
@@ -103,5 +136,12 @@
 
   .url {
     font-size: 0.7rem;
+  }
+
+  .deleteButton {
+    font-size: 1rem;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    opacity: 1;
   }
 }

@@ -7,6 +7,7 @@ import { HistoryItem as HistoryItemType } from "../types/HistoryItem";
 interface HistoryItemProps {
   item: HistoryItemType;
   searchQuery?: string;
+  onDelete?: (item: HistoryItemType) => void;
 }
 
 // テキストハイライト用の関数
@@ -27,12 +28,19 @@ const renderHighlightedText = (text: string, searchQuery: string) => {
 export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
   item,
   searchQuery = "",
+  onDelete,
 }) {
   const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
   const time = new Date(item.lastVisitTime).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete?.(item);
+  };
 
   return (
     <a
@@ -50,6 +58,14 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
           {renderHighlightedText(item.url, searchQuery)}
         </span>
       </div>
+      <button
+        className={styles.deleteButton}
+        onClick={handleDeleteClick}
+        title='Delete this item'
+        aria-label='Delete history item'
+      >
+        ×
+      </button>
     </a>
   );
 });

@@ -8,12 +8,14 @@ interface HistoriesProps {
   history: HistoryItemType[];
   isLoading: boolean;
   searchQuery?: string;
+  onDeleteItem?: (item: HistoryItemType) => void;
 }
 
 export const Histories: FC<HistoriesProps> = memo(function Histories({
   history,
   isLoading,
   searchQuery = "",
+  onDeleteItem,
 }) {
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -61,6 +63,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
                 key={item.id}
                 item={item}
                 searchQuery={searchQuery}
+                onDelete={onDeleteItem}
               />
             ))}
           </div>
