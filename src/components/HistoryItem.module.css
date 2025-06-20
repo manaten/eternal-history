@@ -81,7 +81,13 @@
   border-radius: var(--radius-sm);
 }
 
-.deleteButton {
+.menuContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.menuButton {
   background: none;
   border: none;
   color: var(--color-text-muted);
@@ -100,18 +106,51 @@
   flex-shrink: 0;
 }
 
-.deleteButton:hover {
-  background: var(--color-danger);
+.menuButton:hover {
+  background: var(--color-hover);
   opacity: 0.6;
-  transform: scale(1.1);
 }
 
-.deleteButton:active {
+.menuButton:active {
   transform: scale(0.95);
 }
 
-.historyItem:hover .deleteButton {
+.historyItem:hover .menuButton {
   opacity: 1;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  min-width: 160px;
+  overflow: hidden;
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdownItem:hover {
+  background: var(--color-hover);
+}
+
+.dropdownItem:active {
+  background: var(--color-active);
 }
 
 @media (max-width: 768px) {
@@ -138,10 +177,19 @@
     font-size: 0.7rem;
   }
 
-  .deleteButton {
+  .menuButton {
     font-size: 1rem;
     min-width: 1.75rem;
     height: 1.75rem;
     opacity: 1;
+  }
+
+  .dropdown {
+    min-width: 140px;
+  }
+
+  .dropdownItem {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
   }
 }

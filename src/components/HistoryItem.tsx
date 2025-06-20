@@ -1,4 +1,4 @@
-import { FC, memo } from "react";
+import { FC, memo, useState, useRef, useEffect } from "react";
 
 import styles from "./HistoryItem.module.css";
 import { highlightText } from "../lib/highlight";
@@ -30,17 +30,44 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
   searchQuery = "",
   onDelete,
 }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
   const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
   const time = new Date(item.lastVisitTime).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsMenuOpen(false);
     onDelete?.(item);
   };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return undefined;
+  }, [isMenuOpen]);
 
   return (
     <a
@@ -58,14 +85,28 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
           {renderHighlightedText(item.url, searchQuery)}
         </span>
       </div>
-      <button
-        className={styles.deleteButton}
-        onClick={handleDeleteClick}
-        title='Delete this item'
-        aria-label='Delete history item'
-      >
-        ×
-      </button>
+      {onDelete && (
+        <div className={styles.menuContainer} ref={menuRef}>
+          <button
+            className={styles.menuButton}
+            onClick={handleMenuClick}
+            title='More options'
+            aria-label='More options'
+          >
+            ⋮
+          </button>
+          {isMenuOpen && (
+            <div className={styles.dropdown}>
+              <button
+                className={styles.dropdownItem}
+                onClick={handleDeleteClick}
+              >
+                Delete item
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </a>
   );
 });
