@@ -20,7 +20,8 @@
     "fix:prettier": "prettier --write --ignore-unknown .",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:icons": "npx icon-gen -i ./public/assets/icon.svg -o ./public/assets -r --ico --ico-name=favicon --ico-sizes=48 --favicon --favicon-name=icon --favicon-png-sizes=16,32,48,128"
   },
   "dependencies": {
     "classnames": "^2.5.1",
