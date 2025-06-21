@@ -1,6 +1,7 @@
 import classNames from "classnames";
-import { FC, memo, useState, useRef, useEffect } from "react";
+import { FC, memo, useState } from "react";
 
+import { Dropdown } from "./Dropdown";
 import styles from "./HistoryItem.module.css";
 import { highlightText } from "../lib/highlight";
 import { HistoryItem as HistoryItemType } from "../types/HistoryItem";
@@ -34,7 +35,6 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
   onDelete,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
   const time = new Date(item.lastVisitTime).toLocaleTimeString("ja-JP", {
@@ -48,30 +48,12 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
     setIsMenuOpen(true);
   };
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsMenuOpen(false);
-    onDelete?.(item);
-  };
-
-  // Close menu when clicking outside or clicking on the item
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return undefined;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
-  }, [isMenuOpen]);
+  const dropdownItems = [
+    {
+      label: "Delete item",
+      onClick: () => onDelete?.(item),
+    },
+  ];
 
   return (
     <a
@@ -92,13 +74,12 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
         </span>
       </div>
 
-      {isMenuOpen && (
-        <div className={styles.dropdown} ref={menuRef}>
-          <button className={styles.dropdownItem} onClick={handleDeleteClick}>
-            Delete item
-          </button>
-        </div>
-      )}
+      <Dropdown
+        className={styles.contextDropdown}
+        isOpen={isMenuOpen}
+        items={dropdownItems}
+        onClose={() => setIsMenuOpen(false)}
+      />
     </a>
   );
 });
