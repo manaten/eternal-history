@@ -39,8 +39,11 @@ function App() {
 
   const handleDeleteHistoryItem = async (item: HistoryItem) => {
     try {
-      await deleteHistoryItem(item);
-      setHistory((prev) => prev.filter((h) => h.url !== item.url));
+      const message = `Are you sure you want to delete "${item.title || item.url}"?`;
+      if (confirm(message)) {
+        await deleteHistoryItem(item);
+        setHistory((prev) => prev.filter((h) => h.url !== item.url));
+      }
     } catch (error) {
       console.error("Failed to delete history item:", error);
       alert("Failed to delete history item. Please try again.");
