@@ -33,6 +33,15 @@ Eternal History solves these problems by:
 
 ## 📦 Installation
 
+### From GitHub Releases (Recommended)
+
+1. Download the latest `eternal-history-vX.X.X.zip` from [Releases](https://github.com/manaten/eternal-history/releases)
+2. Extract the ZIP file to a folder
+3. Open Chrome and navigate to `chrome://extensions/`
+4. Enable "Developer mode" (toggle in top right)
+5. Click "Load unpacked" and select the extracted folder
+6. The extension will replace your new tab page with the history interface
+
 ### From Source
 
 1. **Clone the repository**
