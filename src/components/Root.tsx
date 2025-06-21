@@ -10,6 +10,7 @@ interface RootProps {
   history: HistoryItem[];
   searchQuery: string;
   onSearch: (query?: string) => void;
+  onSearchQueryChange: (query: string) => void;
   onSaveQuery?: (query: string) => void;
   savedQueries: SavedQuery[];
   onQueryRemove: (id: string) => void;
@@ -21,6 +22,7 @@ export const Root: FC<RootProps> = ({
   history,
   searchQuery,
   onSearch,
+  onSearchQueryChange,
   onSaveQuery,
   savedQueries,
   onQueryRemove,
@@ -32,6 +34,8 @@ export const Root: FC<RootProps> = ({
       <Header
         onSearch={onSearch}
         onSaveQuery={onSaveQuery}
+        searchQuery={searchQuery}
+        onSearchQueryChange={onSearchQueryChange}
         savedQueries={savedQueries}
         onQueryRemove={onQueryRemove}
         isLoading={isLoading}

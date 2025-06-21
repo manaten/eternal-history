@@ -1,20 +1,22 @@
-import { FC, useState } from "react";
+import { FC } from "react";
 
 import styles from "./SearchBox.module.css";
 
 interface SearchBoxProps {
   onSearch: (query: string) => void;
   onSaveQuery?: (query: string) => void;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
   isLoading: boolean;
 }
 
 export const SearchBox: FC<SearchBoxProps> = ({
   onSearch,
   onSaveQuery,
+  searchQuery,
+  onSearchQueryChange,
   isLoading,
 }) => {
-  const [searchQuery, setSearchQuery] = useState("");
-
   const handleSaveQuery = () => {
     if (searchQuery.trim() && onSaveQuery) {
       onSaveQuery(searchQuery.trim());
@@ -35,7 +37,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
           placeholder='Search history...'
           value={searchQuery}
           onChange={(e) => {
-            setSearchQuery(e.target.value);
+            onSearchQueryChange(e.target.value);
           }}
           className={styles.searchInput}
           disabled={isLoading}

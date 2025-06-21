@@ -35,10 +35,14 @@ body {
   font-size: 14px;
   line-height: 1.5;
   color: var(--color-text);
-  background: linear-gradient(100deg, #10b981 0%, #063b4e 100%);
+  background-image: linear-gradient(135deg, #10b981 0%, #063b4e 100%);
+  background-size: 100vw 100vh;
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* 固定背景にしておくと安定することもあるのだ */
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-y: scroll;
 }
 
 a {

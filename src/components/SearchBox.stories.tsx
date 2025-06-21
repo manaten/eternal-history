@@ -16,14 +16,27 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
+    searchQuery: "",
     isLoading: false,
     onSearch: () => {},
+    onSearchQueryChange: () => {},
   },
 };
 
 export const Loading: Story = {
   args: {
+    searchQuery: "",
     isLoading: true,
     onSearch: () => {},
+    onSearchQueryChange: () => {},
+  },
+};
+
+export const WithQuery: Story = {
+  args: {
+    searchQuery: "react hooks",
+    isLoading: false,
+    onSearch: () => {},
+    onSearchQueryChange: () => {},
   },
 };

@@ -51,6 +51,10 @@ export const Default: Story = {
     searchQuery: "",
     isLoading: false,
     savedQueries: [],
+    onSearch: () => {},
+    onSearchQueryChange: () => {},
+    onSaveQuery: () => {},
+    onQueryRemove: () => {},
   },
 };
 
@@ -60,6 +64,10 @@ export const Loading: Story = {
     searchQuery: "",
     isLoading: true,
     savedQueries: [],
+    onSearch: () => {},
+    onSearchQueryChange: () => {},
+    onSaveQuery: () => {},
+    onQueryRemove: () => {},
   },
 };
 
@@ -69,6 +77,10 @@ export const Empty: Story = {
     searchQuery: "",
     isLoading: false,
     savedQueries: [],
+    onSearch: () => {},
+    onSearchQueryChange: () => {},
+    onSaveQuery: () => {},
+    onQueryRemove: () => {},
   },
 };
 
@@ -81,5 +93,9 @@ export const WithSavedQueries: Story = {
       { id: "1", query: "react", createdAt: 0 },
       { id: "2", query: "storybook", createdAt: 0 },
     ],
+    onSearch: () => {},
+    onSearchQueryChange: () => {},
+    onSaveQuery: () => {},
+    onQueryRemove: () => {},
   },
 };
