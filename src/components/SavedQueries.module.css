@@ -6,19 +6,22 @@
 
 .tag {
   display: flex;
-  align-items: center;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-full);
+  align-items: stretch;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
 }
 
 .tag:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
   border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .tagButton {
@@ -27,17 +30,13 @@
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-text);
+  color: #fff;
   cursor: pointer;
   transition: color 0.2s ease;
   white-space: nowrap;
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.tagButton:hover {
-  color: var(--color-primary);
 }
 
 .removeButton {
@@ -49,12 +48,11 @@
   color: var(--color-text-muted);
   cursor: pointer;
   transition: all 0.2s ease;
-  border-left: 1px solid var(--color-border-light);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   width: 2rem;
-  height: 100%;
 }
 
 .removeButton:hover {

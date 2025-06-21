@@ -17,13 +17,23 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     isLoading: false,
-    onSearch: () => {},
+    savedQueries: [],
   },
 };
 
 export const Loading: Story = {
   args: {
     isLoading: true,
-    onSearch: () => {},
+    savedQueries: [],
+  },
+};
+
+export const WithSavedQueries: Story = {
+  args: {
+    isLoading: false,
+    savedQueries: [
+      { id: "1", query: "query1", createdAt: 0 },
+      { id: "2", query: "query2", createdAt: 0 },
+    ],
   },
 };
