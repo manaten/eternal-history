@@ -24,11 +24,11 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
   return (
     <div className={classNames(className, styles.savedQueries)}>
       {queries.map((savedQuery) => (
-        <div key={savedQuery.id} className={styles.tag}>
+        <div key={savedQuery.id} className={styles.savedQuery}>
           <button
             type='button'
             onClick={() => onQueryClick(savedQuery.query)}
-            className={styles.tagButton}
+            className={styles.queryButton}
             title={`Search for: ${savedQuery.query}`}
           >
             {savedQuery.query}

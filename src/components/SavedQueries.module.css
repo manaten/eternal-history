@@ -4,7 +4,7 @@
   gap: 0.5rem;
 }
 
-.tag {
+.savedQuery {
   display: flex;
   align-items: stretch;
   overflow: hidden;
@@ -17,14 +17,14 @@
   backdrop-filter: blur(10px);
 }
 
-.tag:hover {
+.savedQuery:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
   border-color: var(--color-primary);
   background: rgba(255, 255, 255, 0.2);
 }
 
-.tagButton {
+.queryButton {
   background: none;
   border: none;
   padding: 0.5rem 0.75rem;
@@ -62,7 +62,7 @@
 }
 
 @media (max-width: 768px) {
-  .tagButton {
+  .queryButton {
     padding: 0.375rem 0.625rem;
     font-size: 0.8125rem;
     max-width: 150px;
