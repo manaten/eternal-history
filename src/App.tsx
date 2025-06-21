@@ -89,7 +89,6 @@ function App() {
       history={history}
       searchQuery={searchQuery}
       onSearch={getHistory}
-      onSearchQueryChange={setSearchQuery}
       onSaveQuery={handleSaveQuery}
       savedQueries={savedQueries}
       onQueryRemove={handleRemoveQuery}

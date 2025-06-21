@@ -1,4 +1,4 @@
-import { FC, memo } from "react";
+import { FC, memo, useState } from "react";
 
 import styles from "./Header.module.css";
 import { SavedQueries } from "./SavedQueries";
@@ -8,8 +8,6 @@ import { SavedQuery } from "../lib/savedQueries";
 interface HeaderProps {
   onSearch: (query: string) => void;
   onSaveQuery?: (query: string) => void;
-  searchQuery: string;
-  onSearchQueryChange: (query: string) => void;
   savedQueries: SavedQuery[];
   onQueryRemove: (id: string) => void;
   isLoading: boolean;
@@ -18,14 +16,14 @@ interface HeaderProps {
 export const Header: FC<HeaderProps> = memo(function Header({
   onSearch,
   onSaveQuery,
-  searchQuery,
-  onSearchQueryChange,
   savedQueries,
   onQueryRemove,
   isLoading,
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
+
   const handleQueryClick = (query: string) => {
-    onSearchQueryChange(query);
+    setSearchQuery(query);
     onSearch(query);
   };
 
@@ -35,7 +33,7 @@ export const Header: FC<HeaderProps> = memo(function Header({
         onSearch={onSearch}
         onSaveQuery={onSaveQuery}
         searchQuery={searchQuery}
-        onSearchQueryChange={onSearchQueryChange}
+        onSearchQueryChange={setSearchQuery}
         isLoading={isLoading}
       />
       <SavedQueries
