@@ -16,24 +16,24 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    historyCount: 1234,
     isLoading: false,
-    onSearch: () => {},
+    savedQueries: [],
   },
 };
 
 export const Loading: Story = {
   args: {
-    historyCount: 890,
     isLoading: true,
-    onSearch: () => {},
+    savedQueries: [],
   },
 };
 
-export const EmptyHistory: Story = {
+export const WithSavedQueries: Story = {
   args: {
-    historyCount: 0,
     isLoading: false,
-    onSearch: () => {},
+    savedQueries: [
+      { id: "1", query: "query1", createdAt: 0 },
+      { id: "2", query: "query2", createdAt: 0 },
+    ],
   },
 };

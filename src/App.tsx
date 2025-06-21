@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 
 import { Root } from "./components/Root";
 import {
+  getSavedQueries,
+  addSavedQuery,
+  removeSavedQuery,
+  SavedQuery,
+} from "./lib/savedQueries";
+import {
   search,
   initializeStorage,
   getRecentHistories,
@@ -12,6 +18,7 @@ import { HistoryItem } from "./types/HistoryItem";
 function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const getHistory = async (query = "") => {
@@ -30,10 +37,9 @@ function App() {
     }
   };
 
-  const handleDeleteItem = async (item: HistoryItem) => {
+  const handleDeleteHistoryItem = async (item: HistoryItem) => {
     try {
       await deleteHistoryItem(item);
-      // Remove from local state immediately for better UX
       setHistory((prev) => prev.filter((h) => h.url !== item.url));
     } catch (error) {
       console.error("Failed to delete history item:", error);
@@ -41,8 +47,41 @@ function App() {
     }
   };
 
+  const handleSaveQuery = async (query: string) => {
+    try {
+      await addSavedQuery(query);
+      const updatedQueries = await getSavedQueries();
+      setSavedQueries(updatedQueries);
+    } catch (error) {
+      console.error("Failed to save query:", error);
+    }
+  };
+
+  const handleRemoveSavedQuery = async (id: string) => {
+    try {
+      const message = "Are you sure you want to remove this query?";
+      if (confirm(message)) {
+        await removeSavedQuery(id);
+        const updatedQueries = await getSavedQueries();
+        setSavedQueries(updatedQueries);
+      }
+    } catch (error) {
+      console.error("Failed to remove query:", error);
+    }
+  };
+
+  const loadSavedQueries = async () => {
+    try {
+      const queries = await getSavedQueries();
+      setSavedQueries(queries);
+    } catch (error) {
+      console.error("Failed to load saved queries:", error);
+    }
+  };
+
   useEffect(() => {
     getHistory();
+    loadSavedQueries();
   }, []);
 
   return (
@@ -50,8 +89,11 @@ function App() {
       history={history}
       searchQuery={searchQuery}
       onSearch={getHistory}
+      onSaveQuery={handleSaveQuery}
+      savedQueries={savedQueries}
+      onSavedQueryRemove={handleRemoveSavedQuery}
       isLoading={isLoading}
-      onDeleteItem={handleDeleteItem}
+      onDeleteHistoryItem={handleDeleteHistoryItem}
     />
   );
 }

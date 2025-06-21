@@ -5,7 +5,7 @@
 
 .searchInput {
   width: 100%;
-  padding: 1rem 1.25rem;
+  padding: 1rem 3.5rem 1rem 1.25rem;
   font-size: 16px;
   font-weight: 400;
   color: var(--color-text);
@@ -14,6 +14,45 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   outline: none;
+}
+
+.saveButton {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.saveButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.saveButton:active:not(:disabled) {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.saveButton:disabled {
+  background: var(--color-border-light);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  transform: translateY(-50%);
+  box-shadow: var(--shadow-sm);
 }
 
 .searchInput::placeholder {

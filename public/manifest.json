@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Eternal History",
   "version": "1.0",
-  "permissions": ["history", "scripting", "bookmarks"],
+  "permissions": ["history", "scripting", "bookmarks", "storage"],
   "background": {
     "service_worker": "background.js",
     "type": "module"

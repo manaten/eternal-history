@@ -50,6 +50,7 @@ export const Default: Story = {
     history: mockHistoryItems,
     searchQuery: "",
     isLoading: false,
+    savedQueries: [],
   },
 };
 
@@ -58,6 +59,7 @@ export const Loading: Story = {
     history: [],
     searchQuery: "",
     isLoading: true,
+    savedQueries: [],
   },
 };
 
@@ -66,5 +68,18 @@ export const Empty: Story = {
     history: [],
     searchQuery: "",
     isLoading: false,
+    savedQueries: [],
+  },
+};
+
+export const WithSavedQueries: Story = {
+  args: {
+    history: mockHistoryItems,
+    searchQuery: "",
+    isLoading: false,
+    savedQueries: [
+      { id: "1", query: "react", createdAt: 0 },
+      { id: "2", query: "storybook", createdAt: 0 },
+    ],
   },
 };
