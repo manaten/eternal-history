@@ -52,7 +52,11 @@ export const Dropdown: FC<DropdownProps> = ({
   }
 
   return (
-    <div className={classNames(styles.dropdown, className)} ref={dropdownRef}>
+    <div
+      className={classNames(styles.dropdown, className)}
+      ref={dropdownRef}
+      role='menu'
+    >
       {items.map((item, index) => (
         <button
           key={index}
