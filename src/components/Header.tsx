@@ -9,7 +9,7 @@ interface HeaderProps {
   onSearch: (query: string) => void;
   onSaveQuery?: (query: string) => void;
   savedQueries: SavedQuery[];
-  onQueryRemove: (id: string) => void;
+  onSavedQueryRemove: (id: string) => void;
   isLoading: boolean;
 }
 
@@ -17,12 +17,12 @@ export const Header: FC<HeaderProps> = memo(function Header({
   onSearch,
   onSaveQuery,
   savedQueries,
-  onQueryRemove,
+  onSavedQueryRemove,
   isLoading,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleQueryClick = (query: string) => {
+  const handleSavedQueryClick = (query: string) => {
     setSearchQuery(query);
     onSearch(query);
   };
@@ -38,8 +38,8 @@ export const Header: FC<HeaderProps> = memo(function Header({
       />
       <SavedQueries
         queries={savedQueries}
-        onQueryClick={handleQueryClick}
-        onQueryRemove={onQueryRemove}
+        onQueryClick={handleSavedQueryClick}
+        onQueryRemove={onSavedQueryRemove}
       />
     </header>
   );

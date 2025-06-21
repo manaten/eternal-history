@@ -37,7 +37,7 @@ function App() {
     }
   };
 
-  const handleDeleteItem = async (item: HistoryItem) => {
+  const handleDeleteHistoryItem = async (item: HistoryItem) => {
     try {
       await deleteHistoryItem(item);
       setHistory((prev) => prev.filter((h) => h.url !== item.url));
@@ -57,7 +57,7 @@ function App() {
     }
   };
 
-  const handleRemoveQuery = async (id: string) => {
+  const handleRemoveSavedQuery = async (id: string) => {
     try {
       const message = "Are you sure you want to remove this query?";
       if (confirm(message)) {
@@ -91,9 +91,9 @@ function App() {
       onSearch={getHistory}
       onSaveQuery={handleSaveQuery}
       savedQueries={savedQueries}
-      onQueryRemove={handleRemoveQuery}
+      onSavedQueryRemove={handleRemoveSavedQuery}
       isLoading={isLoading}
-      onDeleteItem={handleDeleteItem}
+      onDeleteHistoryItem={handleDeleteHistoryItem}
     />
   );
 }

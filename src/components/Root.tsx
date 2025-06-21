@@ -12,9 +12,9 @@ interface RootProps {
   onSearch: (query?: string) => void;
   onSaveQuery?: (query: string) => void;
   savedQueries: SavedQuery[];
-  onQueryRemove: (id: string) => void;
+  onSavedQueryRemove: (id: string) => void;
   isLoading: boolean;
-  onDeleteItem?: (item: HistoryItem) => void;
+  onDeleteHistoryItem?: (item: HistoryItem) => void;
 }
 
 export const Root: FC<RootProps> = ({
@@ -23,9 +23,9 @@ export const Root: FC<RootProps> = ({
   onSearch,
   onSaveQuery,
   savedQueries,
-  onQueryRemove,
+  onSavedQueryRemove,
   isLoading,
-  onDeleteItem,
+  onDeleteHistoryItem,
 }: RootProps) => {
   return (
     <main className={styles.root}>
@@ -33,14 +33,14 @@ export const Root: FC<RootProps> = ({
         onSearch={onSearch}
         onSaveQuery={onSaveQuery}
         savedQueries={savedQueries}
-        onQueryRemove={onQueryRemove}
+        onSavedQueryRemove={onSavedQueryRemove}
         isLoading={isLoading}
       />
       <Histories
         history={history}
         isLoading={isLoading}
         searchQuery={searchQuery}
-        onDeleteItem={onDeleteItem}
+        onDeleteItem={onDeleteHistoryItem}
       />
     </main>
   );
