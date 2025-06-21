@@ -1,9 +1,7 @@
 name: Release Extension
 
 on:
-  push:
-    tags:
-      - "v*" # Triggers on version tags like v1.0.0
+  workflow_dispatch:
 
 jobs:
   build-and-release:
@@ -26,52 +24,36 @@ jobs:
       - name: 👨🏻‍💻 Install dependencies
         run: npm ci
 
+      - name: 👀 Run linter
+        run: npm run lint
+
+      - name: 🐷 Run Typecheck
+        run: npm run typecheck
+
+      - name: 🐢 Run Test
+        run: npm run test
+
+      - name: Bump version
+        run: |
+          HUSKY=0 npm version patch
+          git push origin main --follow-tags
+
       - name: Build extension
         run: npm run build
 
-      - name: Set version from tag
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+      - name: Set version from package.json
+        id: set_version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
       - name: Create extension package
         run: |
-          mkdir -p packages
+          mkdir -p output
           cd dist
-          zip -r ../packages/eternal-history-v${{ env.VERSION }}.zip .
+          zip -r ../output/eternal-history-v${{ env.VERSION }}.zip .
 
-      - name: Calculate file checksums
-        run: |
-          cd packages
-          sha256sum eternal-history-v${{ env.VERSION }}.zip > eternal-history-v${{ env.VERSION }}.sha256
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Upload to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: output/eternal-history-v${{ env.VERSION }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ env.VERSION }}
-          release_name: Eternal History v${{ env.VERSION }}
-          draft: false
-          prerelease: false
-          body: |
-            ## Eternal History v${{ env.VERSION }}
-
-      - name: Upload ZIP Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./packages/eternal-history-v${{ env.VERSION }}.zip
-          asset_name: eternal-history-v${{ env.VERSION }}.zip
-          asset_content_type: application/zip
-
-      - name: Upload Checksum Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./packages/eternal-history-v${{ env.VERSION }}.sha256
-          asset_name: eternal-history-v${{ env.VERSION }}.sha256
-          asset_content_type: text/plain
