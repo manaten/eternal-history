@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A Chrome extension make history unlimited and searchable.",
   "scripts": {
     "dev": "vite build --watch",
