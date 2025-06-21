@@ -1,3 +1,5 @@
+<img src="public/assets/icon48.png" style="width: 48px; height: auto;" >
+
 # Eternal History
 
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-green.svg)
