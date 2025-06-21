@@ -254,6 +254,51 @@ async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {
 }
 
 /**
+ * 履歴アイテムを削除します。
+ * 対応するブックマークとChrome履歴の両方から削除されます。
+ *
+ * @param historyItem - 削除する履歴アイテム
+ * @throws {Error} ストレージが初期化されていない場合
+ *
+ * @example
+ * ```typescript
+ * // 履歴アイテムを削除
+ * await deleteHistoryItem(item);
+ * ```
+ */
+export async function deleteHistoryItem(
+  historyItem: HistoryItem,
+): Promise<void> {
+  if (!rootFolderId) {
+    throw new Error("Storage not initialized");
+  }
+
+  try {
+    // ブックマークから削除
+    const bookmarks = await chrome.bookmarks.search({ url: historyItem.url });
+
+    // Find the bookmark under our root folder
+    for (const bookmark of bookmarks) {
+      if (bookmark.url === historyItem.url && rootFolderId) {
+        const isUnder = await isUnderFolder(bookmark, rootFolderId);
+        if (isUnder) {
+          await chrome.bookmarks.remove(bookmark.id);
+          console.log("Deleted bookmark item:", bookmark.id);
+        }
+      }
+    }
+
+    // Chrome履歴からも削除
+    await chrome.history.deleteUrl({ url: historyItem.url });
+
+    console.log("Deleted history item:", historyItem.url);
+  } catch (error) {
+    console.error("Failed to delete history item:", error);
+    throw error;
+  }
+}
+
+/**
  * 指定された日数分の最近の履歴アイテムを取得します。
  * 今日から過去に向かって指定日数分のフォルダを検索し、見つかったブックマークを
  * 最終訪問時刻の降順（新しい順）でソートして返します。

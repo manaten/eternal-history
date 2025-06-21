@@ -13,7 +13,8 @@
   position: relative;
 }
 
-.historyItem:hover {
+.historyItem:hover,
+.historyItem[data-menu-open="true"] {
   background: var(--color-hover);
   border-color: var(--color-border);
   box-shadow: var(--shadow-sm);
@@ -79,6 +80,11 @@
   color: var(--color-highlight-text);
   padding: 2px 4px;
   border-radius: var(--radius-sm);
+}
+
+.contextDropdown {
+  top: calc(100% - 0.5rem);
+  right: 0.25rem;
 }
 
 @media (max-width: 768px) {

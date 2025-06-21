@@ -1,12 +1,16 @@
-import { FC, memo } from "react";
+import classNames from "classnames";
+import { FC, memo, useState } from "react";
 
+import { Dropdown } from "./Dropdown";
 import styles from "./HistoryItem.module.css";
 import { highlightText } from "../lib/highlight";
 import { HistoryItem as HistoryItemType } from "../types/HistoryItem";
 
 interface HistoryItemProps {
+  className?: string;
   item: HistoryItemType;
   searchQuery?: string;
+  onDelete?: (item: HistoryItemType) => void;
 }
 
 // テキストハイライト用の関数
@@ -25,20 +29,39 @@ const renderHighlightedText = (text: string, searchQuery: string) => {
 };
 
 export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
+  className,
   item,
   searchQuery = "",
+  onDelete,
 }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
   const time = new Date(item.lastVisitTime).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",
   });
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsMenuOpen(true);
+  };
+
+  const dropdownItems = [
+    {
+      label: "Delete item",
+      onClick: () => onDelete?.(item),
+    },
+  ];
+
   return (
     <a
       href={item.url}
-      className={styles.historyItem}
+      className={classNames(className, styles.historyItem)}
       title={item.title || item.url}
+      onContextMenu={handleContextMenu}
+      data-menu-open={isMenuOpen}
     >
       <span className={styles.time}>{time}</span>
       <img src={favicon} className={styles.icon} />
@@ -50,6 +73,13 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
           {renderHighlightedText(item.url, searchQuery)}
         </span>
       </div>
+
+      <Dropdown
+        className={styles.contextDropdown}
+        isOpen={isMenuOpen}
+        items={dropdownItems}
+        onClose={() => setIsMenuOpen(false)}
+      />
     </a>
   );
 });

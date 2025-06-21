@@ -10,6 +10,7 @@ interface RootProps {
   searchQuery: string;
   onSearch: (query?: string) => void;
   isLoading: boolean;
+  onDeleteItem?: (item: HistoryItem) => void;
 }
 
 export const Root: FC<RootProps> = ({
@@ -17,6 +18,7 @@ export const Root: FC<RootProps> = ({
   searchQuery,
   onSearch,
   isLoading,
+  onDeleteItem,
 }: RootProps) => {
   return (
     <main className={styles.root}>
@@ -29,6 +31,7 @@ export const Root: FC<RootProps> = ({
         history={history}
         isLoading={isLoading}
         searchQuery={searchQuery}
+        onDeleteItem={onDeleteItem}
       />
     </main>
   );
