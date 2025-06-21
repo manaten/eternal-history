@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 
 import { Root } from "./components/Root";
 import {
+  getSavedQueries,
+  addSavedQuery,
+  removeSavedQuery,
+  SavedQuery,
+} from "./lib/savedQueries";
+import {
   search,
   initializeStorage,
   getRecentHistories,
@@ -12,6 +18,7 @@ import { HistoryItem } from "./types/HistoryItem";
 function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const getHistory = async (query = "") => {
@@ -41,8 +48,38 @@ function App() {
     }
   };
 
+  const handleSaveQuery = async (query: string) => {
+    try {
+      await addSavedQuery(query);
+      const updatedQueries = await getSavedQueries();
+      setSavedQueries(updatedQueries);
+    } catch (error) {
+      console.error("Failed to save query:", error);
+    }
+  };
+
+  const handleRemoveQuery = async (id: string) => {
+    try {
+      await removeSavedQuery(id);
+      const updatedQueries = await getSavedQueries();
+      setSavedQueries(updatedQueries);
+    } catch (error) {
+      console.error("Failed to remove query:", error);
+    }
+  };
+
+  const loadSavedQueries = async () => {
+    try {
+      const queries = await getSavedQueries();
+      setSavedQueries(queries);
+    } catch (error) {
+      console.error("Failed to load saved queries:", error);
+    }
+  };
+
   useEffect(() => {
     getHistory();
+    loadSavedQueries();
   }, []);
 
   return (
@@ -50,6 +87,9 @@ function App() {
       history={history}
       searchQuery={searchQuery}
       onSearch={getHistory}
+      onSaveQuery={handleSaveQuery}
+      savedQueries={savedQueries}
+      onQueryRemove={handleRemoveQuery}
       isLoading={isLoading}
       onDeleteItem={handleDeleteItem}
     />

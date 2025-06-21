@@ -16,7 +16,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    historyCount: 1234,
     isLoading: false,
     onSearch: () => {},
   },
@@ -24,16 +23,7 @@ export const Default: Story = {
 
 export const Loading: Story = {
   args: {
-    historyCount: 890,
     isLoading: true,
-    onSearch: () => {},
-  },
-};
-
-export const EmptyHistory: Story = {
-  args: {
-    historyCount: 0,
-    isLoading: false,
     onSearch: () => {},
   },
 };
