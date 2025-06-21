@@ -40,7 +40,6 @@ function App() {
   const handleDeleteItem = async (item: HistoryItem) => {
     try {
       await deleteHistoryItem(item);
-      // Remove from local state immediately for better UX
       setHistory((prev) => prev.filter((h) => h.url !== item.url));
     } catch (error) {
       console.error("Failed to delete history item:", error);
@@ -60,9 +59,12 @@ function App() {
 
   const handleRemoveQuery = async (id: string) => {
     try {
-      await removeSavedQuery(id);
-      const updatedQueries = await getSavedQueries();
-      setSavedQueries(updatedQueries);
+      const message = "Are you sure you want to remove this query?";
+      if (confirm(message)) {
+        await removeSavedQuery(id);
+        const updatedQueries = await getSavedQueries();
+        setSavedQueries(updatedQueries);
+      }
     } catch (error) {
       console.error("Failed to remove query:", error);
     }
