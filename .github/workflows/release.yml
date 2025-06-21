@@ -35,9 +35,9 @@ jobs:
 
       - name: Bump version
         run: |
-          HUSKY=0 npm version patch
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          HUSKY=0 npm version patch
           git push origin main --follow-tags
 
       - name: Build extension
