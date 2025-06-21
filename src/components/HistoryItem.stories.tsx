@@ -9,6 +9,21 @@ const meta: Meta<typeof HistoryItem> = {
     layout: "centered",
   },
   tags: ["autodocs"],
+  decorators: [
+    (Story) => (
+      <div
+        style={{
+          width: "600px",
+          maxWidth: "100%",
+          margin: "0 auto",
+          background: "#fff",
+          padding: "1rem",
+        }}
+      >
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 export default meta;
@@ -94,30 +109,6 @@ export const ExtremelyLongText: Story = {
         "this-is-an-extremely-long-domain-name-that-should-definitely-overflow-and-cause-layout-issues-if-not-handled-properly.example.com",
     },
   },
-};
-
-export const InContainer: Story = {
-  args: {
-    item: {
-      id: "4",
-      url: "https://very-long-url-that-might-overflow-container-width.example.com/path/to/resource",
-      title:
-        "コンテナ内での省略表示テスト - 長いタイトルがコンテナ幅に制限されて正しく省略されるかテスト",
-      visitCount: 3,
-      lastVisitTime: Date.now(),
-      domain: "very-long-url-that-might-overflow-container-width.example.com",
-    },
-  },
-  decorators: [
-    (Story) => (
-      <div
-        style={{ width: "400px", border: "1px solid #ccc", padding: "1rem" }}
-      >
-        <h3>400px幅のコンテナ</h3>
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export const WithSearchHighlight: Story = {

@@ -23,6 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "classnames": "^2.5.1",
     "p-map": "^7.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

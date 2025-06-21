@@ -13,7 +13,8 @@
   position: relative;
 }
 
-.historyItem:hover {
+.historyItem:hover,
+.historyItem[data-menu-open="true"] {
   background: var(--color-hover);
   border-color: var(--color-border);
   box-shadow: var(--shadow-sm);
@@ -81,48 +82,10 @@
   border-radius: var(--radius-sm);
 }
 
-.menuContainer {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.menuButton {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 1.25rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-  opacity: 0;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.menuButton:hover {
-  background: var(--color-hover);
-  opacity: 0.6;
-}
-
-.menuButton:active {
-  transform: scale(0.95);
-}
-
-.historyItem:hover .menuButton {
-  opacity: 1;
-}
-
 .dropdown {
   position: absolute;
-  top: 100%;
-  right: 0;
+  top: calc(100% - 0.5rem);
+  right: 0.25rem;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -175,13 +138,6 @@
 
   .url {
     font-size: 0.7rem;
-  }
-
-  .menuButton {
-    font-size: 1rem;
-    min-width: 1.75rem;
-    height: 1.75rem;
-    opacity: 1;
   }
 
   .dropdown {

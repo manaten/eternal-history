@@ -1,3 +1,4 @@
+import classNames from "classnames";
 import { FC, memo, useState, useRef, useEffect } from "react";
 
 import styles from "./HistoryItem.module.css";
@@ -5,6 +6,7 @@ import { highlightText } from "../lib/highlight";
 import { HistoryItem as HistoryItemType } from "../types/HistoryItem";
 
 interface HistoryItemProps {
+  className?: string;
   item: HistoryItemType;
   searchQuery?: string;
   onDelete?: (item: HistoryItemType) => void;
@@ -26,6 +28,7 @@ const renderHighlightedText = (text: string, searchQuery: string) => {
 };
 
 export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
+  className,
   item,
   searchQuery = "",
   onDelete,
@@ -39,10 +42,10 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
     minute: "2-digit",
   });
 
-  const handleMenuClick = (e: React.MouseEvent) => {
+  const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsMenuOpen(!isMenuOpen);
+    setIsMenuOpen(true);
   };
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -52,28 +55,31 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
     onDelete?.(item);
   };
 
-  // Close menu when clicking outside
+  // Close menu when clicking outside or clicking on the item
   useEffect(() => {
+    if (!isMenuOpen) {
+      return undefined;
+    }
+
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
     };
 
-    if (isMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return undefined;
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+    };
   }, [isMenuOpen]);
 
   return (
     <a
       href={item.url}
-      className={styles.historyItem}
+      className={classNames(className, styles.historyItem)}
       title={item.title || item.url}
+      onContextMenu={handleContextMenu}
+      data-menu-open={isMenuOpen}
     >
       <span className={styles.time}>{time}</span>
       <img src={favicon} className={styles.icon} />
@@ -85,26 +91,12 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
           {renderHighlightedText(item.url, searchQuery)}
         </span>
       </div>
-      {onDelete && (
-        <div className={styles.menuContainer} ref={menuRef}>
-          <button
-            className={styles.menuButton}
-            onClick={handleMenuClick}
-            title='More options'
-            aria-label='More options'
-          >
-            ⋮
+
+      {isMenuOpen && (
+        <div className={styles.dropdown} ref={menuRef}>
+          <button className={styles.dropdownItem} onClick={handleDeleteClick}>
+            Delete item
           </button>
-          {isMenuOpen && (
-            <div className={styles.dropdown}>
-              <button
-                className={styles.dropdownItem}
-                onClick={handleDeleteClick}
-              >
-                Delete item
-              </button>
-            </div>
-          )}
         </div>
       )}
     </a>
