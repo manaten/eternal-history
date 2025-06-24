@@ -21,7 +21,8 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run",
-    "gen:icons": "npx icon-gen -i ./public/assets/icon.svg -o ./public/assets -r --ico --ico-name=favicon --ico-sizes=48 --favicon --favicon-name=icon --favicon-png-sizes=16,32,48,128"
+    "gen:icons": "npx icon-gen -i ./public/assets/icon.svg -o ./public/assets -r --ico --ico-name=favicon --ico-sizes=48 --favicon --favicon-name=icon --favicon-png-sizes=16,32,48,128",
+    "version": "node scripts/update-manifest-version.ts && git add public/manifest.json"
   },
   "dependencies": {
     "classnames": "^2.5.1",
