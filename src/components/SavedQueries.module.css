@@ -17,6 +17,10 @@
   backdrop-filter: blur(10px);
 }
 
+.savedQuery--active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .savedQuery:hover {
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
@@ -37,6 +41,10 @@
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.savedQuery--active > .queryButton {
+  font-weight: 600;
 }
 
 .removeButton {

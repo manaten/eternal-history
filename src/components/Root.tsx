@@ -35,6 +35,7 @@ export const Root: FC<RootProps> = ({
         savedQueries={savedQueries}
         onSavedQueryRemove={onSavedQueryRemove}
         isLoading={isLoading}
+        currentQuery={searchQuery}
       />
       <Histories
         history={history}
