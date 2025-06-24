@@ -9,6 +9,7 @@ interface SavedQueriesProps {
   onQueryClick: (query: string) => void;
   onQueryRemove: (id: string) => void;
   className?: string;
+  currentQuery?: string;
 }
 
 export const SavedQueries: FC<SavedQueriesProps> = ({
@@ -16,6 +17,7 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
   onQueryClick,
   onQueryRemove,
   className,
+  currentQuery,
 }) => {
   if (queries.length === 0) {
     return null;
@@ -24,7 +26,13 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
   return (
     <div className={classNames(className, styles.savedQueries)}>
       {queries.map((savedQuery) => (
-        <div key={savedQuery.id} className={styles.savedQuery}>
+        <div
+          key={savedQuery.id}
+          className={classNames(
+            styles.savedQuery,
+            currentQuery === savedQuery.query && styles["savedQuery--active"],
+          )}
+        >
           <button
             type='button'
             onClick={() => onQueryClick(savedQuery.query)}

@@ -23,11 +23,11 @@ function App() {
 
   const getHistory = async (query = "") => {
     setIsLoading(true);
-    setSearchQuery(query);
+    setSearchQuery(query.trim());
     try {
       await initializeStorage();
       const results: HistoryItem[] = query.trim()
-        ? await search(query)
+        ? await search(query.trim())
         : await getRecentHistories(3);
       setHistory(results);
     } catch (error) {

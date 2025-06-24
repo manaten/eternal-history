@@ -69,3 +69,14 @@ export const Empty: Story = {
     queries: [],
   },
 };
+
+export const WithActiveQuery: Story = {
+  args: {
+    queries: [
+      { id: "1", query: "react", createdAt: Date.now() - 1000 },
+      { id: "2", query: "typescript", createdAt: Date.now() - 2000 },
+      { id: "3", query: "storybook", createdAt: Date.now() - 3000 },
+    ],
+    currentQuery: "typescript",
+  },
+};
