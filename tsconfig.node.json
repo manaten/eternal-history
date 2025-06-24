@@ -31,6 +31,7 @@
     "vite.config.ts",
     "vitest.config.ts",
     "eslint.config.mjs",
-    "lint-staged.config.mjs"
+    "lint-staged.config.mjs",
+    "scripts/**/*.ts"
   ]
 }
