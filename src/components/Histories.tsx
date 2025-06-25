@@ -2,6 +2,7 @@ import { FC, memo } from "react";
 
 import styles from "./Histories.module.css";
 import { HistoryItem } from "./HistoryItem";
+import { Spinner } from "./Spinner";
 import { HistoryItem as HistoryItemType } from "../types/HistoryItem";
 
 interface HistoriesProps {
@@ -18,7 +19,11 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
   onDeleteItem,
 }) {
   if (isLoading) {
-    return <div className={styles.loading}>Loading...</div>;
+    return (
+      <div className={styles.loading}>
+        <Spinner size='large' />
+      </div>
+    );
   }
 
   const groupHistoriesByDate = (histories: HistoryItemType[]) => {
