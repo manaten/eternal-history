@@ -2,6 +2,11 @@ name: Release Extension
 
 on:
   workflow_dispatch:
+    inputs:
+      release_body:
+        description: "Release body (changelog)"
+        required: true
+        type: string
 
 jobs:
   build-and-release:
@@ -56,7 +61,8 @@ jobs:
       - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: output/eternal-history-v${{ env.VERSION }}.zip        
+          files: output/eternal-history-v${{ env.VERSION }}.zip
           tag_name: v${{ env.VERSION }}
+          body: ${{ github.event.inputs.release_body }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
