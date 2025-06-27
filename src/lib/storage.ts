@@ -185,9 +185,10 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
 /**
  * 保存された履歴アイテムを検索します。
  * クエリ文字列をスペースで分割し、すべての単語がタイトルまたはURLに含まれるアイテムを返します。
+ * site:example.com構文でドメイン検索も可能です。
  * 検索対象は "Eternal History" フォルダ配下のブックマークのみです。
  *
- * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能）
+ * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能、site:ドメイン指定可能）
  * @returns マッチした履歴アイテムの配列を返すPromise
  *
  * @example
@@ -197,6 +198,12 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
  *
  * // 複数単語での検索（AND検索）
  * const results2 = await search("google search engine");
+ *
+ * // ドメイン検索
+ * const results3 = await search("site:example.com");
+ *
+ * // ドメイン検索と単語の組み合わせ
+ * const results4 = await search("site:google.com search");
  *
  * // 検索結果を表示
  * results2.forEach(item => {
@@ -212,25 +219,102 @@ export async function search(query: string): Promise<HistoryItem[]> {
     return [];
   }
 
-  const queryTerms = query
-    .trim()
-    .split(/\s+/)
-    .filter((term) => term.length > 0)
-    .map((term) => term.toLowerCase())
-    .sort((a, b) => b.length - a.length);
+  const { siteTerms, searchTerms } = parseSearchQuery(query);
 
-  if (!queryTerms[0]) {
+  if (searchTerms.length === 0 && siteTerms.length === 0) {
     return [];
   }
 
-  // 最初の語で検索
-  const bookmarks = await searchHistoriesByQuery(queryTerms[0]);
+  // 検索実行
+  const bookmarks =
+    searchTerms.length > 0
+      ? await searchHistoriesByQuery(searchTerms[0]!) // 長さチェック済みなので安全
+      : await getAllHistories();
 
-  // 残りの語で絞り込み
+  // フィルタリング
   return bookmarks.filter((bookmark) => {
     const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
-    return queryTerms.slice(1).every((term) => searchText.includes(term));
+
+    // site:条件をチェック
+    const siteMatches = siteTerms.every((siteTerm) => {
+      try {
+        const url = new URL(bookmark.url);
+        return url.hostname.includes(siteTerm);
+      } catch {
+        return false;
+      }
+    });
+
+    // 検索語条件をチェック
+    const searchMatches = searchTerms.every((term) =>
+      searchText.includes(term),
+    );
+
+    return siteMatches && searchMatches;
   });
+}
+
+/**
+ * 検索クエリを解析してsite:構文と通常の検索語を分離します。
+ */
+function parseSearchQuery(query: string): {
+  siteTerms: string[];
+  searchTerms: string[];
+} {
+  const terms = query
+    .trim()
+    .split(/\s+/)
+    .filter((term) => term.length > 0);
+
+  const { siteTerms, searchTerms } = terms.reduce<{
+    siteTerms: string[];
+    searchTerms: string[];
+  }>(
+    (acc, term) => {
+      if (term.toLowerCase().startsWith("site:")) {
+        const siteTerm = term.slice(5).toLowerCase();
+        if (siteTerm.length > 0) {
+          return {
+            ...acc,
+            siteTerms: [...acc.siteTerms, siteTerm],
+          };
+        }
+      } else {
+        return {
+          ...acc,
+          searchTerms: [...acc.searchTerms, term.toLowerCase()],
+        };
+      }
+      return acc;
+    },
+    { siteTerms: [], searchTerms: [] },
+  );
+
+  // 検索語を長い順にソート（既存の仕様を維持）
+  const sortedSearchTerms = [...searchTerms].sort(
+    (a, b) => b.length - a.length,
+  );
+
+  return { siteTerms, searchTerms: sortedSearchTerms };
+}
+
+/**
+ * 全ての履歴を取得します（site:のみの検索で使用）
+ */
+async function getAllHistories(): Promise<HistoryItem[]> {
+  if (!rootFolderId) {
+    return [];
+  }
+
+  const bookmarks = await getAllBookmarksInFolder(rootFolderId);
+  return (
+    await pMap(bookmarks, async (bookmark) => {
+      if (bookmark.url) {
+        return await convertBookmarkToHistoryItem(bookmark);
+      }
+      return null;
+    })
+  ).filter((item) => item !== null);
 }
 
 async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {
