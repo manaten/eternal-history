@@ -14,8 +14,12 @@ interface HistoryItemProps {
 }
 
 // テキストハイライト用の関数
-const renderHighlightedText = (text: string, searchQuery: string) => {
-  const highlighted = highlightText(text, searchQuery);
+const renderHighlightedText = (
+  text: string,
+  searchQuery: string,
+  type: "url" | "title",
+) => {
+  const highlighted = highlightText(text, searchQuery, type);
   return highlighted.map((part, index) => {
     if (part.highlight) {
       return (
@@ -67,10 +71,10 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
       <img src={favicon} className={styles.icon} />
       <div className={styles.linkContainer}>
         <span className={styles.title} title={item.title || item.url}>
-          {renderHighlightedText(item.title || item.url, searchQuery)}
+          {renderHighlightedText(item.title || item.url, searchQuery, "title")}
         </span>
         <span className={styles.url} title={item.url}>
-          {renderHighlightedText(item.url, searchQuery)}
+          {renderHighlightedText(item.url, searchQuery, "url")}
         </span>
       </div>
 
