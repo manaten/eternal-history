@@ -220,19 +220,17 @@ export async function search(query: string): Promise<HistoryItem[]> {
   }
 
   const parsedTerms = parseSearchQuery(query);
-
   if (!parsedTerms[0]) {
     return [];
   }
 
-  // 最初のタームでChrome API検索を実行（textでもsiteでも効率的）
+  // まず最初の単語で全体から検索
   const bookmarks = await searchHistoriesByQuery(parsedTerms[0].term);
 
   // フィルタリング
   return bookmarks.filter((bookmark) => {
     const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
 
-    // 全ての条件をチェック
     return parsedTerms.every((parsedTerm) => {
       if (parsedTerm.type === "site") {
         // site:条件は hostname に対してチェック
@@ -267,24 +265,17 @@ function parseSearchQuery(query: string): Array<{
       if (term.toLowerCase().startsWith("site:")) {
         const siteTerm = term.slice(5).toLowerCase();
         if (siteTerm.length > 0) {
-          return { term: siteTerm, type: "site" as const };
+          return { term: siteTerm, type: "site" } as const;
         }
         return null;
-      } else {
-        return { term: term.toLowerCase(), type: "text" as const };
       }
+      return { term: term.toLowerCase(), type: "text" } as const;
     })
-    .filter(
-      (item): item is { term: string; type: "text" | "site" } => item !== null,
-    );
-
-  // テキスト検索語を長い順にソート（既存の仕様を維持）
-  const textTerms = parsedTerms
-    .filter((t) => t.type === "text")
+    .filter((item) => item !== null)
+    // テキスト検索語を長い順にソート (最も長い単語でまず検索するため)
     .sort((a, b) => b.term.length - a.term.length);
-  const siteTerms = parsedTerms.filter((t) => t.type === "site");
 
-  return [...textTerms, ...siteTerms];
+  return parsedTerms;
 }
 
 async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {
