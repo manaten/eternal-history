@@ -1,12 +1,12 @@
 import { FC, useState } from "react";
 
-import styles from "../App.module.css";
-import { Header } from "./Header";
-import { HelpButton } from "./HelpButton";
-import { HelpModal } from "./HelpModal";
-import { Histories } from "./Histories";
-import { SavedQuery } from "../lib/savedQueries";
-import { HistoryItem } from "../types/HistoryItem";
+import styles from "../../App.module.css";
+import { SavedQuery } from "../../lib/savedQueries";
+import { HistoryItem } from "../../types/HistoryItem";
+import { Header } from "../Header";
+import { HelpButton } from "../HelpButton";
+import { HelpModal } from "../HelpModal";
+import { Histories } from "../Histories";
 
 interface RootProps {
   history: HistoryItem[];

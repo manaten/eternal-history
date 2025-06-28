@@ -1,6 +1,6 @@
 import { FC } from "react";
 
-import styles from "./HelpButton.module.css";
+import styles from "./index.module.css";
 
 interface HelpButtonProps {
   onClick: () => void;

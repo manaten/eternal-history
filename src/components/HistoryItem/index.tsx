@@ -1,10 +1,10 @@
 import classNames from "classnames";
 import { FC, memo, useState } from "react";
 
-import { Dropdown } from "./Dropdown";
-import styles from "./HistoryItem.module.css";
-import { highlightText } from "../lib/highlight";
-import { HistoryItem as HistoryItemType } from "../types/HistoryItem";
+import { Dropdown } from "../Dropdown";
+import styles from "./index.module.css";
+import { highlightText } from "../../lib/highlight";
+import { HistoryItem as HistoryItemType } from "../../types/HistoryItem";
 
 interface HistoryItemProps {
   className?: string;

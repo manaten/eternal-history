@@ -3,7 +3,7 @@ import { ComponentProps } from "react";
 import { useArgs } from "storybook/internal/preview-api";
 import { expect } from "storybook/test";
 
-import { Dropdown } from "./Dropdown";
+import { Dropdown } from "./index";
 
 const meta: Meta<typeof Dropdown> = {
   title: "Components/Dropdown",

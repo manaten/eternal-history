@@ -1,9 +1,9 @@
 import { FC, memo } from "react";
 
-import styles from "./Histories.module.css";
-import { HistoryItem } from "./HistoryItem";
-import { Spinner } from "./Spinner";
-import { HistoryItem as HistoryItemType } from "../types/HistoryItem";
+import styles from "./index.module.css";
+import { HistoryItem as HistoryItemType } from "../../types/HistoryItem";
+import { HistoryItem } from "../HistoryItem";
+import { Spinner } from "../Spinner";
 
 interface HistoriesProps {
   history: HistoryItemType[];
