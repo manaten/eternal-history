@@ -10,6 +10,7 @@ import {
   serializeHistoryItemToBookmark,
 } from "./bookmark-serializer";
 import { dateToFolderNames, getDateArray } from "./date";
+import { parseSearchQuery } from "./query";
 import { HistoryItem } from "../types/HistoryItem";
 
 export const ROOT_FOLDER_NAME = "Eternal History";
@@ -185,9 +186,10 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
 /**
  * 保存された履歴アイテムを検索します。
  * クエリ文字列をスペースで分割し、すべての単語がタイトルまたはURLに含まれるアイテムを返します。
+ * site:example.com構文でドメイン検索も可能です。
  * 検索対象は "Eternal History" フォルダ配下のブックマークのみです。
  *
- * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能）
+ * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能、site:ドメイン指定可能）
  * @returns マッチした履歴アイテムの配列を返すPromise
  *
  * @example
@@ -197,6 +199,12 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
  *
  * // 複数単語での検索（AND検索）
  * const results2 = await search("google search engine");
+ *
+ * // ドメイン検索
+ * const results3 = await search("site:example.com");
+ *
+ * // ドメイン検索と単語の組み合わせ
+ * const results4 = await search("site:google.com search");
  *
  * // 検索結果を表示
  * results2.forEach(item => {
@@ -212,24 +220,32 @@ export async function search(query: string): Promise<HistoryItem[]> {
     return [];
   }
 
-  const queryTerms = query
-    .trim()
-    .split(/\s+/)
-    .filter((term) => term.length > 0)
-    .map((term) => term.toLowerCase())
-    .sort((a, b) => b.length - a.length);
-
-  if (!queryTerms[0]) {
+  const parsedTerms = parseSearchQuery(query);
+  if (!parsedTerms[0]) {
     return [];
   }
 
-  // 最初の語で検索
-  const bookmarks = await searchHistoriesByQuery(queryTerms[0]);
+  // まず最初の単語で全体から検索
+  const bookmarks = await searchHistoriesByQuery(parsedTerms[0].term);
 
-  // 残りの語で絞り込み
+  // フィルタリング
   return bookmarks.filter((bookmark) => {
     const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
-    return queryTerms.slice(1).every((term) => searchText.includes(term));
+
+    return parsedTerms.every((parsedTerm) => {
+      if (parsedTerm.type === "site") {
+        // site:条件は hostname に対してチェック
+        try {
+          const url = new URL(bookmark.url);
+          return url.hostname.includes(parsedTerm.term);
+        } catch {
+          return false;
+        }
+      } else {
+        // text条件は title と url 全体に対してチェック
+        return searchText.includes(parsedTerm.term);
+      }
+    });
   });
 }
 

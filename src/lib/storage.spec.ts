@@ -419,6 +419,174 @@ describe("storage", () => {
       // Should not find the bookmark outside root folder
       expect(resultOutside).toEqual([]);
     });
+
+    it("should search by site: syntax for domain matching", async () => {
+      // Create test bookmarks with different domains
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://google.com/search",
+          title: "Google Search",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "2",
+          url: "https://maps.google.com",
+          title: "Google Maps",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          domain: "maps.google.com",
+        },
+        {
+          id: "3",
+          url: "https://yahoo.com",
+          title: "Yahoo Homepage",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "yahoo.com",
+        },
+        {
+          id: "4",
+          url: "https://other.com/google.com",
+          title: "other Homepage (Google Link)",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "other.com",
+        },
+        {
+          id: "5",
+          url: "https://other.com",
+          title: "other Homepage (google.com)",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "other.com",
+        },
+      ];
+      await insertHistories(...historyItems);
+
+      // Test exact domain search
+      const googleResult = await search("site:google.com");
+      expect(googleResult).toHaveLength(2);
+      expect(googleResult.map((r) => r.url)).toContain(
+        "https://google.com/search",
+      );
+      expect(googleResult.map((r) => r.url)).toContain(
+        "https://maps.google.com",
+      );
+
+      // Test partial domain search
+      const yahoResult = await search("site:yahoo");
+      expect(yahoResult).toHaveLength(1);
+      expect(yahoResult[0]?.url).toBe("https://yahoo.com");
+    });
+
+    it("should combine site: search with regular search terms", async () => {
+      // Create test bookmarks
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://google.com/search",
+          title: "Google Search Engine",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "2",
+          url: "https://google.com/maps",
+          title: "Google Maps",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "3",
+          url: "https://yahoo.com",
+          title: "Yahoo Search Engine",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "yahoo.com",
+        },
+      ];
+      await insertHistories(...historyItems);
+
+      // Search for "search" within google.com domain
+      const result = await search("site:google.com search");
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        url: "https://google.com/search",
+        title: "Google Search Engine",
+      });
+    });
+
+    it("should handle multiple site: terms", async () => {
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://google.com",
+          title: "Google",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "2",
+          url: "https://search.yahoo.com",
+          title: "Yahoo Search",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          domain: "search.yahoo.com",
+        },
+        {
+          id: "3",
+          url: "https://example.com",
+          title: "Example",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "example.com",
+        },
+      ];
+      await insertHistories(...historyItems);
+
+      // Multiple site: terms should match domains containing both terms
+      const result = await search("site:search site:yahoo");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.url).toBe("https://search.yahoo.com");
+    });
+
+    it("should return empty array when site: matches no domains", async () => {
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://google.com",
+          title: "Google",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "google.com",
+        },
+      ];
+      await insertHistories(...historyItems);
+
+      const result = await search("site:nonexistent.com");
+      expect(result).toEqual([]);
+    });
+
+    it("should handle invalid URLs gracefully in site: search", async () => {
+      // Add a bookmark with an invalid URL (this shouldn't normally happen, but test defensive coding)
+      const mockBookmark = {
+        id: "invalid",
+        title: "Invalid URL Bookmark",
+        url: "not-a-valid-url",
+        parentId: "some-parent",
+      };
+      mockBookmarkUtils.addMockBookmark(mockBookmark);
+
+      // This should not throw an error and should simply not match
+      const result = await search("site:example.com");
+      expect(result).toEqual([]);
+    });
   });
 
   describe("getRecentHistories", () => {
