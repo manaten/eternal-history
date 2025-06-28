@@ -77,6 +77,13 @@ export function serializeHistoryItemToBookmark(item: HistoryItem): {
   };
 }
 
+function faviconURL(u: string): string {
+  const url = new URL(chrome.runtime.getURL("/_favicon/"));
+  url.searchParams.set("pageUrl", u);
+  url.searchParams.set("size", "32");
+  return url.toString();
+}
+
 /**
  * Deserializes bookmark format to HistoryItem
  * Note: This creates a partial HistoryItem - other fields like id, domain need to be set separately
@@ -92,5 +99,6 @@ export function deserializeBookmarkToHistoryItem(
     lastVisitTime: metadata?.t ?? 0,
     visitCount: metadata?.vc ?? 1, // Default to 1 if not specified
     domain: bookmark.url ? new URL(bookmark.url).hostname : "",
+    favicon: bookmark.url ? faviconURL(bookmark.url) : undefined,
   };
 }

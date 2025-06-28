@@ -40,7 +40,9 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const favicon = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
+  const favicon =
+    item.favicon ||
+    `https://www.google.com/s2/favicons?domain=${item.domain}&sz=16`;
   const time = new Date(item.lastVisitTime).toLocaleTimeString("ja-JP", {
     hour: "2-digit",
     minute: "2-digit",

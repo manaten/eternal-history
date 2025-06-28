@@ -54,6 +54,13 @@ function getChildrenOfParent(parentId: string): MockBookmarkTreeNode[] {
   return children;
 }
 
+// Mock Chrome runtime
+export const mockChromeRuntime = {
+  getURL: vi.fn().mockImplementation((path: string): string => {
+    return `chrome-extension://test-extension-id${path}`;
+  }),
+};
+
 // Mock implementations
 export const mockChromeBookmarks = {
   get: vi
@@ -207,6 +214,7 @@ export const mockBookmarkUtils = {
 export function setupChromeBookmarksMock() {
   global.chrome = {
     bookmarks: mockChromeBookmarks as unknown as typeof chrome.bookmarks,
+    runtime: mockChromeRuntime as unknown as typeof chrome.runtime,
   } as unknown as typeof global.chrome;
   mockBookmarks.clear();
   nextId = 1;

@@ -11,4 +11,5 @@ export type HistoryItem = {
   visitCount: number;
   lastVisitTime: number;
   domain: string;
+  favicon?: string;
 };

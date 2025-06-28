@@ -1,12 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 
 import {
   serializeHistoryItemToBookmark,
   deserializeBookmarkToHistoryItem,
 } from "./bookmark-serializer";
 import { HistoryItem } from "../types/HistoryItem";
+import { setupChromeBookmarksMock } from "./__mocks__/chrome_bookmarks.mock";
 
 describe("bookmark-serializer", () => {
+  beforeEach(() => {
+    setupChromeBookmarksMock();
+  });
+
   describe("serializeHistoryItemToBookmark", () => {
     it("should serialize HistoryItem to bookmark format with metadata", () => {
       const historyItem: HistoryItem = {
@@ -62,6 +67,8 @@ describe("bookmark-serializer", () => {
         lastVisitTime: 1234567890123,
         visitCount: 5,
         domain: "example.com",
+        favicon:
+          "chrome-extension://test-extension-id/_favicon/?pageUrl=https%3A%2F%2Fexample.com&size=32",
       });
     });
 
@@ -83,6 +90,8 @@ describe("bookmark-serializer", () => {
         lastVisitTime: 0, // No metadata, so lastVisitTime is 0
         visitCount: 1, // Default value
         domain: "legacy.com",
+        favicon:
+          "chrome-extension://test-extension-id/_favicon/?pageUrl=https%3A%2F%2Flegacy.com&size=32",
       });
     });
 
@@ -104,6 +113,8 @@ describe("bookmark-serializer", () => {
         lastVisitTime: 0,
         visitCount: 1,
         domain: "malformed.com",
+        favicon:
+          "chrome-extension://test-extension-id/_favicon/?pageUrl=https%3A%2F%2Fmalformed.com&size=32",
       });
     });
 
@@ -125,6 +136,8 @@ describe("bookmark-serializer", () => {
         lastVisitTime: 1234567890123,
         visitCount: 1, // Default when not specified
         domain: "partial.com",
+        favicon:
+          "chrome-extension://test-extension-id/_favicon/?pageUrl=https%3A%2F%2Fpartial.com&size=32",
       });
     });
 
@@ -147,6 +160,8 @@ describe("bookmark-serializer", () => {
         lastVisitTime: 1234567890123,
         visitCount: 3,
         domain: "multiple.com",
+        favicon:
+          "chrome-extension://test-extension-id/_favicon/?pageUrl=https%3A%2F%2Fmultiple.com&size=32",
       });
     });
 
@@ -168,6 +183,8 @@ describe("bookmark-serializer", () => {
         lastVisitTime: 0,
         visitCount: 1,
         domain: "invalid.com",
+        favicon:
+          "chrome-extension://test-extension-id/_favicon/?pageUrl=https%3A%2F%2Finvalid.com&size=32",
       });
     });
   });
