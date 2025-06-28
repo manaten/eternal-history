@@ -447,6 +447,22 @@ describe("storage", () => {
           lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
           domain: "yahoo.com",
         },
+        {
+          id: "4",
+          url: "https://other.com/google.com",
+          title: "other Homepage (Google Link)",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "other.com",
+        },
+        {
+          id: "5",
+          url: "https://other.com",
+          title: "other Homepage (google.com)",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "other.com",
+        },
       ];
       await insertHistories(...historyItems);
 
