@@ -28,11 +28,11 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>ヘルプ</h2>
+          <h2 className={styles.title}>How to use</h2>
           <button
             className={styles.closeButton}
             onClick={onClose}
-            aria-label='モーダルを閉じる'
+            aria-label='Close modal'
           >
             ×
           </button>
@@ -40,52 +40,57 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
         <div className={styles.content}>
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>この拡張について</h3>
+            <h3 className={styles.sectionTitle}>About This Extension</h3>
             <p className={styles.text}>
-              Eternal
-              Historyは、Chromeの履歴をブックマーク領域に無制限に保存する拡張機能です。
-              通常のChromeの履歴とは異なり、データが削除されることなく永続的に保管され、
-              高度な検索機能でいつでも過去のサイトを見つけることができます。
+              Eternal History is a Chrome extension that stores unlimited
+              browser history data in the bookmarks area. Unlike Chrome's
+              standard history, your data is permanently preserved and never
+              deleted, with advanced search capabilities to help you find any
+              site you've visited.
             </p>
           </section>
 
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>検索構文</h3>
+            <h3 className={styles.sectionTitle}>Search Syntax</h3>
             <div className={styles.syntaxList}>
               <div className={styles.syntaxItem}>
                 <code className={styles.code}>search term</code>
                 <span className={styles.description}>
-                  通常のテキスト検索。タイトルとURLに含まれる文字列を検索します。
+                  Regular text search. Searches for strings contained in both
+                  titles and URLs.
                 </span>
               </div>
               <div className={styles.syntaxItem}>
                 <code className={styles.code}>site:example.com</code>
                 <span className={styles.description}>
-                  ドメイン検索。指定したドメインを含むサイトのみを検索します。
+                  Domain search. Returns only sites that contain the specified
+                  domain.
                 </span>
               </div>
               <div className={styles.syntaxItem}>
                 <code className={styles.code}>-exclude</code>
                 <span className={styles.description}>
-                  除外検索。指定した文字列を含む結果を除外します。
+                  Exclude search. Filters out results containing the specified
+                  string.
                 </span>
               </div>
               <div className={styles.syntaxItem}>
                 <code className={styles.code}>site:google.com search -ads</code>
                 <span className={styles.description}>
-                  複合検索。すべての構文を組み合わせて使用できます。
+                  Combined search. All syntax types can be used together for
+                  complex queries.
                 </span>
               </div>
             </div>
           </section>
 
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>クエリの保存</h3>
+            <h3 className={styles.sectionTitle}>Saving Queries</h3>
             <p className={styles.text}>
-              よく使用する検索クエリは保存することができます。
-              検索ボックスの右側にある「保存」ボタンを押すと、現在のクエリが保存され、
-              次回から簡単にアクセスできるようになります。
-              保存されたクエリは検索ボックス下に表示され、クリックで再実行できます。
+              Frequently used search queries can be saved for quick access.
+              Click the "Save" button next to the search box to save your
+              current query. Saved queries appear below the search box and can
+              be clicked to re-execute them instantly.
             </p>
           </section>
         </div>
