@@ -38,14 +38,14 @@ jobs:
       - name: 🐢 Run Test
         run: npm run test
 
-      - name: Bump version
+      - name: 💪 Bump version
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           HUSKY=0 npm version patch
           git push origin main --follow-tags
 
-      - name: Build extension
+      - name: 🔧 Build extension
         run: npm run build
 
       - name: Set version from package.json
