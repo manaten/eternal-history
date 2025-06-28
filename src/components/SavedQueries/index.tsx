@@ -1,8 +1,8 @@
 import classNames from "classnames";
 import { FC } from "react";
 
-import styles from "./SavedQueries.module.css";
-import { SavedQuery } from "../lib/savedQueries";
+import styles from "./index.module.css";
+import { SavedQuery } from "../../lib/savedQueries";
 
 interface SavedQueriesProps {
   queries: SavedQuery[];

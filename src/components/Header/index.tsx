@@ -1,9 +1,9 @@
 import { FC, memo, useState } from "react";
 
-import styles from "./Header.module.css";
-import { SavedQueries } from "./SavedQueries";
-import { SearchBox } from "./SearchBox";
-import { SavedQuery } from "../lib/savedQueries";
+import styles from "./index.module.css";
+import { SavedQuery } from "../../lib/savedQueries";
+import { SavedQueries } from "../SavedQueries";
+import { SearchBox } from "../SearchBox";
 
 interface HeaderProps {
   onSearch: (query: string) => void;

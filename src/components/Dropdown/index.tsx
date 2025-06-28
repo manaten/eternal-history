@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import { FC, useRef, useEffect } from "react";
 
-import styles from "./Dropdown.module.css";
+import styles from "./index.module.css";
 
 export interface DropdownItem {
   label: string;

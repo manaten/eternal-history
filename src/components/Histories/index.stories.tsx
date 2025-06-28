@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { Histories } from "./Histories";
-import type { HistoryItem } from "../types/HistoryItem";
+import { Histories } from "./index";
+import type { HistoryItem } from "../../types/HistoryItem";
 
 const meta: Meta<typeof Histories> = {
   title: "Components/Histories",

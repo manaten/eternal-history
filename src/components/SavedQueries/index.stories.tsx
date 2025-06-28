@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { SavedQueries } from "./SavedQueries";
+import { SavedQueries } from "./index";
 
 const meta: Meta<typeof SavedQueries> = {
   component: SavedQueries,

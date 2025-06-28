@@ -1,6 +1,6 @@
 import { FC } from "react";
 
-import styles from "./SearchBox.module.css";
+import styles from "./index.module.css";
 
 interface SearchBoxProps {
   onSearch: (query: string) => void;

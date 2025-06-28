@@ -1,6 +1,6 @@
 import { FC } from "react";
 
-import styles from "./HelpModal.module.css";
+import styles from "./index.module.css";
 
 interface HelpModalProps {
   isOpen: boolean;

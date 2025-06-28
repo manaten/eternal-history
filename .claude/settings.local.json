@@ -22,7 +22,8 @@
       "WebFetch(domain:developer.chrome.com)",
       "Bash(npm run typecheck:*)",
       "Bash(grep:*)",
-      "Bash(npm run fix:js:*)"
+      "Bash(npm run fix:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

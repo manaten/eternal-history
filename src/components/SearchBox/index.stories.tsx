@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { SearchBox } from "./SearchBox";
+import { SearchBox } from "./index";
 
 const meta: Meta<typeof SearchBox> = {
   title: "Components/SearchBox",
