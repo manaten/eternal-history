@@ -88,9 +88,10 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
             <h3 className={styles.sectionTitle}>Saving Queries</h3>
             <p className={styles.text}>
               Frequently used search queries can be saved for quick access.
-              Click the "Save" button next to the search box to save your
-              current query. Saved queries appear below the search box and can
-              be clicked to re-execute them instantly.
+              Click the Save button (
+              <button className={styles.dummyButton}>+</button>) next to the
+              search box to save your current query. Saved queries appear below
+              the search box and can be clicked to re-execute them instantly.
             </p>
           </section>
         </div>
