@@ -221,30 +221,38 @@ export async function search(query: string): Promise<HistoryItem[]> {
   }
 
   const parsedTerms = parseSearchQuery(query);
-  if (!parsedTerms[0]) {
+
+  // 除外タームのみの場合は空配列を返す
+  const nonExcludeTerms = parsedTerms.filter((term) => term.type !== "exclude");
+  if (!nonExcludeTerms[0]) {
     return [];
   }
 
-  // まず最初の単語で全体から検索
-  const bookmarks = await searchHistoriesByQuery(parsedTerms[0].term);
+  // まず最初の非除外単語で全体から検索
+  const bookmarks = await searchHistoriesByQuery(nonExcludeTerms[0].term);
 
   // フィルタリング
   return bookmarks.filter((bookmark) => {
     const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
 
     return parsedTerms.every((parsedTerm) => {
+      // 除外条件
+      if (parsedTerm.type === "exclude") {
+        return !searchText.includes(parsedTerm.term);
+      }
+
+      // site:条件は hostname に対してチェック
       if (parsedTerm.type === "site") {
-        // site:条件は hostname に対してチェック
         try {
           const url = new URL(bookmark.url);
           return url.hostname.includes(parsedTerm.term);
         } catch {
           return false;
         }
-      } else {
-        // text条件は title と url 全体に対してチェック
-        return searchText.includes(parsedTerm.term);
       }
+
+      // text条件は title と url 全体に対してチェック
+      return searchText.includes(parsedTerm.term);
     });
   });
 }

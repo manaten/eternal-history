@@ -17,6 +17,11 @@ export const highlightText = (
   }
 
   const parsedQuery = parseSearchQuery(query).filter((q) => {
+    // 除外タームはハイライトしない
+    if (q.type === "exclude") {
+      return false;
+    }
+    // site:タームはURLでのみハイライト
     if (q.type === "site") {
       return type === "url";
     }
@@ -156,6 +161,46 @@ if (import.meta.vitest) {
       );
       expect(result).toHaveLength(1);
       expect(result.filter((part) => part.highlight)).toHaveLength(0);
+    });
+
+    it("should not highlight exclude terms", () => {
+      const result = highlightText(
+        "Visit ads and content pages",
+        "content -ads",
+        "title",
+      );
+      expect(result).toHaveLength(3);
+      expect(result[1]).toEqual({
+        highlight: true,
+        content: "content",
+      });
+      // Only "content" should be highlighted, not "ads"
+      expect(result.filter((part) => part.highlight)).toHaveLength(1);
+      expect(result.filter((part) => part.highlight)[0]?.content).toBe(
+        "content",
+      );
+    });
+
+    it("should handle mixed queries with exclude terms", () => {
+      const result = highlightText(
+        "Google search without ads",
+        "google search -ads",
+        "title",
+      );
+      expect(result).toHaveLength(4);
+      expect(result[0]).toEqual({
+        highlight: true,
+        content: "Google",
+      });
+      expect(result[2]).toEqual({
+        highlight: true,
+        content: "search",
+      });
+      // Only "Google" and "search" should be highlighted, not "ads"
+      expect(result.filter((part) => part.highlight)).toHaveLength(2);
+      expect(
+        result.filter((part) => part.highlight).map((part) => part.content),
+      ).toEqual(["Google", "search"]);
     });
   });
 }

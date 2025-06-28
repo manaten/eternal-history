@@ -587,6 +587,140 @@ describe("storage", () => {
       const result = await search("site:example.com");
       expect(result).toEqual([]);
     });
+
+    it("should support exclude search with - prefix", async () => {
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://google.com/search",
+          title: "Google Search Results",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "2",
+          url: "https://google.com/ads",
+          title: "Google Ads Dashboard",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "3",
+          url: "https://google.com/analytics",
+          title: "Google Analytics",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "google.com",
+        },
+      ];
+      await insertHistories(...historyItems);
+
+      // Search for google but exclude ads
+      const result = await search("google -ads");
+      expect(result).toHaveLength(2);
+      expect(result.map((r) => r.url)).toContain("https://google.com/search");
+      expect(result.map((r) => r.url)).toContain(
+        "https://google.com/analytics",
+      );
+      expect(result.map((r) => r.url)).not.toContain("https://google.com/ads");
+    });
+
+    it("should support multiple exclude terms", async () => {
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://example.com/search",
+          title: "Search Page",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "example.com",
+        },
+        {
+          id: "2",
+          url: "https://example.com/ads",
+          title: "Ads Page",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          domain: "example.com",
+        },
+        {
+          id: "3",
+          url: "https://example.com/spam",
+          title: "Spam Content",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "example.com",
+        },
+        {
+          id: "4",
+          url: "https://example.com/content",
+          title: "Good Content",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 13, 0, 0).getTime(),
+          domain: "example.com",
+        },
+      ];
+      await insertHistories(...historyItems);
+
+      // Exclude both ads and spam
+      const result = await search("example -ads -spam");
+      expect(result).toHaveLength(2);
+      expect(result.map((r) => r.url)).toContain("https://example.com/search");
+      expect(result.map((r) => r.url)).toContain("https://example.com/content");
+    });
+
+    it("should return empty array when only exclude terms are provided", async () => {
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://example.com",
+          title: "Example",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "example.com",
+        },
+      ];
+      await insertHistories(...historyItems);
+
+      const result = await search("-ads -spam");
+      expect(result).toEqual([]);
+    });
+
+    it("should combine site: and exclude searches", async () => {
+      const historyItems: HistoryItem[] = [
+        {
+          id: "1",
+          url: "https://google.com/search",
+          title: "Google Search",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "2",
+          url: "https://google.com/ads",
+          title: "Google Ads",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+          domain: "google.com",
+        },
+        {
+          id: "3",
+          url: "https://yahoo.com/search",
+          title: "Yahoo Search",
+          visitCount: 1,
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+          domain: "yahoo.com",
+        },
+      ];
+      await insertHistories(...historyItems);
+
+      const result = await search("site:google.com -ads");
+      expect(result).toHaveLength(1);
+      expect(result[0]?.url).toBe("https://google.com/search");
+    });
   });
 
   describe("getRecentHistories", () => {
