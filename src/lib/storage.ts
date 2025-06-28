@@ -219,102 +219,72 @@ export async function search(query: string): Promise<HistoryItem[]> {
     return [];
   }
 
-  const { siteTerms, searchTerms } = parseSearchQuery(query);
+  const parsedTerms = parseSearchQuery(query);
 
-  if (searchTerms.length === 0 && siteTerms.length === 0) {
+  if (!parsedTerms[0]) {
     return [];
   }
 
-  // 検索実行
-  const bookmarks =
-    searchTerms.length > 0
-      ? await searchHistoriesByQuery(searchTerms[0]!) // 長さチェック済みなので安全
-      : await getAllHistories();
+  // 最初のタームでChrome API検索を実行（textでもsiteでも効率的）
+  const bookmarks = await searchHistoriesByQuery(parsedTerms[0].term);
 
   // フィルタリング
   return bookmarks.filter((bookmark) => {
     const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
 
-    // site:条件をチェック
-    const siteMatches = siteTerms.every((siteTerm) => {
-      try {
-        const url = new URL(bookmark.url);
-        return url.hostname.includes(siteTerm);
-      } catch {
-        return false;
+    // 全ての条件をチェック
+    return parsedTerms.every((parsedTerm) => {
+      if (parsedTerm.type === "site") {
+        // site:条件は hostname に対してチェック
+        try {
+          const url = new URL(bookmark.url);
+          return url.hostname.includes(parsedTerm.term);
+        } catch {
+          return false;
+        }
+      } else {
+        // text条件は title と url 全体に対してチェック
+        return searchText.includes(parsedTerm.term);
       }
     });
-
-    // 検索語条件をチェック
-    const searchMatches = searchTerms.every((term) =>
-      searchText.includes(term),
-    );
-
-    return siteMatches && searchMatches;
   });
 }
 
 /**
- * 検索クエリを解析してsite:構文と通常の検索語を分離します。
+ * 検索クエリを解析して各タームの種類を識別します。
  */
-function parseSearchQuery(query: string): {
-  siteTerms: string[];
-  searchTerms: string[];
-} {
+function parseSearchQuery(query: string): Array<{
+  term: string;
+  type: "text" | "site";
+}> {
   const terms = query
     .trim()
     .split(/\s+/)
     .filter((term) => term.length > 0);
 
-  const { siteTerms, searchTerms } = terms.reduce<{
-    siteTerms: string[];
-    searchTerms: string[];
-  }>(
-    (acc, term) => {
+  const parsedTerms = terms
+    .map((term) => {
       if (term.toLowerCase().startsWith("site:")) {
         const siteTerm = term.slice(5).toLowerCase();
         if (siteTerm.length > 0) {
-          return {
-            ...acc,
-            siteTerms: [...acc.siteTerms, siteTerm],
-          };
+          return { term: siteTerm, type: "site" as const };
         }
+        return null;
       } else {
-        return {
-          ...acc,
-          searchTerms: [...acc.searchTerms, term.toLowerCase()],
-        };
+        return { term: term.toLowerCase(), type: "text" as const };
       }
-      return acc;
-    },
-    { siteTerms: [], searchTerms: [] },
-  );
-
-  // 検索語を長い順にソート（既存の仕様を維持）
-  const sortedSearchTerms = [...searchTerms].sort(
-    (a, b) => b.length - a.length,
-  );
-
-  return { siteTerms, searchTerms: sortedSearchTerms };
-}
-
-/**
- * 全ての履歴を取得します（site:のみの検索で使用）
- */
-async function getAllHistories(): Promise<HistoryItem[]> {
-  if (!rootFolderId) {
-    return [];
-  }
-
-  const bookmarks = await getAllBookmarksInFolder(rootFolderId);
-  return (
-    await pMap(bookmarks, async (bookmark) => {
-      if (bookmark.url) {
-        return await convertBookmarkToHistoryItem(bookmark);
-      }
-      return null;
     })
-  ).filter((item) => item !== null);
+    .filter(
+      (item): item is { term: string; type: "text" | "site" } => item !== null,
+    );
+
+  // テキスト検索語を長い順にソート（既存の仕様を維持）
+  const textTerms = parsedTerms
+    .filter((t) => t.type === "text")
+    .sort((a, b) => b.term.length - a.term.length);
+  const siteTerms = parsedTerms.filter((t) => t.type === "site");
+
+  return [...textTerms, ...siteTerms];
 }
 
 async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {
