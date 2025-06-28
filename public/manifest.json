@@ -1,13 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Eternal History",
+  "name": "Eternal History on bookmarks",
   "version": "1.0.8",
-  "permissions": [
-    "history",
-    "scripting",
-    "bookmarks",
-    "storage"
-  ],
+  "permissions": ["history", "scripting", "bookmarks", "storage"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -21,7 +16,5 @@
     "48": "assets/icon48.png",
     "128": "assets/icon128.png"
   },
-  "host_permissions": [
-    "<all_urls>"
-  ]
+  "host_permissions": ["<all_urls>"]
 }
