@@ -1,7 +1,9 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 
 import styles from "../App.module.css";
 import { Header } from "./Header";
+import { HelpButton } from "./HelpButton";
+import { HelpModal } from "./HelpModal";
 import { Histories } from "./Histories";
 import { SavedQuery } from "../lib/savedQueries";
 import { HistoryItem } from "../types/HistoryItem";
@@ -27,6 +29,16 @@ export const Root: FC<RootProps> = ({
   isLoading,
   onDeleteHistoryItem,
 }: RootProps) => {
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
+  const handleOpenHelp = () => {
+    setIsHelpModalOpen(true);
+  };
+
+  const handleCloseHelp = () => {
+    setIsHelpModalOpen(false);
+  };
+
   return (
     <main className={styles.root}>
       <Header
@@ -43,6 +55,8 @@ export const Root: FC<RootProps> = ({
         searchQuery={searchQuery}
         onDeleteItem={onDeleteHistoryItem}
       />
+      <HelpButton onClick={handleOpenHelp} />
+      <HelpModal isOpen={isHelpModalOpen} onClose={handleCloseHelp} />
     </main>
   );
 };
