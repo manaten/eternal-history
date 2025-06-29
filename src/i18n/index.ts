@@ -16,7 +16,7 @@ export const t = (
   }
 
   return Object.entries(replacement).reduce<string>(
-    (mes, [key, value]) => mes.replace(`{${key}}`, value),
+    (mes, [key, value]) => mes.replaceAll(`{${key}}`, value),
     message,
   );
 };
