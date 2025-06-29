@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { Root } from "./components/Root";
+import { t } from "./i18n";
 import {
   getSavedQueries,
   addSavedQuery,
@@ -39,14 +40,16 @@ function App() {
 
   const handleDeleteHistoryItem = async (item: HistoryItem) => {
     try {
-      const message = `Are you sure you want to delete "${item.title || item.url}"?`;
+      const message = t("app.confirmDeleteHistoryItem", {
+        title: item.title || item.url,
+      });
       if (confirm(message)) {
         await deleteHistoryItem(item);
         setHistory((prev) => prev.filter((h) => h.url !== item.url));
       }
     } catch (error) {
       console.error("Failed to delete history item:", error);
-      alert("Failed to delete history item. Please try again.");
+      alert(t("app.deleteHistoryItemFailed"));
     }
   };
 
@@ -62,7 +65,7 @@ function App() {
 
   const handleRemoveSavedQuery = async (id: string) => {
     try {
-      const message = "Are you sure you want to remove this query?";
+      const message = t("app.confirmRemoveQuery");
       if (confirm(message)) {
         await removeSavedQuery(id);
         const updatedQueries = await getSavedQueries();
