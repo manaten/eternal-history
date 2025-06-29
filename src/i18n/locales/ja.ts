@@ -9,34 +9,35 @@ export const ja = {
   "app.confirmRemoveQuery": "このクエリを削除してもよろしいですか？",
 
   // Search box
-  searchPlaceholder: "履歴を検索...",
-  saveQuery: "クエリを保存",
+  "searchBox.placeholder": "履歴を検索...",
+  "searchBox.saveQuery": "クエリを保存",
 
   // History item
-  deleteItem: "履歴を削除",
+  "historyItem.deleteItem": "履歴を削除",
 
   // Saved queries
-  searchForQuery: "{query} で検索",
-  removeSavedQuery: "保存されたクエリを削除",
+  "savedQueries.searchForQuery": "{query} で検索",
+  "savedQueries.removeSavedQuery": "保存されたクエリを削除",
 
   // Help button
-  openHelp: "ヘルプを開く",
-  help: "ヘルプ",
+  "helpButton.openHelp": "ヘルプを開く",
+  "helpButton.help": "ヘルプ",
 
   // Help modal
-  howToUse: "使い方",
-  closeModal: "モーダルを閉じる",
-  aboutThisExtension: "Eternal Historyとは",
-  aboutDescription:
+  "helpModal.howToUse": "使い方",
+  "helpModal.closeModal": "モーダルを閉じる",
+  "helpModal.aboutThisExtension": "Eternal Historyとは",
+  "helpModal.aboutDescription":
     "Eternal Historyは、すべてのブラウザ履歴をChromeブックマークに保存することで無期限のブラウザ履歴ストレージを提供するChrome拡張機能です。さらに、新しいタブページを履歴検索画面に置き換え、訪れたことのあるページを簡単に検索・管理できるようにします。",
-  searchSyntax: "検索クエリ構文",
-  searchPhrase: "通常の検索。タイトルとURLに含まれる文字列から検索します。",
-  searchExclude: "除外検索。指定した文字列を含む結果を除外します。",
-  searchSite:
+  "helpModal.searchSyntax": "検索クエリ構文",
+  "helpModal.searchPhrase":
+    "通常の検索。タイトルとURLに含まれる文字列から検索します。",
+  "helpModal.searchExclude": "除外検索。指定した文字列を含む結果を除外します。",
+  "helpModal.searchSite":
     "ドメイン指定検索。指定した文字列をURLに含むサイトのみを検索します。",
-  searchMultiple:
+  "helpModal.searchMultiple":
     "クエリの組み合わせの例。それぞれの構文は組み合わせて利用が可能です。",
-  savingQueries: "クエリの保存",
-  savingQueriesDescription:
+  "helpModal.savingQueries": "クエリの保存",
+  "helpModal.savingQueriesDescription":
     "検索ボックス横の「+」ボタンをクリックすることでクエリの保存ができます。よく使うクエリを保存し、すばやくアクセスできます。",
 } as const satisfies Record<keyof typeof en, string>;

@@ -12,8 +12,8 @@ export const HelpButton: FC<HelpButtonProps> = ({ onClick }) => {
     <button
       className={styles.helpButton}
       onClick={onClick}
-      aria-label={t("openHelp")}
-      title={t("help")}
+      aria-label={t("helpButton.openHelp")}
+      title={t("helpButton.help")}
     >
       ?
     </button>

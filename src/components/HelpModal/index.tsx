@@ -29,11 +29,11 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{t("howToUse")}</h2>
+          <h2 className={styles.title}>{t("helpModal.howToUse")}</h2>
           <button
             className={styles.closeButton}
             onClick={onClose}
-            aria-label={t("closeModal")}
+            aria-label={t("helpModal.closeModal")}
           >
             ×
           </button>
@@ -41,37 +41,51 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
         <div className={styles.content}>
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>{t("aboutThisExtension")}</h3>
-            <p className={styles.text}>{t("aboutDescription")}</p>
+            <h3 className={styles.sectionTitle}>
+              {t("helpModal.aboutThisExtension")}
+            </h3>
+            <p className={styles.text}>{t("helpModal.aboutDescription")}</p>
           </section>
 
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>{t("searchSyntax")}</h3>
+            <h3 className={styles.sectionTitle}>
+              {t("helpModal.searchSyntax")}
+            </h3>
             <div className={styles.syntaxList}>
               <div className={styles.syntaxItem}>
                 <code className={styles.code}>search term</code>
-                <span className={styles.description}>{t("searchPhrase")}</span>
+                <span className={styles.description}>
+                  {t("helpModal.searchPhrase")}
+                </span>
               </div>
               <div className={styles.syntaxItem}>
                 <code className={styles.code}>site:example.com</code>
-                <span className={styles.description}>{t("searchSite")}</span>
+                <span className={styles.description}>
+                  {t("helpModal.searchSite")}
+                </span>
               </div>
               <div className={styles.syntaxItem}>
                 <code className={styles.code}>-exclude</code>
-                <span className={styles.description}>{t("searchExclude")}</span>
+                <span className={styles.description}>
+                  {t("helpModal.searchExclude")}
+                </span>
               </div>
               <div className={styles.syntaxItem}>
                 <code className={styles.code}>site:google.com search -ads</code>
                 <span className={styles.description}>
-                  {t("searchMultiple")}
+                  {t("helpModal.searchMultiple")}
                 </span>
               </div>
             </div>
           </section>
 
           <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>{t("savingQueries")}</h3>
-            <p className={styles.text}>{t("savingQueriesDescription")}</p>
+            <h3 className={styles.sectionTitle}>
+              {t("helpModal.savingQueries")}
+            </h3>
+            <p className={styles.text}>
+              {t("helpModal.savingQueriesDescription")}
+            </p>
           </section>
         </div>
       </div>

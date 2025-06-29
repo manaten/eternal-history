@@ -57,7 +57,7 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
 
   const dropdownItems = [
     {
-      label: t("deleteItem"),
+      label: t("historyItem.deleteItem"),
       onClick: () => onDelete?.(item),
     },
   ];

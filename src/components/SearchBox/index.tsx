@@ -35,7 +35,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
         <input
           ref={(e) => e?.focus()}
           type='text'
-          placeholder={t("searchPlaceholder")}
+          placeholder={t("searchBox.placeholder")}
           value={searchQuery}
           onChange={(e) => {
             onSearchQueryChange(e.target.value);
@@ -48,7 +48,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
           onClick={handleSaveQuery}
           className={styles.saveButton}
           disabled={isLoading || !searchQuery.trim()}
-          title={t("saveQuery")}
+          title={t("searchBox.saveQuery")}
         >
           +
         </button>

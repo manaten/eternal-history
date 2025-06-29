@@ -38,7 +38,10 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             type='button'
             onClick={() => onQueryClick(savedQuery.query)}
             className={styles.queryButton}
-            title={t("searchForQuery").replace("{query}", savedQuery.query)}
+            title={t("savedQueries.searchForQuery").replace(
+              "{query}",
+              savedQuery.query,
+            )}
           >
             {savedQuery.query}
           </button>
@@ -46,7 +49,7 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             type='button'
             onClick={() => onQueryRemove(savedQuery.id)}
             className={styles.removeButton}
-            title={t("removeSavedQuery")}
+            title={t("savedQueries.removeSavedQuery")}
           >
             ×
           </button>
