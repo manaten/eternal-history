@@ -2,9 +2,10 @@ import type { en } from "./en";
 
 export const ja = {
   // App confirmation dialogs
-  "app.confirmDeleteHistoryItem": "「{title}」を削除してもよろしいですか？",
+  "app.confirmDeleteHistoryItem":
+    "「{title}」を履歴から削除してもよろしいですか？",
   "app.deleteHistoryItemFailed":
-    "履歴アイテムの削除に失敗しました。もう一度お試しください。",
+    "履歴の削除に失敗しました。もう一度お試しください。",
   "app.confirmRemoveQuery": "このクエリを削除してもよろしいですか？",
 
   // Search box
@@ -12,10 +13,10 @@ export const ja = {
   saveQuery: "クエリを保存",
 
   // History item
-  deleteItem: "アイテムを削除",
+  deleteItem: "履歴を削除",
 
   // Saved queries
-  searchForQuery: "検索: {query}",
+  searchForQuery: "{query} で検索",
   removeSavedQuery: "保存されたクエリを削除",
 
   // Help button
@@ -25,21 +26,17 @@ export const ja = {
   // Help modal
   howToUse: "使い方",
   closeModal: "モーダルを閉じる",
-  aboutThisExtension: "この拡張機能について",
+  aboutThisExtension: "Eternal Historyとは",
   aboutDescription:
-    "Eternal Historyは、履歴データをChromeブックマークに階層フォルダ構造でシリアル化することで、無制限のブラウザ履歴ストレージを提供するChrome拡張機能です。この拡張機能は新しいタブページを検索可能な履歴インターフェースに置き換え、ブラウジング履歴を簡単に検索・管理できるようにします。",
-  searchSyntax: "検索構文",
-  searchSyntaxDescription:
-    "以下の検索演算子を使用して結果を絞り込むことができます：",
-  searchExactPhrase: "完全一致検索（クォートを使用）",
-  searchExactPhraseExample: '"完全一致フレーズ"',
-  searchExclude: "除外検索（マイナス記号を使用）",
-  searchExcludeExample: "-除外したい語",
-  searchSite: "特定サイト内検索",
-  searchSiteExample: "site:example.com",
-  searchMultiple: "複数の演算子の組み合わせ",
-  searchMultipleExample: '"重要な文書" -下書き site:company.com',
+    "Eternal Historyは、すべてのブラウザ履歴をChromeブックマークに保存することで無期限のブラウザ履歴ストレージを提供するChrome拡張機能です。さらに、新しいタブページを履歴検索画面に置き換え、訪れたことのあるページを簡単に検索・管理できるようにします。",
+  searchSyntax: "検索クエリ構文",
+  searchPhrase: "通常の検索。タイトルとURLに含まれる文字列から検索します。",
+  searchExclude: "除外検索。指定した文字列を含む結果を除外します。",
+  searchSite:
+    "ドメイン指定検索。指定した文字列をURLに含むサイトのみを検索します。",
+  searchMultiple:
+    "クエリの組み合わせの例。それぞれの構文は組み合わせて利用が可能です。",
   savingQueries: "クエリの保存",
   savingQueriesDescription:
-    "検索ボックス横の「+」ボタンをクリックして、よく使うクエリを保存してすばやくアクセスできます。",
+    "検索ボックス横の「+」ボタンをクリックすることでクエリの保存ができます。よく使うクエリを保存し、すばやくアクセスできます。",
 } as const satisfies Record<keyof typeof en, string>;

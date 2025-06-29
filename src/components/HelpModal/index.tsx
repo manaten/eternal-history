@@ -47,27 +47,24 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>{t("searchSyntax")}</h3>
-            <p className={styles.text}>{t("searchSyntaxDescription")}</p>
             <div className={styles.syntaxList}>
               <div className={styles.syntaxItem}>
-                <strong>{t("searchExactPhrase")}</strong>
-                <code className={styles.code}>
-                  {t("searchExactPhraseExample")}
-                </code>
+                <code className={styles.code}>search term</code>
+                <span className={styles.description}>{t("searchPhrase")}</span>
               </div>
               <div className={styles.syntaxItem}>
-                <strong>{t("searchExclude")}</strong>
-                <code className={styles.code}>{t("searchExcludeExample")}</code>
+                <code className={styles.code}>site:example.com</code>
+                <span className={styles.description}>{t("searchSite")}</span>
               </div>
               <div className={styles.syntaxItem}>
-                <strong>{t("searchSite")}</strong>
-                <code className={styles.code}>{t("searchSiteExample")}</code>
+                <code className={styles.code}>-exclude</code>
+                <span className={styles.description}>{t("searchExclude")}</span>
               </div>
               <div className={styles.syntaxItem}>
-                <strong>{t("searchMultiple")}</strong>
-                <code className={styles.code}>
-                  {t("searchMultipleExample")}
-                </code>
+                <code className={styles.code}>site:google.com search -ads</code>
+                <span className={styles.description}>
+                  {t("searchMultiple")}
+                </span>
               </div>
             </div>
           </section>
