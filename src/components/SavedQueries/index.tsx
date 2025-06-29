@@ -2,6 +2,7 @@ import classNames from "classnames";
 import { FC } from "react";
 
 import styles from "./index.module.css";
+import { t } from "../../i18n";
 import { SavedQuery } from "../../lib/savedQueries";
 
 interface SavedQueriesProps {
@@ -37,7 +38,7 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             type='button'
             onClick={() => onQueryClick(savedQuery.query)}
             className={styles.queryButton}
-            title={`Search for: ${savedQuery.query}`}
+            title={t("searchForQuery").replace("{query}", savedQuery.query)}
           >
             {savedQuery.query}
           </button>
@@ -45,7 +46,7 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             type='button'
             onClick={() => onQueryRemove(savedQuery.id)}
             className={styles.removeButton}
-            title='Remove saved query'
+            title={t("removeSavedQuery")}
           >
             ×
           </button>

@@ -1,6 +1,7 @@
 import { FC } from "react";
 
 import styles from "./index.module.css";
+import { t } from "../../i18n";
 
 interface SearchBoxProps {
   onSearch: (query: string) => void;
@@ -34,7 +35,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
         <input
           ref={(e) => e?.focus()}
           type='text'
-          placeholder='Search history...'
+          placeholder={t("searchPlaceholder")}
           value={searchQuery}
           onChange={(e) => {
             onSearchQueryChange(e.target.value);
@@ -47,7 +48,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
           onClick={handleSaveQuery}
           className={styles.saveButton}
           disabled={isLoading || !searchQuery.trim()}
-          title='Save query'
+          title={t("saveQuery")}
         >
           +
         </button>

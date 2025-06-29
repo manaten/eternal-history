@@ -1,6 +1,7 @@
 import { FC } from "react";
 
 import styles from "./index.module.css";
+import { t } from "../../i18n";
 
 interface HelpButtonProps {
   onClick: () => void;
@@ -11,8 +12,8 @@ export const HelpButton: FC<HelpButtonProps> = ({ onClick }) => {
     <button
       className={styles.helpButton}
       onClick={onClick}
-      aria-label='ヘルプを開く'
-      title='ヘルプ'
+      aria-label={t("openHelp")}
+      title={t("help")}
     >
       ?
     </button>

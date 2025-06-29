@@ -3,6 +3,7 @@ import { FC, memo, useState } from "react";
 
 import { Dropdown } from "../Dropdown";
 import styles from "./index.module.css";
+import { t } from "../../i18n";
 import { highlightText } from "../../lib/highlight";
 import { HistoryItem as HistoryItemType } from "../../types/HistoryItem";
 
@@ -56,7 +57,7 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
 
   const dropdownItems = [
     {
-      label: "Delete item",
+      label: t("deleteItem"),
       onClick: () => onDelete?.(item),
     },
   ];
