@@ -40,10 +40,9 @@ function App() {
 
   const handleDeleteHistoryItem = async (item: HistoryItem) => {
     try {
-      const message = t("app.confirmDeleteHistoryItem").replace(
-        "{title}",
-        item.title || item.url,
-      );
+      const message = t("app.confirmDeleteHistoryItem", {
+        title: item.title || item.url,
+      });
       if (confirm(message)) {
         await deleteHistoryItem(item);
         setHistory((prev) => prev.filter((h) => h.url !== item.url));

@@ -38,10 +38,9 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             type='button'
             onClick={() => onQueryClick(savedQuery.query)}
             className={styles.queryButton}
-            title={t("savedQueries.searchForQuery").replace(
-              "{query}",
-              savedQuery.query,
-            )}
+            title={t("savedQueries.searchForQuery", {
+              query: savedQuery.query,
+            })}
           >
             {savedQuery.query}
           </button>
