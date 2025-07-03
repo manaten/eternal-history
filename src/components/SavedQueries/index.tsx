@@ -35,6 +35,7 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
               backdrop-blur-[10px] transition-all duration-200
               hover:-translate-y-px hover:border-primary hover:bg-white/20
               hover:shadow-md
+              active:translate-y-0
             `,
             currentQuery === savedQuery.query && "bg-white/30",
           )}

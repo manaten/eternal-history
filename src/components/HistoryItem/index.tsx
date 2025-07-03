@@ -123,7 +123,7 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
       </div>
 
       <Dropdown
-        className='top-[calc(100%-0.5rem)] right-1'
+        className='top-[calc(100%-0.5rem)] right-1 z-10'
         isOpen={isMenuOpen}
         items={dropdownItems}
         onClose={() => setIsMenuOpen(false)}

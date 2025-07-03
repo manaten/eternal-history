@@ -32,7 +32,6 @@
     "vitest.config.ts",
     "eslint.config.mjs",
     "lint-staged.config.mjs",
-    "scripts/**/*.ts",
-    "tailwind.config.js"
+    "scripts/**/*.ts"
   ]
 }

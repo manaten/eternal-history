@@ -24,6 +24,7 @@ export const Default: Story = {
       { id: "2", query: "typescript", createdAt: Date.now() - 2000 },
       { id: "3", query: "storybook", createdAt: Date.now() - 3000 },
     ],
+    currentQuery: "react",
   },
 };
 
@@ -43,6 +44,7 @@ export const ManyQueries: Story = {
       { id: "5", query: "history api", createdAt: Date.now() - 5000 },
       { id: "6", query: "bookmark management", createdAt: Date.now() - 6000 },
     ],
+    currentQuery: "react",
   },
 };
 
