@@ -71,7 +71,7 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
         `
           relative flex max-w-full items-center gap-3 rounded-lg border
           border-transparent p-2 text-sm text-inherit no-underline
-          transition-colors duration-200
+          transition-colors duration-100
           hover:border-gray-200 hover:bg-slate-100 hover:shadow-sm
           active:shadow-none
         `,

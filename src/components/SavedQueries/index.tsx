@@ -24,7 +24,7 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
   }
 
   return (
-    <div className={classNames("flex flex-wrap gap-2", className)}>
+    <div className={classNames("flex flex-wrap gap-3", className)}>
       {queries.map((savedQuery) => (
         <div
           key={savedQuery.id}
@@ -46,9 +46,9 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             className={classNames(
               `
                 max-w-[150px] cursor-pointer overflow-hidden border-none
-                bg-transparent px-2.5 py-1.5 text-xs font-medium text-ellipsis
+                bg-transparent px-2 py-1.5 text-xs font-medium text-ellipsis
                 whitespace-nowrap text-white transition-colors duration-200
-                md:max-w-[200px] md:px-3 md:py-2 md:text-sm
+                md:max-w-[200px] md:px-2.5 md:py-1.5 md:text-sm
               `,
               currentQuery === savedQuery.query && "font-semibold",
             )}
@@ -63,8 +63,8 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             onClick={() => onQueryRemove(savedQuery.id)}
             className={`
               flex w-7 flex-shrink-0 cursor-pointer items-center justify-center
-              border-l border-white/20 bg-transparent p-2 text-sm font-semibold
-              text-white transition-all duration-200
+              border-l border-white/20 bg-transparent px-2 py-1.5 text-sm
+              font-semibold text-white transition-all duration-200
               hover:bg-red-500 hover:text-white
               md:w-8 md:text-base
             `}
