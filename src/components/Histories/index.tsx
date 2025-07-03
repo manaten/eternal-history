@@ -19,7 +19,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
 }) {
   if (isLoading) {
     return (
-      <div className='flex justify-center items-center p-16 min-h-[200px]'>
+      <div className='flex min-h-[200px] items-center justify-center p-16'>
         <Spinner size='large' />
       </div>
     );
@@ -57,10 +57,22 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
     );
 
   return (
-    <div className='flex flex-col gap-6 p-6 bg-white rounded-xl shadow-md border border-white/20 backdrop-blur-[10px] flex-1 md:p-4 md:gap-4'>
+    <div
+      className={`
+        flex flex-1 flex-col gap-4 rounded-xl bg-white p-4 shadow-md
+        backdrop-blur-[10px]
+        md:gap-6 md:p-6
+      `}
+    >
       {entries.map(([date, items]) => (
         <div key={date} className='flex flex-col gap-3'>
-          <div className='text-sm font-medium text-gray-700 px-1 py-2 border-b border-gray-200 md:px-3 md:py-2 md:text-[0.8rem]'>
+          <div
+            className={`
+              border-b border-gray-200 px-3 py-2 text-xs font-medium
+              text-gray-700
+              md:text-sm
+            `}
+          >
             {date}
           </div>
           <div className='flex flex-col gap-0.5'>

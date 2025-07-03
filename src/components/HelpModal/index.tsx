@@ -2,6 +2,28 @@ import { FC } from "react";
 
 import { t } from "../../i18n";
 
+const Heading = ({ children }: { children: React.ReactNode }) => (
+  <h3 className='m-0 mb-4 text-xl font-semibold text-gray-800'>{children}</h3>
+);
+
+const Paragraph = ({ children }: { children: React.ReactNode }) => (
+  <p className='m-0 leading-relaxed text-gray-800'>{children}</p>
+);
+
+const TermExample = ({ term, text }: { term: string; text: string }) => (
+  <div className='flex flex-col gap-2'>
+    <code
+      className={`
+        self-start rounded-md bg-gray-100 px-3 py-2 font-mono text-sm
+        font-medium text-gray-800
+      `}
+    >
+      {term}
+    </code>
+    <span className='text-sm leading-normal text-gray-600'>{text}</span>
+  </div>
+);
+
 interface HelpModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,7 +40,9 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div
-      className='fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4'
+      className={`
+        fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4
+      `}
       onClick={handleBackdropClick}
     >
       <style>
@@ -29,13 +53,28 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
         `}
       </style>
 
-      <div className='bg-white rounded-xl shadow-lg max-w-[600px] w-full max-h-[80vh] overflow-y-auto relative'>
-        <div className='flex items-center justify-between px-6 pt-4 pb-4 border-b border-gray-200 mb-6'>
-          <h2 className='text-2xl font-semibold text-gray-800 m-0'>
+      <div
+        className={`
+          relative max-h-[80vh] w-full max-w-[600px] overflow-y-auto rounded-xl
+          bg-white shadow-lg
+        `}
+      >
+        <div
+          className={`
+            mb-6 flex items-center justify-between border-b border-gray-200 pt-4
+            pr-1 pb-4 pl-6
+          `}
+        >
+          <h2 className='m-0 text-2xl font-semibold text-gray-800'>
             {t("helpModal.howToUse")}
           </h2>
           <button
-            className='bg-transparent border-none text-2xl text-gray-600 cursor-pointer p-3 leading-none rounded-full transition-colors duration-200 hover:text-gray-700 hover:bg-gray-100'
+            className={`
+              flex size-12 cursor-pointer items-center justify-center
+              rounded-full border-none bg-transparent text-2xl leading-none
+              text-gray-600 transition-colors duration-200
+              hover:bg-gray-100 hover:text-gray-700
+            `}
             onClick={onClose}
             aria-label={t("helpModal.closeModal")}
           >
@@ -43,63 +82,37 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className='px-6 pb-6'>
-          <section className='mb-8'>
-            <h3 className='text-xl font-semibold text-gray-800 m-0 mb-4'>
-              {t("helpModal.aboutThisExtension")}
-            </h3>
-            <p className='text-gray-800 leading-relaxed m-0'>
-              {t("helpModal.aboutDescription")}
-            </p>
+        <div className='flex flex-col gap-8 px-6 pb-6'>
+          <section>
+            <Heading>{t("helpModal.aboutThisExtension")}</Heading>
+            <Paragraph>{t("helpModal.aboutDescription")}</Paragraph>
           </section>
 
-          <section className='mb-8'>
-            <h3 className='text-xl font-semibold text-gray-800 m-0 mb-4'>
-              {t("helpModal.searchSyntax")}
-            </h3>
+          <section>
+            <Heading>{t("helpModal.searchSyntax")}</Heading>
             <div className='flex flex-col gap-4'>
-              <div className='flex flex-col gap-2'>
-                <code className='bg-gray-100 text-gray-800 px-3 py-2 rounded-md font-mono text-sm font-medium self-start'>
-                  search term
-                </code>
-                <span className='text-gray-600 text-sm leading-normal'>
-                  {t("helpModal.searchPhrase")}
-                </span>
-              </div>
-              <div className='flex flex-col gap-2'>
-                <code className='bg-gray-100 text-gray-800 px-3 py-2 rounded-md font-mono text-sm font-medium self-start'>
-                  site:example.com
-                </code>
-                <span className='text-gray-600 text-sm leading-normal'>
-                  {t("helpModal.searchSite")}
-                </span>
-              </div>
-              <div className='flex flex-col gap-2'>
-                <code className='bg-gray-100 text-gray-800 px-3 py-2 rounded-md font-mono text-sm font-medium self-start'>
-                  -exclude
-                </code>
-                <span className='text-gray-600 text-sm leading-normal'>
-                  {t("helpModal.searchExclude")}
-                </span>
-              </div>
-              <div className='flex flex-col gap-2'>
-                <code className='bg-gray-100 text-gray-800 px-3 py-2 rounded-md font-mono text-sm font-medium self-start'>
-                  site:google.com search -ads
-                </code>
-                <span className='text-gray-600 text-sm leading-normal'>
-                  {t("helpModal.searchMultiple")}
-                </span>
-              </div>
+              <TermExample
+                term='search term'
+                text={t("helpModal.searchPhrase")}
+              />
+              <TermExample
+                term='site:example.com'
+                text={t("helpModal.searchSite")}
+              />
+              <TermExample
+                term='-exclude'
+                text={t("helpModal.searchExclude")}
+              />
+              <TermExample
+                term='site:google.com search -ads'
+                text={t("helpModal.searchMultiple")}
+              />
             </div>
           </section>
 
-          <section className='mb-0'>
-            <h3 className='text-xl font-semibold text-gray-800 m-0 mb-4'>
-              {t("helpModal.savingQueries")}
-            </h3>
-            <p className='text-gray-800 leading-relaxed m-0'>
-              {t("helpModal.savingQueriesDescription")}
-            </p>
+          <section>
+            <Heading>{t("helpModal.savingQueries")}</Heading>
+            <Paragraph>{t("helpModal.savingQueriesDescription")}</Paragraph>
           </section>
         </div>
       </div>

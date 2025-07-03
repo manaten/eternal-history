@@ -52,7 +52,11 @@ export const Dropdown: FC<DropdownProps> = ({
   return (
     <div
       className={classNames(
-        "absolute bg-slate-50 border border-gray-200 rounded-lg shadow-lg z-[1000] min-w-[160px] overflow-hidden md:min-w-[140px]",
+        `
+          absolute min-w-[140px] overflow-hidden rounded-lg border
+          border-gray-200 bg-slate-50 shadow-lg
+          md:min-w-[160px]
+        `,
         className,
       )}
       ref={dropdownRef}
@@ -62,9 +66,16 @@ export const Dropdown: FC<DropdownProps> = ({
         <button
           key={index}
           className={classNames(
-            "block w-full px-4 py-3 bg-transparent border-none text-gray-800 text-sm text-left cursor-pointer transition-colors duration-200",
-            "hover:bg-slate-100 active:bg-emerald-50",
-            "md:px-3 md:py-2 md:text-xs",
+            `
+              block w-full cursor-pointer border-none bg-transparent text-left
+              text-gray-800 transition-colors duration-200
+              md:px-4 md:py-3 md:text-sm
+            `,
+            `
+              hover:bg-slate-100
+              active:bg-emerald-50
+            `,
+            "px-3 py-2 text-xs",
             item.disabled &&
               "text-gray-400 cursor-not-allowed opacity-60 hover:bg-transparent active:bg-transparent",
           )}

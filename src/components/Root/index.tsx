@@ -39,7 +39,13 @@ export const Root: FC<RootProps> = ({
   };
 
   return (
-    <main className='w-full max-w-[900px] mx-auto px-6 py-8 flex items-stretch flex-col gap-6 min-h-screen md:px-4 md:py-4 md:gap-4'>
+    <main
+      className={`
+        mx-auto flex min-h-screen w-full max-w-[900px] flex-col items-stretch
+        gap-4 px-4 py-4
+        md:gap-6 md:px-6 md:py-8
+      `}
+    >
       <Header
         onSearch={onSearch}
         onSaveQuery={onSaveQuery}

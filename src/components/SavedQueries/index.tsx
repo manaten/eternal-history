@@ -29,8 +29,13 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
         <div
           key={savedQuery.id}
           className={classNames(
-            "flex items-stretch overflow-hidden shadow-sm transition-all duration-200 bg-white/10 text-white/80 border border-white/20 rounded-lg backdrop-blur-[10px]",
-            "hover:-translate-y-px hover:shadow-md hover:border-primary hover:bg-white/20",
+            `
+              flex items-stretch overflow-hidden rounded-lg border
+              border-white/20 bg-white/10 text-white/80 shadow-sm
+              backdrop-blur-[10px] transition-all duration-200
+              hover:-translate-y-px hover:border-primary hover:bg-white/20
+              hover:shadow-md
+            `,
             currentQuery === savedQuery.query && "bg-white/30",
           )}
         >
@@ -38,8 +43,12 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             type='button'
             onClick={() => onQueryClick(savedQuery.query)}
             className={classNames(
-              "bg-transparent border-none px-3 py-2 text-sm font-medium text-white cursor-pointer transition-colors duration-200 whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis",
-              "md:px-2.5 md:py-1.5 md:text-[0.8125rem] md:max-w-[150px]",
+              `
+                max-w-[150px] cursor-pointer overflow-hidden border-none
+                bg-transparent px-2.5 py-1.5 text-xs font-medium text-ellipsis
+                whitespace-nowrap text-white transition-colors duration-200
+                md:max-w-[200px] md:px-3 md:py-2 md:text-sm
+              `,
               currentQuery === savedQuery.query && "font-semibold",
             )}
             title={t("savedQueries.searchForQuery", {
@@ -51,7 +60,13 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
           <button
             type='button'
             onClick={() => onQueryRemove(savedQuery.id)}
-            className='bg-transparent border-none p-2 text-base font-semibold text-white cursor-pointer transition-all duration-200 border-l border-white/20 flex items-center justify-center w-8 flex-shrink-0 hover:bg-red-500 hover:text-white md:w-7 md:text-sm'
+            className={`
+              flex w-7 flex-shrink-0 cursor-pointer items-center justify-center
+              border-l border-white/20 bg-transparent p-2 text-sm font-semibold
+              text-white transition-all duration-200
+              hover:bg-red-500 hover:text-white
+              md:w-8 md:text-base
+            `}
             title={t("savedQueries.removeSavedQuery")}
           >
             ×

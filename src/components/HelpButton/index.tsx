@@ -9,7 +9,14 @@ interface HelpButtonProps {
 export const HelpButton: FC<HelpButtonProps> = ({ onClick }) => {
   return (
     <button
-      className='fixed bottom-6 right-6 w-14 h-14 rounded-full bg-slate-50 text-gray-800 text-2xl font-semibold cursor-pointer shadow-lg transition-all duration-200 z-[100] flex items-center justify-center hover:text-gray-600 hover:bg-slate-100 hover:-translate-y-0.5 active:translate-y-0 md:bottom-4 md:right-4 md:w-12 md:h-12 md:text-xl'
+      className={`
+        fixed right-4 bottom-4 z-[100] flex h-12 w-12 cursor-pointer
+        items-center justify-center rounded-full bg-slate-50 text-xl
+        font-semibold text-gray-800 shadow-lg transition-all duration-200
+        hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-600
+        active:translate-y-0
+        md:right-6 md:bottom-6 md:h-14 md:w-14 md:text-2xl
+      `}
       onClick={onClick}
       aria-label={t("helpButton.openHelp")}
       title={t("helpButton.help")}
