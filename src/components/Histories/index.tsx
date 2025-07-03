@@ -1,6 +1,5 @@
 import { FC, memo } from "react";
 
-import styles from "./index.module.css";
 import { HistoryItem as HistoryItemType } from "../../types/HistoryItem";
 import { HistoryItem } from "../HistoryItem";
 import { Spinner } from "../Spinner";
@@ -20,7 +19,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
 }) {
   if (isLoading) {
     return (
-      <div className={styles.loading}>
+      <div className='flex justify-center items-center p-16 min-h-[200px]'>
         <Spinner size='large' />
       </div>
     );
@@ -58,11 +57,13 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
     );
 
   return (
-    <div className={styles.histories}>
+    <div className='flex flex-col gap-6 p-6 bg-white rounded-xl shadow-md border border-white/20 backdrop-blur-[10px] flex-1 md:p-4 md:gap-4'>
       {entries.map(([date, items]) => (
-        <div key={date} className={styles.dateGroup}>
-          <div className={styles.dateHeader}>{date}</div>
-          <div className={styles.dateItems}>
+        <div key={date} className='flex flex-col gap-3'>
+          <div className='text-sm font-medium text-gray-700 px-1 py-2 border-b border-gray-200 md:px-3 md:py-2 md:text-[0.8rem]'>
+            {date}
+          </div>
+          <div className='flex flex-col gap-0.5'>
             {items.map((item) => (
               <HistoryItem
                 key={item.id}

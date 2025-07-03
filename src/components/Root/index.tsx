@@ -1,6 +1,5 @@
 import { FC, useState } from "react";
 
-import styles from "../../App.module.css";
 import { SavedQuery } from "../../lib/savedQueries";
 import { HistoryItem } from "../../types/HistoryItem";
 import { Header } from "../Header";
@@ -40,7 +39,7 @@ export const Root: FC<RootProps> = ({
   };
 
   return (
-    <main className={styles.root}>
+    <main className='w-full max-w-[900px] mx-auto px-6 py-8 flex items-stretch flex-col gap-6 min-h-screen md:px-4 md:py-4 md:gap-4'>
       <Header
         onSearch={onSearch}
         onSaveQuery={onSaveQuery}

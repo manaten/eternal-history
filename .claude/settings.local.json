@@ -23,7 +23,8 @@
       "Bash(npm run typecheck:*)",
       "Bash(grep:*)",
       "Bash(npm run fix:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }
