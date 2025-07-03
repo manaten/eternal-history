@@ -2,8 +2,13 @@
   "manifest_version": 3,
   "name": "Eternal History on bookmarks",
   "description": "Eternal History is a Chrome extension that stores unlimited browser history data in the bookmarks area.",
-  "version": "1.0.12",
-  "permissions": ["history", "bookmarks", "storage", "favicon"],
+  "version": "1.0.13",
+  "permissions": [
+    "history",
+    "bookmarks",
+    "storage",
+    "favicon"
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
