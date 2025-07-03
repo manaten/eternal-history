@@ -1,7 +1,28 @@
 import { FC } from "react";
 
-import styles from "./index.module.css";
 import { t } from "../../i18n";
+
+const Heading = ({ children }: { children: React.ReactNode }) => (
+  <h3 className='m-0 mb-4 text-xl font-semibold text-gray-800'>{children}</h3>
+);
+
+const Paragraph = ({ children }: { children: React.ReactNode }) => (
+  <p className='m-0 leading-relaxed text-gray-800'>{children}</p>
+);
+
+const TermExample = ({ term, text }: { term: string; text: string }) => (
+  <div className='flex flex-col gap-2'>
+    <code
+      className={`
+        self-start rounded-md bg-gray-100 px-3 py-2 font-mono text-sm
+        font-medium text-gray-800
+      `}
+    >
+      {term}
+    </code>
+    <span className='text-sm leading-normal text-gray-600'>{text}</span>
+  </div>
+);
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -18,7 +39,12 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className={styles.backdrop} onClick={handleBackdropClick}>
+    <div
+      className={`
+        fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4
+      `}
+      onClick={handleBackdropClick}
+    >
       <style>
         {`
           body {
@@ -27,11 +53,28 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
         `}
       </style>
 
-      <div className={styles.modal}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>{t("helpModal.howToUse")}</h2>
+      <div
+        className={`
+          relative max-h-[80vh] w-full max-w-[600px] overflow-y-auto rounded-xl
+          bg-white shadow-lg
+        `}
+      >
+        <div
+          className={`
+            mb-6 flex items-center justify-between border-b border-gray-200 pt-4
+            pr-1 pb-4 pl-6
+          `}
+        >
+          <h2 className='m-0 text-2xl font-semibold text-gray-800'>
+            {t("helpModal.howToUse")}
+          </h2>
           <button
-            className={styles.closeButton}
+            className={`
+              flex size-12 cursor-pointer items-center justify-center
+              rounded-full border-none bg-transparent text-2xl leading-none
+              text-gray-600 transition-colors duration-200
+              hover:bg-gray-100 hover:text-gray-700
+            `}
             onClick={onClose}
             aria-label={t("helpModal.closeModal")}
           >
@@ -39,53 +82,37 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className={styles.content}>
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>
-              {t("helpModal.aboutThisExtension")}
-            </h3>
-            <p className={styles.text}>{t("helpModal.aboutDescription")}</p>
+        <div className='flex flex-col gap-8 px-6 pb-6'>
+          <section>
+            <Heading>{t("helpModal.aboutThisExtension")}</Heading>
+            <Paragraph>{t("helpModal.aboutDescription")}</Paragraph>
           </section>
 
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>
-              {t("helpModal.searchSyntax")}
-            </h3>
-            <div className={styles.syntaxList}>
-              <div className={styles.syntaxItem}>
-                <code className={styles.code}>search term</code>
-                <span className={styles.description}>
-                  {t("helpModal.searchPhrase")}
-                </span>
-              </div>
-              <div className={styles.syntaxItem}>
-                <code className={styles.code}>site:example.com</code>
-                <span className={styles.description}>
-                  {t("helpModal.searchSite")}
-                </span>
-              </div>
-              <div className={styles.syntaxItem}>
-                <code className={styles.code}>-exclude</code>
-                <span className={styles.description}>
-                  {t("helpModal.searchExclude")}
-                </span>
-              </div>
-              <div className={styles.syntaxItem}>
-                <code className={styles.code}>site:google.com search -ads</code>
-                <span className={styles.description}>
-                  {t("helpModal.searchMultiple")}
-                </span>
-              </div>
+          <section>
+            <Heading>{t("helpModal.searchSyntax")}</Heading>
+            <div className='flex flex-col gap-4'>
+              <TermExample
+                term='search term'
+                text={t("helpModal.searchPhrase")}
+              />
+              <TermExample
+                term='site:example.com'
+                text={t("helpModal.searchSite")}
+              />
+              <TermExample
+                term='-exclude'
+                text={t("helpModal.searchExclude")}
+              />
+              <TermExample
+                term='site:google.com search -ads'
+                text={t("helpModal.searchMultiple")}
+              />
             </div>
           </section>
 
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>
-              {t("helpModal.savingQueries")}
-            </h3>
-            <p className={styles.text}>
-              {t("helpModal.savingQueriesDescription")}
-            </p>
+          <section>
+            <Heading>{t("helpModal.savingQueries")}</Heading>
+            <Paragraph>{t("helpModal.savingQueriesDescription")}</Paragraph>
           </section>
         </div>
       </div>

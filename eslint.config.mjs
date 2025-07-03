@@ -2,6 +2,7 @@
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import eslintConfigPrettier from "eslint-config-prettier";
+import eslintPluginBetterTailwindcss from "eslint-plugin-better-tailwindcss";
 import functionalPlugin from "eslint-plugin-functional";
 // @ts-expect-error 型定義がないため
 import importPlugin from "eslint-plugin-import";
@@ -45,10 +46,20 @@ export default tsEslint.config(
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      "better-tailwindcss": eslintPluginBetterTailwindcss,
+    },
+
+    settings: {
+      "better-tailwindcss": {
+        entryPoint: "src/index.css",
+        callees: ["classNames"],
+      },
     },
 
     rules: {
       ...reactHooks.configs.recommended.rules,
+      ...eslintPluginBetterTailwindcss.configs["recommended-error"]?.rules,
+
       "import/order": [
         "error",
         {

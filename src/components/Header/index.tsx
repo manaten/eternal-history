@@ -1,6 +1,5 @@
 import { FC, memo, useState } from "react";
 
-import styles from "./index.module.css";
 import { SavedQuery } from "../../lib/savedQueries";
 import { SavedQueries } from "../SavedQueries";
 import { SearchBox } from "../SearchBox";
@@ -30,7 +29,7 @@ export const Header: FC<HeaderProps> = memo(function Header({
   };
 
   return (
-    <header className={styles.header}>
+    <header className='flex flex-col gap-4'>
       <SearchBox
         onSearch={onSearch}
         onSaveQuery={onSaveQuery}
