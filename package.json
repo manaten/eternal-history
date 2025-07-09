@@ -8,7 +8,7 @@
   "description": "A Chrome extension make history unlimited and searchable.",
   "scripts": {
     "dev": "vite build --watch",
-    "build": "tsc -b && vite build --emptyOutDir",
+    "build": "tsc -b && vite build",
     "build:dev": "npm run build && node scripts/update-manifest-name-for-dev.ts",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
