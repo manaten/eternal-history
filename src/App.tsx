@@ -18,6 +18,23 @@ import { HistoryItem } from "./types/HistoryItem";
 
 const SESSION_STORAGE_KEY = "eternal-history-search-query";
 
+function getInitialQuery() {
+  try {
+    return sessionStorage.getItem(SESSION_STORAGE_KEY) ?? "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function saveInitialQuery(query: string) {
+  try {
+    sessionStorage.setItem(SESSION_STORAGE_KEY, query);
+  } catch (error) {
+    // セッションストレージの保存に失敗した場合は何もしない
+    console.error("Failed to set initial query in session storage:", error);
+  }
+}
+
 function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [currentSearchQuery, setCurrentSearchQuery] = useState<string>("");
@@ -31,10 +48,9 @@ function App() {
     const trimmedQuery = query.trim();
     setIsLoading(true);
     setCurrentSearchQuery(trimmedQuery);
+    saveInitialQuery(trimmedQuery);
 
     try {
-      sessionStorage.setItem(SESSION_STORAGE_KEY, trimmedQuery);
-
       await initializeStorage();
       const results: HistoryItem[] = trimmedQuery
         ? await search(trimmedQuery)
@@ -95,9 +111,9 @@ function App() {
   };
 
   useEffect(() => {
-    const savedQuery = sessionStorage.getItem(SESSION_STORAGE_KEY) ?? "";
-    setInitialSearchQuery(savedQuery);
-    getHistory(savedQuery);
+    const initialSearchQuery = getInitialQuery();
+    setInitialSearchQuery(initialSearchQuery);
+    getHistory(initialSearchQuery);
     loadSavedQueries();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 初期化時に一回だけ動けばよいため
 
