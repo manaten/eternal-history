@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Root } from "./components/Root";
 import { t } from "./i18n";
@@ -16,24 +16,25 @@ import {
 } from "./lib/storage";
 import { HistoryItem } from "./types/HistoryItem";
 
+const SESSION_STORAGE_KEY = "eternal-history-search-query";
+
 function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [currentSearchQuery, setCurrentSearchQuery] = useState<string>("");
+  const [initialSearchQuery, setInitialSearchQuery] = useState<string | null>(
+    null,
+  );
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [defaultSearchQuery, setDefaultSearchQuery] = useState("");
 
-  const getHistory = async (query = "") => {
-    setIsLoading(true);
+  const getHistory = useCallback(async (query = "") => {
     const trimmedQuery = query.trim();
-    setSearchQuery(trimmedQuery);
-
-    // Save to sessionStorage when user executes a search
-    if (trimmedQuery) {
-      sessionStorage.setItem("eternal-history-search-query", trimmedQuery);
-    }
+    setIsLoading(true);
+    setCurrentSearchQuery(trimmedQuery);
 
     try {
+      sessionStorage.setItem(SESSION_STORAGE_KEY, trimmedQuery);
+
       await initializeStorage();
       const results: HistoryItem[] = trimmedQuery
         ? await search(trimmedQuery)
@@ -44,9 +45,9 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleDeleteHistoryItem = async (item: HistoryItem) => {
+  const handleDeleteHistoryItem = useCallback(async (item: HistoryItem) => {
     try {
       const message = t("app.confirmDeleteHistoryItem", {
         title: item.title || item.url,
@@ -59,9 +60,9 @@ function App() {
       console.error("Failed to delete history item:", error);
       alert(t("app.deleteHistoryItemFailed"));
     }
-  };
+  }, []);
 
-  const handleSaveQuery = async (query: string) => {
+  const handleSaveQuery = useCallback(async (query: string) => {
     try {
       await addSavedQuery(query);
       const updatedQueries = await getSavedQueries();
@@ -69,9 +70,9 @@ function App() {
     } catch (error) {
       console.error("Failed to save query:", error);
     }
-  };
+  }, []);
 
-  const handleRemoveSavedQuery = async (id: string) => {
+  const handleRemoveSavedQuery = useCallback(async (id: string) => {
     try {
       const message = t("app.confirmRemoveQuery");
       if (confirm(message)) {
@@ -82,7 +83,7 @@ function App() {
     } catch (error) {
       console.error("Failed to remove query:", error);
     }
-  };
+  }, []);
 
   const loadSavedQueries = async () => {
     try {
@@ -94,27 +95,27 @@ function App() {
   };
 
   useEffect(() => {
-    const savedQuery = sessionStorage.getItem("eternal-history-search-query");
-    if (savedQuery) {
-      setDefaultSearchQuery(savedQuery);
-      getHistory(savedQuery);
-    } else {
-      getHistory();
-    }
+    const savedQuery = sessionStorage.getItem(SESSION_STORAGE_KEY) ?? "";
+    setInitialSearchQuery(savedQuery);
+    getHistory(savedQuery);
     loadSavedQueries();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- 初期化時に一回だけ動けばよいため
+
+  if (initialSearchQuery === null) {
+    return null; // 初期化中は何も表示しない
+  }
 
   return (
     <Root
       history={history}
-      searchQuery={searchQuery}
+      searchQuery={currentSearchQuery}
       onSearch={getHistory}
       onSaveQuery={handleSaveQuery}
       savedQueries={savedQueries}
       onSavedQueryRemove={handleRemoveSavedQuery}
       isLoading={isLoading}
       onDeleteHistoryItem={handleDeleteHistoryItem}
-      defaultSearchQuery={defaultSearchQuery}
+      initialSearchQuery={initialSearchQuery}
     />
   );
 }

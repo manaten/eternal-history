@@ -16,7 +16,7 @@ interface RootProps {
   onSavedQueryRemove: (id: string) => void;
   isLoading: boolean;
   onDeleteHistoryItem?: (item: HistoryItem) => void;
-  defaultSearchQuery?: string;
+  initialSearchQuery?: string;
 }
 
 export const Root: FC<RootProps> = ({
@@ -28,7 +28,7 @@ export const Root: FC<RootProps> = ({
   onSavedQueryRemove,
   isLoading,
   onDeleteHistoryItem,
-  defaultSearchQuery,
+  initialSearchQuery,
 }: RootProps) => {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
@@ -55,7 +55,7 @@ export const Root: FC<RootProps> = ({
         onSavedQueryRemove={onSavedQueryRemove}
         isLoading={isLoading}
         currentQuery={searchQuery}
-        defaultSearchQuery={defaultSearchQuery}
+        initialQuery={initialSearchQuery}
       />
       <Histories
         history={history}

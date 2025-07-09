@@ -37,3 +37,11 @@ export const WithSavedQueries: Story = {
     ],
   },
 };
+
+export const WithInitialQuery: Story = {
+  args: {
+    isLoading: false,
+    savedQueries: [],
+    initialQuery: "query1",
+  },
+};
