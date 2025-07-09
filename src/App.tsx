@@ -21,14 +21,22 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [defaultSearchQuery, setDefaultSearchQuery] = useState("");
 
   const getHistory = async (query = "") => {
     setIsLoading(true);
-    setSearchQuery(query.trim());
+    const trimmedQuery = query.trim();
+    setSearchQuery(trimmedQuery);
+
+    // Save to sessionStorage when user executes a search
+    if (trimmedQuery) {
+      sessionStorage.setItem("eternal-history-search-query", trimmedQuery);
+    }
+
     try {
       await initializeStorage();
-      const results: HistoryItem[] = query.trim()
-        ? await search(query.trim())
+      const results: HistoryItem[] = trimmedQuery
+        ? await search(trimmedQuery)
         : await getRecentHistories(3);
       setHistory(results);
     } catch (error) {
@@ -86,7 +94,13 @@ function App() {
   };
 
   useEffect(() => {
-    getHistory();
+    const savedQuery = sessionStorage.getItem("eternal-history-search-query");
+    if (savedQuery) {
+      setDefaultSearchQuery(savedQuery);
+      getHistory(savedQuery);
+    } else {
+      getHistory();
+    }
     loadSavedQueries();
   }, []);
 
@@ -100,6 +114,7 @@ function App() {
       onSavedQueryRemove={handleRemoveSavedQuery}
       isLoading={isLoading}
       onDeleteHistoryItem={handleDeleteHistoryItem}
+      defaultSearchQuery={defaultSearchQuery}
     />
   );
 }
