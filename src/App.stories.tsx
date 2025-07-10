@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useEffect } from "react";
 import { expect, within } from "storybook/test";
 
 import App from "./App";
@@ -52,20 +51,6 @@ const mockChromeHistory = {
 };
 
 const mockChromeRuntime = {
-  id: "test-extension-id",
-  lastError: null,
-  onInstalled: {
-    addListener: () => {},
-    removeListener: () => {},
-  },
-  onStartup: {
-    addListener: () => {},
-    removeListener: () => {},
-  },
-  getManifest: () => ({
-    name: "Eternal History Test",
-    version: "1.0.0",
-  }),
   getURL: (path: string) => `chrome-extension://test-extension-id/${path}`,
 };
 
@@ -84,27 +69,20 @@ const mockChromeRuntime = {
 };
 
 const meta: Meta<typeof App> = {
-  title: "App",
   component: App,
   parameters: {
     layout: "fullscreen",
   },
-  decorators: [
-    (Story) => {
-      useEffect(() => {
-        // 各ストーリーの前にセッションストレージをクリア
-        sessionStorage.clear();
-      }, []);
-      return <Story />;
-    },
-  ],
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  name: "デフォルト（セッションストレージなし）",
+  beforeEach: () => {
+    sessionStorage.clear();
+  },
+
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
@@ -114,18 +92,18 @@ export const Default: Story = {
     await expect(searchInput).toHaveValue("");
 
     // sessionStorageが設定されていないことを確認
-    await expect(
-      sessionStorage.getItem("eternal-history-search-query"),
-    ).toBeNull();
+    await expect(sessionStorage.getItem("eternal-history-search-query")).toBe(
+      "",
+    );
   },
 };
 
 export const WithSessionStorageQuery: Story = {
-  name: "セッションストレージにクエリがある場合",
   beforeEach: () => {
     sessionStorage.clear();
     sessionStorage.setItem("eternal-history-search-query", "react hooks");
   },
+
   play: async ({ canvasElement, userEvent }) => {
     const canvas = within(canvasElement);
 
@@ -145,11 +123,11 @@ export const WithSessionStorageQuery: Story = {
 };
 
 export const WithEmptySessionStorage: Story = {
-  name: "セッションストレージが空文字の場合",
   beforeEach: () => {
     sessionStorage.clear();
     sessionStorage.setItem("eternal-history-search-query", "");
   },
+
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
@@ -161,7 +139,6 @@ export const WithEmptySessionStorage: Story = {
 };
 
 export const WithLongQuery: Story = {
-  name: "長いクエリがセッションストレージにある場合",
   beforeEach: () => {
     sessionStorage.clear();
     sessionStorage.setItem(
@@ -169,6 +146,7 @@ export const WithLongQuery: Story = {
       "react hooks useState useEffect useCallback useMemo",
     );
   },
+
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
@@ -185,26 +163,20 @@ export const WithLongQuery: Story = {
   },
 };
 
+const originalGetItem = sessionStorage.getItem;
 export const SessionStorageError: Story = {
-  name: "セッションストレージ読み取りエラー",
-  decorators: [
-    (Story) => {
-      useEffect(() => {
-        // sessionStorage.getItemをモックしてエラーを投げる
-        const originalGetItem = sessionStorage.getItem;
-        // eslint-disable-next-line functional/immutable-data
-        sessionStorage.getItem = () => {
-          throw new Error("Session storage not available");
-        };
+  beforeEach: () => {
+    // eslint-disable-next-line functional/immutable-data
+    sessionStorage.getItem = () => {
+      throw new Error("Session storage not available");
+    };
+  },
 
-        return () => {
-          // eslint-disable-next-line functional/immutable-data
-          sessionStorage.getItem = originalGetItem;
-        };
-      }, []);
-      return <Story />;
-    },
-  ],
+  afterEach: () => {
+    // eslint-disable-next-line functional/immutable-data
+    sessionStorage.getItem = originalGetItem;
+  },
+
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 

@@ -43,9 +43,7 @@ export function resetStorageForTesting() {
  * ```
  */
 export async function initializeStorage() {
-  if (!rootFolderId) {
-    rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
-  }
+  rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
 }
 
 async function getLastVisitTimeFromPath(
