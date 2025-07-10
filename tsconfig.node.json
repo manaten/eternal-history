@@ -32,6 +32,7 @@
     "vitest.config.ts",
     "eslint.config.mjs",
     "lint-staged.config.mjs",
-    "scripts/**/*.ts"
+    "scripts/**/*.ts",
+    "vitest.shims.d.ts"
   ]
 }

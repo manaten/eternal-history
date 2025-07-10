@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { ComponentProps } from "react";
-import { useArgs } from "storybook/internal/preview-api";
+import { useState } from "react";
 import { expect } from "storybook/test";
 
 import { Dropdown } from "./index";
@@ -13,8 +12,8 @@ const meta: Meta<typeof Dropdown> = {
   },
   tags: ["autodocs"],
   decorators: [
-    (Story) => {
-      const [args, updateArgs] = useArgs<ComponentProps<typeof Dropdown>>();
+    (Story, { args }) => {
+      const [isOpen, setOpen] = useState(true);
 
       const buttonStyles = {
         padding: "0.5rem 1rem",
@@ -36,15 +35,16 @@ const meta: Meta<typeof Dropdown> = {
             `}
           </style>
           <button
-            onClick={() => updateArgs({ isOpen: true })}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
             style={buttonStyles}
           >
             Open Menu
           </button>
-          <Story
-            args={{ ...args, onClose: () => updateArgs({ isOpen: false }) }}
-          />
-          <div aria-label='outside' title={`dropdown-${args.isOpen}`} />
+          <Story args={{ ...args, isOpen, onClose: () => setOpen(false) }} />
+          <div title={`dropdown-${isOpen}`} />
         </div>
       );
     },
@@ -162,7 +162,7 @@ export const PositionedBottomLeft: Story = {
 export const OpenOnClick: Story = {
   ...Default,
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(canvas.getByLabelText("outside"));
+    await userEvent.click(document.body);
     await canvas.findByTitle("dropdown-false");
     await expect(canvas.queryByRole("menu")).toBeNull();
 
@@ -177,7 +177,7 @@ export const CloseOnClickOutside: Story = {
     await userEvent.click(canvas.getByText("Open Menu"));
     await expect(await canvas.findByRole("menu")).toBeVisible();
 
-    await userEvent.click(canvas.getByLabelText("outside"));
+    await userEvent.click(document.body);
     await canvas.findByTitle("dropdown-false");
     await expect(canvas.queryByRole("menu")).toBeNull();
   },

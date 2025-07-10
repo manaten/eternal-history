@@ -79,6 +79,7 @@ describe("storage", () => {
 
   describe("insertHistories", () => {
     beforeEach(async () => {
+      resetStorageForTesting();
       await initializeStorage();
     });
 

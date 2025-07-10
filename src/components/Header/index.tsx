@@ -11,6 +11,7 @@ interface HeaderProps {
   onSavedQueryRemove: (id: string) => void;
   isLoading: boolean;
   currentQuery?: string;
+  initialQuery?: string;
 }
 
 export const Header: FC<HeaderProps> = memo(function Header({
@@ -20,8 +21,9 @@ export const Header: FC<HeaderProps> = memo(function Header({
   onSavedQueryRemove,
   isLoading,
   currentQuery,
+  initialQuery = "",
 }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
 
   const handleSavedQueryClick = (query: string) => {
     setSearchQuery(query);
