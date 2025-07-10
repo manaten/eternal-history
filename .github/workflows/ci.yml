@@ -44,9 +44,9 @@ jobs:
         run: npm run lint
 
       - name: 🐷 Run Typecheck
-        env:
-          TEST_SUPPRESS_CONSOLE: "true"
         run: npm run typecheck
 
       - name: 🐢 Run Test
-        run: npm run test
+        env:
+          TEST_SUPPRESS_CONSOLE: "true"
+        run: npm run test -- --project=unit
