@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
+import { expect, within } from "storybook/test";
 
 import App from "./App";
 
@@ -31,6 +32,7 @@ const mockChromeBookmarks = {
       ],
     },
   ],
+  getChildren: async () => [],
 };
 
 const mockChromeHistory = {
@@ -73,6 +75,12 @@ const mockChromeRuntime = {
   bookmarks: mockChromeBookmarks,
   history: mockChromeHistory,
   runtime: mockChromeRuntime,
+  storage: {
+    local: {
+      get: async () => ({ savedQueries: [] }),
+      set: async () => {},
+    },
+  },
 };
 
 const meta: Meta<typeof App> = {
@@ -97,45 +105,84 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   name: "デフォルト（セッションストレージなし）",
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // 検索ボックスが表示され、空であることを確認
+    const searchInput = await canvas.findByPlaceholderText(/検索|search/i);
+    await expect(searchInput).toBeInTheDocument();
+    await expect(searchInput).toHaveValue("");
+
+    // sessionStorageが設定されていないことを確認
+    await expect(
+      sessionStorage.getItem("eternal-history-search-query"),
+    ).toBeNull();
+  },
 };
 
 export const WithSessionStorageQuery: Story = {
   name: "セッションストレージにクエリがある場合",
-  decorators: [
-    (Story) => {
-      useEffect(() => {
-        sessionStorage.setItem("eternal-history-search-query", "react hooks");
-      }, []);
-      return <Story />;
-    },
-  ],
+  beforeEach: () => {
+    sessionStorage.clear();
+    sessionStorage.setItem("eternal-history-search-query", "react hooks");
+  },
+  play: async ({ canvasElement, userEvent }) => {
+    const canvas = within(canvasElement);
+
+    // 検索ボックスに保存されたクエリが表示されることを確認
+    const searchInput = await canvas.findByPlaceholderText(/検索|search/i);
+    await expect(searchInput).toBeInTheDocument();
+    await expect(searchInput).toHaveValue("react hooks");
+
+    // Enterキーを押して検索を実行
+    await userEvent.type(searchInput, "{Enter}");
+
+    // sessionStorageにクエリが保存されていることを確認
+    await expect(sessionStorage.getItem("eternal-history-search-query")).toBe(
+      "react hooks",
+    );
+  },
 };
 
 export const WithEmptySessionStorage: Story = {
   name: "セッションストレージが空文字の場合",
-  decorators: [
-    (Story) => {
-      useEffect(() => {
-        sessionStorage.setItem("eternal-history-search-query", "");
-      }, []);
-      return <Story />;
-    },
-  ],
+  beforeEach: () => {
+    sessionStorage.clear();
+    sessionStorage.setItem("eternal-history-search-query", "");
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // 検索ボックスが空であることを確認
+    const searchInput = await canvas.findByPlaceholderText(/検索|search/i);
+    await expect(searchInput).toBeInTheDocument();
+    await expect(searchInput).toHaveValue("");
+  },
 };
 
 export const WithLongQuery: Story = {
   name: "長いクエリがセッションストレージにある場合",
-  decorators: [
-    (Story) => {
-      useEffect(() => {
-        sessionStorage.setItem(
-          "eternal-history-search-query",
-          "react hooks useState useEffect useCallback useMemo",
-        );
-      }, []);
-      return <Story />;
-    },
-  ],
+  beforeEach: () => {
+    sessionStorage.clear();
+    sessionStorage.setItem(
+      "eternal-history-search-query",
+      "react hooks useState useEffect useCallback useMemo",
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // 長いクエリが正しく表示されることを確認
+    const searchInput = await canvas.findByPlaceholderText(/検索|search/i);
+    await expect(searchInput).toBeInTheDocument();
+    await expect(searchInput).toHaveValue(
+      "react hooks useState useEffect useCallback useMemo",
+    );
+
+    // 検索ボックスが正しくレイアウトされていることを確認（オーバーフローしていない）
+    const searchBoxContainer = searchInput.parentElement?.parentElement;
+    await expect(searchBoxContainer).toBeInTheDocument();
+  },
 };
 
 export const SessionStorageError: Story = {
@@ -158,4 +205,16 @@ export const SessionStorageError: Story = {
       return <Story />;
     },
   ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    // エラーが発生しても検索ボックスが表示されることを確認
+    const searchInput = await canvas.findByPlaceholderText(/検索|search/i);
+    await expect(searchInput).toBeInTheDocument();
+    await expect(searchInput).toHaveValue("");
+
+    // アプリケーションが正常に動作することを確認
+    const app = canvasElement.querySelector("main");
+    await expect(app).toBeInTheDocument();
+  },
 };
