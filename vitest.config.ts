@@ -11,7 +11,7 @@ const dirname =
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
   test: {
-    // onConsoleLog: () => false,
+    onConsoleLog: () => process.env.TEST_SUPPRESS_CONSOLE !== "true",
 
     projects: [
       {
