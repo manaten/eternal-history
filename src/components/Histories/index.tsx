@@ -58,9 +58,18 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
     (e: React.MouseEvent, item: HistoryItemType) => {
       e.preventDefault();
       e.stopPropagation();
+
+      if (!(e.currentTarget instanceof HTMLElement)) {
+        return;
+      }
+
+      const parentRect = e.currentTarget.offsetParent?.getBoundingClientRect();
       setDropdownState({
         item,
-        position: { x: e.clientX, y: e.clientY },
+        position: {
+          x: e.clientX - (parentRect?.left ?? 0),
+          y: e.clientY - (parentRect?.top ?? 0),
+        },
       });
     },
     [],
