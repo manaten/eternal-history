@@ -59,6 +59,40 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
 
   const dropdownItems = [
     {
+      label: t("historyItem.openInNewTab"),
+      onClick: () => {
+        window.open(item.url, "_blank");
+      },
+    },
+    {
+      label: t("historyItem.copyLink"),
+      onClick: async () => {
+        try {
+          await navigator.clipboard.writeText(item.url);
+        } catch (error) {
+          console.error("Failed to copy URL:", error);
+        }
+      },
+    },
+    {
+      label: t("historyItem.copyRichText"),
+      onClick: async () => {
+        try {
+          const html = `<a href="${item.url}">${item.title || item.url}</a>`;
+          const text = item.title ? `${item.title} (${item.url})` : item.url;
+
+          const clipboardData = new ClipboardItem({
+            "text/html": new Blob([html], { type: "text/html" }),
+            "text/plain": new Blob([text], { type: "text/plain" }),
+          });
+
+          await navigator.clipboard.write([clipboardData]);
+        } catch (error) {
+          console.error("Failed to copy rich text:", error);
+        }
+      },
+    },
+    {
       label: t("historyItem.deleteItem"),
       onClick: () => onDelete?.(item),
     },

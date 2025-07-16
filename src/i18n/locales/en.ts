@@ -11,6 +11,9 @@ export const en = {
 
   // History item
   "historyItem.deleteItem": "Delete item",
+  "historyItem.openInNewTab": "Open in new tab",
+  "historyItem.copyLink": "Copy link",
+  "historyItem.copyRichText": "Copy link as rich text",
 
   // Saved queries
   "savedQueries.searchForQuery": "Search for: {query}",

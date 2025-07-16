@@ -14,6 +14,9 @@ export const ja = {
 
   // History item
   "historyItem.deleteItem": "履歴を削除",
+  "historyItem.openInNewTab": "新しいタブで開く",
+  "historyItem.copyLink": "リンクをコピー",
+  "historyItem.copyRichText": "リンクをリッチテキスト形式でコピー",
 
   // Saved queries
   "savedQueries.searchForQuery": "{query} で検索",
