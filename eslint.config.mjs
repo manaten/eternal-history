@@ -4,7 +4,6 @@ import tsParser from "@typescript-eslint/parser";
 import eslintConfigPrettier from "eslint-config-prettier";
 import eslintPluginBetterTailwindcss from "eslint-plugin-better-tailwindcss";
 import functionalPlugin from "eslint-plugin-functional";
-// @ts-expect-error 型定義がないため
 import importPlugin from "eslint-plugin-import";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
@@ -23,6 +22,20 @@ export default tsEslint.config(
   functionalPlugin.configs.noMutations,
   eslintConfigPrettier,
   storybook.configs["flat/recommended"],
+
+  // 非Reactプロジェクトの場合は以下のブロックと関連するimportを削除してください
+  storybook.configs["flat/recommended"],
+  {
+    plugins: {
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
+      "better-tailwindcss": eslintPluginBetterTailwindcss,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      ...eslintPluginBetterTailwindcss.configs["recommended-error"]?.rules,
+    },
+  },
 
   {
     languageOptions: {
@@ -55,7 +68,9 @@ export default tsEslint.config(
         callees: ["classNames"],
       },
     },
+  },
 
+  {
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...eslintPluginBetterTailwindcss.configs["recommended-error"]?.rules,
