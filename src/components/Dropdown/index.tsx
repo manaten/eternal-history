@@ -9,6 +9,7 @@ export interface DropdownItem {
 
 interface DropdownProps {
   className?: string;
+  style?: React.CSSProperties;
   isOpen: boolean;
   items: DropdownItem[];
   onClose: () => void;
@@ -16,6 +17,7 @@ interface DropdownProps {
 
 export const Dropdown: FC<DropdownProps> = ({
   className,
+  style,
   isOpen,
   items,
   onClose,
@@ -59,6 +61,7 @@ export const Dropdown: FC<DropdownProps> = ({
         `,
         className,
       )}
+      style={style}
       ref={dropdownRef}
       role='menu'
     >
@@ -68,7 +71,8 @@ export const Dropdown: FC<DropdownProps> = ({
           className={classNames(
             `
               block w-full cursor-pointer border-none bg-transparent px-3 py-2
-              text-left text-xs text-gray-800 transition-colors duration-200
+              text-left text-xs break-keep text-gray-800 transition-colors
+              duration-200
               hover:bg-slate-100
               active:bg-emerald-50
               md:px-4 md:py-3 md:text-sm
