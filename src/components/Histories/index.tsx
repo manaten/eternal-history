@@ -1,8 +1,7 @@
 import { FC, memo, useState, useCallback } from "react";
 
-import { t } from "../../i18n";
 import { HistoryItem as HistoryItemType } from "../../types/HistoryItem";
-import { Dropdown } from "../Dropdown";
+import { HistoryDropdown } from "../HistoryDropdown";
 import { HistoryItem } from "../HistoryItem";
 import { Spinner } from "../Spinner";
 
@@ -20,21 +19,15 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
   onDeleteItem,
 }) {
   const [dropdownState, setDropdownState] = useState<{
-    isOpen: boolean;
-    item: HistoryItemType | null;
+    item: HistoryItemType;
     position: { x: number; y: number };
-  }>({
-    isOpen: false,
-    item: null,
-    position: { x: 0, y: 0 },
-  });
+  } | null>(null);
 
   const handleContextMenu = useCallback(
     (e: React.MouseEvent, item: HistoryItemType) => {
       e.preventDefault();
       e.stopPropagation();
       setDropdownState({
-        isOpen: true,
         item,
         position: { x: e.clientX, y: e.clientY },
       });
@@ -43,7 +36,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
   );
 
   const closeDropdown = useCallback(() => {
-    setDropdownState((prev) => ({ ...prev, isOpen: false }));
+    setDropdownState(null);
   }, []);
   if (isLoading) {
     return (
@@ -110,7 +103,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
                 item={item}
                 searchQuery={searchQuery}
                 isMenuOpen={
-                  dropdownState.isOpen && dropdownState.item?.id === item.id
+                  dropdownState !== null && dropdownState.item.id === item.id
                 }
                 onContextMenu={handleContextMenu}
               />
@@ -119,64 +112,14 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
         </div>
       ))}
 
-      {dropdownState.isOpen &&
-        dropdownState.item &&
-        (() => {
-          const item = dropdownState.item;
-          return (
-            <Dropdown
-              style={{
-                position: "fixed",
-                left: `${dropdownState.position.x}px`,
-                top: `${dropdownState.position.y}px`,
-              }}
-              isOpen={dropdownState.isOpen}
-              items={[
-                {
-                  label: t("historyItem.openInNewTab"),
-                  onClick: () => {
-                    window.open(item.url, "_blank");
-                  },
-                },
-                {
-                  label: t("historyItem.copyLink"),
-                  onClick: async () => {
-                    try {
-                      await navigator.clipboard.writeText(item.url);
-                    } catch (error) {
-                      console.error("Failed to copy URL:", error);
-                    }
-                  },
-                },
-                {
-                  label: t("historyItem.copyRichText"),
-                  onClick: async () => {
-                    try {
-                      const html = `<a href="${item.url}">${item.title || item.url}</a>`;
-                      const text = item.title
-                        ? `${item.title} (${item.url})`
-                        : item.url;
-
-                      const clipboardData = new ClipboardItem({
-                        "text/html": new Blob([html], { type: "text/html" }),
-                        "text/plain": new Blob([text], { type: "text/plain" }),
-                      });
-
-                      await navigator.clipboard.write([clipboardData]);
-                    } catch (error) {
-                      console.error("Failed to copy rich text:", error);
-                    }
-                  },
-                },
-                {
-                  label: t("historyItem.deleteItem"),
-                  onClick: () => onDeleteItem?.(item),
-                },
-              ]}
-              onClose={closeDropdown}
-            />
-          );
-        })()}
+      {dropdownState && (
+        <HistoryDropdown
+          item={dropdownState.item}
+          position={dropdownState.position}
+          onDelete={onDeleteItem}
+          onClose={closeDropdown}
+        />
+      )}
     </div>
   );
 });
