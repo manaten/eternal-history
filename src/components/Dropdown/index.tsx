@@ -9,6 +9,7 @@ export interface DropdownItem {
 
 interface DropdownProps {
   className?: string;
+  style?: React.CSSProperties;
   isOpen: boolean;
   items: DropdownItem[];
   onClose: () => void;
@@ -16,6 +17,7 @@ interface DropdownProps {
 
 export const Dropdown: FC<DropdownProps> = ({
   className,
+  style,
   isOpen,
   items,
   onClose,
@@ -59,6 +61,7 @@ export const Dropdown: FC<DropdownProps> = ({
         `,
         className,
       )}
+      style={style}
       ref={dropdownRef}
       role='menu'
     >
