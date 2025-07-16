@@ -12,6 +12,37 @@ interface HistoriesProps {
   onDeleteItem?: (item: HistoryItemType) => void;
 }
 
+const groupHistoriesByDate = (histories: HistoryItemType[]) => {
+  const grouped = histories.reduce<Record<string, HistoryItemType[]>>(
+    (groups, item) => {
+      const date = new Date(item.lastVisitTime);
+      const dateKey = date.toLocaleDateString("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      return {
+        ...groups,
+        [dateKey]: [...(groups[dateKey] ?? []), item],
+      };
+    },
+    {},
+  );
+
+  return Object.entries(grouped)
+    .sort(
+      ([dateA], [dateB]) =>
+        new Date(dateB).getTime() - new Date(dateA).getTime(),
+    )
+    .map(
+      ([date, items]) =>
+        [
+          date,
+          [...items].sort((a, b) => b.lastVisitTime - a.lastVisitTime),
+        ] as const,
+    );
+};
+
 export const Histories: FC<HistoriesProps> = memo(function Histories({
   history,
   isLoading,
@@ -47,41 +78,12 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
     );
   }
 
-  const groupHistoriesByDate = (histories: HistoryItemType[]) => {
-    return histories.reduce<Record<string, HistoryItemType[]>>(
-      (groups, item) => {
-        const date = new Date(item.lastVisitTime);
-        const dateKey = date.toLocaleDateString("ja-JP", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        });
-        return {
-          ...groups,
-          [dateKey]: [...(groups[dateKey] ?? []), item],
-        };
-      },
-      {},
-    );
-  };
-
-  const entries = Object.entries(groupHistoriesByDate(history))
-    .sort(
-      ([dateA], [dateB]) =>
-        new Date(dateB).getTime() - new Date(dateA).getTime(),
-    )
-    .map(
-      ([date, items]) =>
-        [
-          date,
-          [...items].sort((a, b) => b.lastVisitTime - a.lastVisitTime),
-        ] as const,
-    );
+  const entries = groupHistoriesByDate(history);
 
   return (
     <div
       className={`
-        flex flex-1 flex-col gap-4 rounded-xl bg-white p-4 shadow-md
+        relative flex flex-1 flex-col gap-4 rounded-xl bg-white p-4 shadow-md
         backdrop-blur-[10px]
         md:gap-6 md:p-6
       `}

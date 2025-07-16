@@ -64,7 +64,7 @@ export const HistoryDropdown: FC<HistoryDropdownProps> = ({
   return (
     <Dropdown
       style={{
-        position: "fixed",
+        position: "absolute",
         left: `${position.x}px`,
         top: `${position.y}px`,
       }}

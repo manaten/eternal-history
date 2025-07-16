@@ -71,7 +71,8 @@ export const Dropdown: FC<DropdownProps> = ({
           className={classNames(
             `
               block w-full cursor-pointer border-none bg-transparent px-3 py-2
-              text-left text-xs text-gray-800 transition-colors duration-200
+              text-left text-xs break-keep text-gray-800 transition-colors
+              duration-200
               hover:bg-slate-100
               active:bg-emerald-50
               md:px-4 md:py-3 md:text-sm
