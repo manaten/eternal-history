@@ -56,12 +56,6 @@ export default tsEslint.config(
       },
     },
 
-    plugins: {
-      "react-hooks": reactHooks,
-      "react-refresh": reactRefresh,
-      "better-tailwindcss": eslintPluginBetterTailwindcss,
-    },
-
     settings: {
       "better-tailwindcss": {
         entryPoint: "src/index.css",
@@ -72,9 +66,6 @@ export default tsEslint.config(
 
   {
     rules: {
-      ...reactHooks.configs.recommended.rules,
-      ...eslintPluginBetterTailwindcss.configs["recommended-error"]?.rules,
-
       "import/order": [
         "error",
         {

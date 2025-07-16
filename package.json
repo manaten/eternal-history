@@ -12,7 +12,7 @@
     "build:dev": "npm run build && node scripts/update-manifest-name-for-dev.ts",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "prepare": "husky",
     "lint": "run-p lint:*",
     "lint:js": "eslint **/*.{js,mjs,ts,tsx}",
