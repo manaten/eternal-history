@@ -38,6 +38,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
   const closeDropdown = useCallback(() => {
     setDropdownState(null);
   }, []);
+
   if (isLoading) {
     return (
       <div className='flex min-h-[200px] items-center justify-center p-16'>
@@ -102,9 +103,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
                 key={item.id}
                 item={item}
                 searchQuery={searchQuery}
-                isMenuOpen={
-                  dropdownState !== null && dropdownState.item.id === item.id
-                }
+                isMenuOpen={dropdownState?.item.id === item.id}
                 onContextMenu={handleContextMenu}
               />
             ))}
