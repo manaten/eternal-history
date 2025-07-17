@@ -21,7 +21,16 @@ updates:
     schedule:
       interval: weekly
     groups:
-      all-dependencies:
+      major-updates:
         patterns:
           - "*"
+        update-types:
+          - "major"
+      minor-patch-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
     open-pull-requests-limit: 5
