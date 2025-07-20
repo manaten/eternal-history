@@ -20,7 +20,6 @@
     "lint": "run-p lint:*",
     "prepare": "husky",
     "preview": "vite preview",
-    "start": "node src/index.ts",
     "storybook": "storybook dev -p 6006",
     "test": "vitest run",
     "typecheck": "tsc -b --noEmit",
