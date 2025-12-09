@@ -8,7 +8,9 @@ export interface SavedQuery {
 
 export async function getSavedQueries(): Promise<SavedQuery[]> {
   try {
-    const result = await chrome.storage.local.get(SAVED_QUERIES_KEY);
+    const result = await chrome.storage.local.get<{
+      [SAVED_QUERIES_KEY]: SavedQuery[];
+    }>(SAVED_QUERIES_KEY);
     return result[SAVED_QUERIES_KEY] || [];
   } catch (error) {
     console.error("Failed to get saved queries:", error);
