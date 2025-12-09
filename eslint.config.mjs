@@ -1,6 +1,7 @@
 // @ts-check
 import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
+import { defineConfig } from "eslint/config";
 import eslintConfigPrettier from "eslint-config-prettier";
 import eslintPluginBetterTailwindcss from "eslint-plugin-better-tailwindcss";
 import functionalPlugin from "eslint-plugin-functional";
@@ -11,28 +12,29 @@ import storybook from "eslint-plugin-storybook";
 import globals from "globals";
 import tsEslint from "typescript-eslint";
 
-export default tsEslint.config(
+export default defineConfig(
   {
-    ignores: ["dist", "node_modules"],
+    ignores: ["**/dist/**", "**/node_modules/**", "**/.next/**", "**/out/**"],
   },
   js.configs.recommended,
   importPlugin.flatConfigs.recommended,
   tsEslint.configs.recommended,
   tsEslint.configs.eslintRecommended,
+  // @ts-expect-error 型定義がおかしいため
   functionalPlugin.configs.noMutations,
   eslintConfigPrettier,
   storybook.configs["flat/recommended"],
 
   // 非Reactプロジェクトの場合は以下のブロックと関連するimportを削除してください
   storybook.configs["flat/recommended"],
+  reactHooks.configs.flat.recommended,
+
   {
     plugins: {
-      "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
       "better-tailwindcss": eslintPluginBetterTailwindcss,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
       ...eslintPluginBetterTailwindcss.configs["recommended-error"]?.rules,
     },
   },

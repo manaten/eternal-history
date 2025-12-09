@@ -10,6 +10,8 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 5
     groups:
       all-dependencies:
         patterns:
@@ -23,14 +25,32 @@ updates:
     schedule:
       interval: weekly
     groups:
-      major-updates:
-        patterns:
-          - "*"
+      prod-major-updates:
+        # dependabot不具合のため、一時的にコメントアウト
+        # ref https://github.com/dependabot/dependabot-core/issues/13154
+        #
+        # patterns:
+        #   - "*"
+        dependency-type: "production"
         update-types:
           - "major"
-      minor-patch-updates:
-        patterns:
-          - "*"
+      dev-major-updates:
+        # patterns:
+        #   - "*"
+        dependency-type: "development"
+        update-types:
+          - "major"
+      prod-minor-patch-updates:
+        # patterns:
+        #   - "*"
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      dev-minor-patch-updates:
+        # patterns:
+        #   - "*"
+        dependency-type: "development"
         update-types:
           - "minor"
           - "patch"
