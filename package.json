@@ -28,8 +28,8 @@
   "dependencies": {
     "classnames": "^2.5.1",
     "p-map": "^7.0.3",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.0",
