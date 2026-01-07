@@ -40,4 +40,21 @@ export const en = {
   "helpModal.savingQueries": "Saving Queries",
   "helpModal.savingQueriesDescription":
     'Click the "+" button next to the search box to save frequently used queries for quick access.',
+
+  // Options button
+  "optionsButton.openOptions": "Open options",
+  "optionsButton.options": "Options",
+
+  // Options page
+  "options.title": "Eternal History Options",
+  "options.theme": "Theme",
+  "options.themeLight": "Light",
+  "options.themeDark": "Dark",
+  "options.themeSystem": "System",
+  "options.search": "Search Settings",
+  "options.resultsPerPage": "Results per page",
+  "options.highlightMatches": "Highlight matches in search results",
+  "options.save": "Save",
+  "options.reset": "Reset to defaults",
+  "options.saved": "Settings saved!",
 } as const;
