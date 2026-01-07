@@ -6,6 +6,7 @@ import { Header } from "../Header";
 import { HelpButton } from "../HelpButton";
 import { HelpModal } from "../HelpModal";
 import { Histories } from "../Histories";
+import { OptionsButton } from "../OptionsButton";
 
 interface RootProps {
   history: HistoryItem[];
@@ -63,6 +64,7 @@ export const Root: FC<RootProps> = ({
         searchQuery={searchQuery}
         onDeleteItem={onDeleteHistoryItem}
       />
+      <OptionsButton />
       <HelpButton onClick={handleOpenHelp} />
       <HelpModal isOpen={isHelpModalOpen} onClose={handleCloseHelp} />
     </main>
