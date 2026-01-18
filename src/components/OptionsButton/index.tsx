@@ -1,6 +1,7 @@
 import { FC } from "react";
 
 import { t } from "../../i18n";
+import { FloatingButton } from "../FloatingButton";
 
 const GearIcon: FC = () => (
   <svg
@@ -25,20 +26,15 @@ export const OptionsButton: FC = () => {
   };
 
   return (
-    <button
-      className={`
-        fixed right-4 bottom-20 z-[100] flex h-12 w-12 cursor-pointer
-        items-center justify-center rounded-full bg-slate-50 text-xl
-        font-semibold text-gray-800 shadow-lg transition-all duration-200
-        hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-600
-        active:translate-y-0
-        md:right-6 md:bottom-[104px] md:h-14 md:w-14 md:text-2xl
-      `}
+    <FloatingButton
+      icon={<GearIcon />}
       onClick={handleClick}
-      aria-label={t("optionsButton.openOptions")}
+      ariaLabel={t("optionsButton.openOptions")}
       title={t("optionsButton.options")}
-    >
-      <GearIcon />
-    </button>
+      className={`
+        bottom-20
+        md:bottom-[104px]
+      `}
+    />
   );
 };
