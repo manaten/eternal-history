@@ -1,62 +1,30 @@
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 
 import { t } from "../../i18n";
-import {
-  DEFAULT_SETTINGS,
-  getSettings,
-  resetSettings,
-  saveSettings,
-  Settings,
-  Theme,
-} from "../../lib/settings";
+import { Settings, Theme } from "../../lib/settings";
 
-export const OptionsPage: FC = () => {
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
+interface OptionsPageProps {
+  settings: Settings;
+  saved: boolean;
+  isLoading: boolean;
+  onThemeChange: (theme: Theme) => void;
+  onResultsPerPageChange: (value: number) => void;
+  onHighlightMatchesChange: (value: boolean) => void;
+  onSave: () => void;
+  onReset: () => void;
+}
 
-  useEffect(() => {
-    getSettings().then((s) => {
-      setSettings(s);
-      setLoading(false);
-    });
-  }, []);
-
-  const handleThemeChange = (theme: Theme) => {
-    setSettings((prev) => ({ ...prev, theme }));
-    setSaved(false);
-  };
-
-  const handleResultsPerPageChange = (value: number) => {
-    setSettings((prev) => ({
-      ...prev,
-      search: { ...prev.search, resultsPerPage: value },
-    }));
-    setSaved(false);
-  };
-
-  const handleHighlightMatchesChange = (value: boolean) => {
-    setSettings((prev) => ({
-      ...prev,
-      search: { ...prev.search, highlightMatches: value },
-    }));
-    setSaved(false);
-  };
-
-  const handleSave = async () => {
-    await saveSettings(settings);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  const handleReset = async () => {
-    const defaults = await resetSettings();
-    setSettings(defaults);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
-
-  if (loading) {
+export const OptionsPage: FC<OptionsPageProps> = ({
+  settings,
+  saved,
+  isLoading,
+  onThemeChange,
+  onResultsPerPageChange,
+  onHighlightMatchesChange,
+  onSave,
+  onReset,
+}) => {
+  if (isLoading) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
         <div
@@ -105,7 +73,7 @@ export const OptionsPage: FC = () => {
                     `
                 }
               `}
-              onClick={() => handleThemeChange(theme)}
+              onClick={() => onThemeChange(theme)}
             >
               {t(
                 `options.theme${theme.charAt(0).toUpperCase() + theme.slice(1)}` as
@@ -136,9 +104,7 @@ export const OptionsPage: FC = () => {
             <select
               id='resultsPerPage'
               value={settings.search.resultsPerPage}
-              onChange={(e) =>
-                handleResultsPerPageChange(Number(e.target.value))
-              }
+              onChange={(e) => onResultsPerPageChange(Number(e.target.value))}
               className={`
                 w-full max-w-[200px] rounded-lg border border-gray-300 px-3 py-2
                 text-sm text-gray-700 outline-none
@@ -157,7 +123,7 @@ export const OptionsPage: FC = () => {
             <input
               type='checkbox'
               checked={settings.search.highlightMatches}
-              onChange={(e) => handleHighlightMatchesChange(e.target.checked)}
+              onChange={(e) => onHighlightMatchesChange(e.target.checked)}
               className={`
                 h-5 w-5 cursor-pointer rounded border-gray-300 text-primary
                 focus:ring-2 focus:ring-primary/20
@@ -173,7 +139,7 @@ export const OptionsPage: FC = () => {
       {/* Action buttons */}
       <div className='flex flex-wrap items-center gap-3'>
         <button
-          onClick={handleSave}
+          onClick={onSave}
           className={`
             rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white
             shadow-md transition-all
@@ -184,7 +150,7 @@ export const OptionsPage: FC = () => {
           {t("options.save")}
         </button>
         <button
-          onClick={handleReset}
+          onClick={onReset}
           className={`
             rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm
             font-semibold text-gray-700 shadow-sm transition-all
