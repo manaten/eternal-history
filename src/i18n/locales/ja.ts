@@ -50,13 +50,9 @@ export const ja = {
 
   // Options page
   "options.title": "Eternal History オプション",
-  "options.theme": "テーマ",
-  "options.themeLight": "ライト",
-  "options.themeDark": "ダーク",
-  "options.themeSystem": "システム設定に従う",
   "options.search": "検索設定",
-  "options.resultsPerPage": "1ページあたりの結果数",
-  "options.highlightMatches": "検索結果のマッチ箇所をハイライト",
+  "options.groupByUrl": "同一URLの検索結果をまとめる",
+  "options.groupByTitle": "同一タイトルの検索結果をまとめる",
   "options.save": "保存",
   "options.reset": "初期設定に戻す",
   "options.saved": "設定を保存しました！",

@@ -7,7 +7,6 @@ import {
   resetSettings,
   saveSettings,
   Settings,
-  Theme,
 } from "./lib/settings";
 
 function OptionsApp() {
@@ -22,23 +21,18 @@ function OptionsApp() {
     });
   }, []);
 
-  const handleThemeChange = useCallback((theme: Theme) => {
-    setSettings((prev) => ({ ...prev, theme }));
-    setSaved(false);
-  }, []);
-
-  const handleResultsPerPageChange = useCallback((value: number) => {
+  const handleGroupByUrlChange = useCallback((value: boolean) => {
     setSettings((prev) => ({
       ...prev,
-      search: { ...prev.search, resultsPerPage: value },
+      search: { ...prev.search, groupByUrl: value },
     }));
     setSaved(false);
   }, []);
 
-  const handleHighlightMatchesChange = useCallback((value: boolean) => {
+  const handleGroupByTitleChange = useCallback((value: boolean) => {
     setSettings((prev) => ({
       ...prev,
-      search: { ...prev.search, highlightMatches: value },
+      search: { ...prev.search, groupByTitle: value },
     }));
     setSaved(false);
   }, []);
@@ -61,9 +55,8 @@ function OptionsApp() {
       settings={settings}
       saved={saved}
       isLoading={isLoading}
-      onThemeChange={handleThemeChange}
-      onResultsPerPageChange={handleResultsPerPageChange}
-      onHighlightMatchesChange={handleHighlightMatchesChange}
+      onGroupByUrlChange={handleGroupByUrlChange}
+      onGroupByTitleChange={handleGroupByTitleChange}
       onSave={handleSave}
       onReset={handleReset}
     />

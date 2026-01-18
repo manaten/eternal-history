@@ -19,11 +19,9 @@ export const Default: Story = {
     settings: DEFAULT_SETTINGS,
     saved: false,
     isLoading: false,
-    onThemeChange: (theme) => console.log("Theme changed:", theme),
-    onResultsPerPageChange: (value) =>
-      console.log("Results per page changed:", value),
-    onHighlightMatchesChange: (value) =>
-      console.log("Highlight matches changed:", value),
+    onGroupByUrlChange: (value) => console.log("Group by URL changed:", value),
+    onGroupByTitleChange: (value) =>
+      console.log("Group by title changed:", value),
     onSave: () => console.log("Save clicked"),
     onReset: () => console.log("Reset clicked"),
   },
@@ -43,34 +41,40 @@ export const Saved: Story = {
   },
 };
 
-export const LightTheme: Story = {
-  args: {
-    ...Default.args,
-    settings: {
-      ...DEFAULT_SETTINGS,
-      theme: "light",
-    },
-  },
-};
-
-export const DarkTheme: Story = {
-  args: {
-    ...Default.args,
-    settings: {
-      ...DEFAULT_SETTINGS,
-      theme: "dark",
-    },
-  },
-};
-
-export const CustomSearchSettings: Story = {
+export const GroupByUrlEnabled: Story = {
   args: {
     ...Default.args,
     settings: {
       ...DEFAULT_SETTINGS,
       search: {
-        resultsPerPage: 500,
-        highlightMatches: false,
+        ...DEFAULT_SETTINGS.search,
+        groupByUrl: true,
+      },
+    },
+  },
+};
+
+export const GroupByTitleEnabled: Story = {
+  args: {
+    ...Default.args,
+    settings: {
+      ...DEFAULT_SETTINGS,
+      search: {
+        ...DEFAULT_SETTINGS.search,
+        groupByTitle: true,
+      },
+    },
+  },
+};
+
+export const BothGroupingEnabled: Story = {
+  args: {
+    ...Default.args,
+    settings: {
+      ...DEFAULT_SETTINGS,
+      search: {
+        groupByUrl: true,
+        groupByTitle: true,
       },
     },
   },

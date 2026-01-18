@@ -2,25 +2,21 @@
  * Settings persistence using Chrome Storage Sync API
  */
 
-export type Theme = "light" | "dark" | "system";
-
 export interface SearchSettings {
-  /** Number of results per page */
-  resultsPerPage: number;
-  /** Whether to highlight matches in search results */
-  highlightMatches: boolean;
+  /** Whether to group results with the same URL */
+  groupByUrl: boolean;
+  /** Whether to group results with the same title */
+  groupByTitle: boolean;
 }
 
 export interface Settings {
-  theme: Theme;
   search: SearchSettings;
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  theme: "system",
   search: {
-    resultsPerPage: 100,
-    highlightMatches: true,
+    groupByUrl: false,
+    groupByTitle: false,
   },
 };
 

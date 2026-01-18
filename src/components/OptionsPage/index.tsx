@@ -1,15 +1,14 @@
 import { FC } from "react";
 
 import { t } from "../../i18n";
-import { Settings, Theme } from "../../lib/settings";
+import { Settings } from "../../lib/settings";
 
 interface OptionsPageProps {
   settings: Settings;
   saved: boolean;
   isLoading: boolean;
-  onThemeChange: (theme: Theme) => void;
-  onResultsPerPageChange: (value: number) => void;
-  onHighlightMatchesChange: (value: boolean) => void;
+  onGroupByUrlChange: (value: boolean) => void;
+  onGroupByTitleChange: (value: boolean) => void;
   onSave: () => void;
   onReset: () => void;
 }
@@ -18,9 +17,8 @@ export const OptionsPage: FC<OptionsPageProps> = ({
   settings,
   saved,
   isLoading,
-  onThemeChange,
-  onResultsPerPageChange,
-  onHighlightMatchesChange,
+  onGroupByUrlChange,
+  onGroupByTitleChange,
   onSave,
   onReset,
 }) => {
@@ -53,39 +51,6 @@ export const OptionsPage: FC<OptionsPageProps> = ({
         {t("options.title")}
       </h1>
 
-      {/* Theme Settings */}
-      <section className='rounded-xl bg-white p-6 shadow-md'>
-        <h2 className='mb-4 text-lg font-semibold text-gray-800'>
-          {t("options.theme")}
-        </h2>
-        <div className='flex flex-wrap gap-3'>
-          {(["light", "dark", "system"] as const).map((theme) => (
-            <button
-              key={theme}
-              className={`
-                rounded-lg px-4 py-2 text-sm font-medium transition-all
-                ${
-                  settings.theme === theme
-                    ? "bg-primary text-white shadow-md"
-                    : `
-                      bg-gray-100 text-gray-700
-                      hover:bg-gray-200
-                    `
-                }
-              `}
-              onClick={() => onThemeChange(theme)}
-            >
-              {t(
-                `options.theme${theme.charAt(0).toUpperCase() + theme.slice(1)}` as
-                  | "options.themeLight"
-                  | "options.themeDark"
-                  | "options.themeSystem",
-              )}
-            </button>
-          ))}
-        </div>
-      </section>
-
       {/* Search Settings */}
       <section className='rounded-xl bg-white p-6 shadow-md'>
         <h2 className='mb-4 text-lg font-semibold text-gray-800'>
@@ -93,44 +58,35 @@ export const OptionsPage: FC<OptionsPageProps> = ({
         </h2>
 
         <div className='flex flex-col gap-4'>
-          {/* Results per page */}
-          <div className='flex flex-col gap-2'>
-            <label
-              htmlFor='resultsPerPage'
-              className='text-sm font-medium text-gray-700'
-            >
-              {t("options.resultsPerPage")}
-            </label>
-            <select
-              id='resultsPerPage'
-              value={settings.search.resultsPerPage}
-              onChange={(e) => onResultsPerPageChange(Number(e.target.value))}
-              className={`
-                w-full max-w-[200px] rounded-lg border border-gray-300 px-3 py-2
-                text-sm text-gray-700 outline-none
-                focus:border-primary focus:ring-2 focus:ring-primary/20
-              `}
-            >
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-              <option value={200}>200</option>
-              <option value={500}>500</option>
-            </select>
-          </div>
-
-          {/* Highlight matches */}
+          {/* Group by URL */}
           <label className='flex cursor-pointer items-center gap-3'>
             <input
               type='checkbox'
-              checked={settings.search.highlightMatches}
-              onChange={(e) => onHighlightMatchesChange(e.target.checked)}
+              checked={settings.search.groupByUrl}
+              onChange={(e) => onGroupByUrlChange(e.target.checked)}
               className={`
                 h-5 w-5 cursor-pointer rounded border-gray-300 text-primary
                 focus:ring-2 focus:ring-primary/20
               `}
             />
             <span className='text-sm text-gray-700'>
-              {t("options.highlightMatches")}
+              {t("options.groupByUrl")}
+            </span>
+          </label>
+
+          {/* Group by Title */}
+          <label className='flex cursor-pointer items-center gap-3'>
+            <input
+              type='checkbox'
+              checked={settings.search.groupByTitle}
+              onChange={(e) => onGroupByTitleChange(e.target.checked)}
+              className={`
+                h-5 w-5 cursor-pointer rounded border-gray-300 text-primary
+                focus:ring-2 focus:ring-primary/20
+              `}
+            />
+            <span className='text-sm text-gray-700'>
+              {t("options.groupByTitle")}
             </span>
           </label>
         </div>

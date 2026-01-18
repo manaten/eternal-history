@@ -47,13 +47,9 @@ export const en = {
 
   // Options page
   "options.title": "Eternal History Options",
-  "options.theme": "Theme",
-  "options.themeLight": "Light",
-  "options.themeDark": "Dark",
-  "options.themeSystem": "System",
   "options.search": "Search Settings",
-  "options.resultsPerPage": "Results per page",
-  "options.highlightMatches": "Highlight matches in search results",
+  "options.groupByUrl": "Group results with the same URL",
+  "options.groupByTitle": "Group results with the same title",
   "options.save": "Save",
   "options.reset": "Reset to defaults",
   "options.saved": "Settings saved!",
