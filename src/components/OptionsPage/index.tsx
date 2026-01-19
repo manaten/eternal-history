@@ -5,21 +5,17 @@ import { Settings } from "../../lib/settings";
 
 interface OptionsPageProps {
   settings: Settings;
-  saved: boolean;
   isLoading: boolean;
   onGroupByUrlChange: (value: boolean) => void;
   onGroupByTitleChange: (value: boolean) => void;
-  onSave: () => void;
   onReset: () => void;
 }
 
 export const OptionsPage: FC<OptionsPageProps> = ({
   settings,
-  saved,
   isLoading,
   onGroupByUrlChange,
   onGroupByTitleChange,
-  onSave,
   onReset,
 }) => {
   if (isLoading) {
@@ -95,17 +91,6 @@ export const OptionsPage: FC<OptionsPageProps> = ({
       {/* Action buttons */}
       <div className='flex flex-wrap items-center gap-3'>
         <button
-          onClick={onSave}
-          className={`
-            rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white
-            shadow-md transition-all
-            hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-lg
-            active:translate-y-0
-          `}
-        >
-          {t("options.save")}
-        </button>
-        <button
           onClick={onReset}
           className={`
             rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm
@@ -116,11 +101,6 @@ export const OptionsPage: FC<OptionsPageProps> = ({
         >
           {t("options.reset")}
         </button>
-        {saved && (
-          <span className='text-sm font-medium text-emerald-100'>
-            {t("options.saved")}
-          </span>
-        )}
       </div>
     </main>
   );

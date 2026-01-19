@@ -47,7 +47,7 @@ export const getSettings = async (): Promise<Settings> => {
 /**
  * Save settings to Chrome Storage
  */
-export const saveSettings = async (settings: Settings): Promise<void> => {
+const saveSettings = async (settings: Settings): Promise<void> => {
   await chrome.storage.sync.set({ [STORAGE_KEY]: settings });
 };
 
@@ -76,39 +76,6 @@ export const updateSettings = async (
 export const resetSettings = async (): Promise<Settings> => {
   await saveSettings(DEFAULT_SETTINGS);
   return DEFAULT_SETTINGS;
-};
-
-/**
- * Subscribe to settings changes
- */
-export const onSettingsChange = (
-  callback: (settings: Settings) => void,
-): (() => void) => {
-  const listener = (
-    changes: { [key: string]: chrome.storage.StorageChange },
-    areaName: string,
-  ) => {
-    if (areaName === "sync" && changes[STORAGE_KEY]) {
-      const newValue = changes[STORAGE_KEY].newValue as
-        | Partial<Settings>
-        | undefined;
-      const newSettings: Settings = {
-        ...DEFAULT_SETTINGS,
-        ...newValue,
-        search: {
-          ...DEFAULT_SETTINGS.search,
-          ...newValue?.search,
-        },
-      };
-      callback(newSettings);
-    }
-  };
-
-  chrome.storage.onChanged.addListener(listener);
-
-  return () => {
-    chrome.storage.onChanged.removeListener(listener);
-  };
 };
 
 export { DEFAULT_SETTINGS };
