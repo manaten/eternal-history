@@ -47,27 +47,8 @@ export const getSettings = async (): Promise<Settings> => {
 /**
  * Save settings to Chrome Storage
  */
-const saveSettings = async (settings: Settings): Promise<void> => {
+export const saveSettings = async (settings: Settings): Promise<void> => {
   await chrome.storage.sync.set({ [STORAGE_KEY]: settings });
-};
-
-/**
- * Update partial settings
- */
-export const updateSettings = async (
-  partial: Partial<Settings>,
-): Promise<Settings> => {
-  const current = await getSettings();
-  const updated: Settings = {
-    ...current,
-    ...partial,
-    search: {
-      ...current.search,
-      ...(partial.search ?? {}),
-    },
-  };
-  await saveSettings(updated);
-  return updated;
 };
 
 /**

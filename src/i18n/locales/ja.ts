@@ -53,5 +53,7 @@ export const ja = {
   "options.search": "検索設定",
   "options.groupByUrl": "同一URLの検索結果をまとめる",
   "options.groupByTitle": "同一タイトルの検索結果をまとめる",
+  "options.save": "保存",
   "options.reset": "初期設定に戻す",
+  "options.saved": "設定を保存しました！",
 } as const satisfies Record<keyof typeof en, string>;

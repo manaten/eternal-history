@@ -50,5 +50,7 @@ export const en = {
   "options.search": "Search Settings",
   "options.groupByUrl": "Group results with the same URL",
   "options.groupByTitle": "Group results with the same title",
+  "options.save": "Save",
   "options.reset": "Reset to defaults",
+  "options.saved": "Settings saved!",
 } as const;
