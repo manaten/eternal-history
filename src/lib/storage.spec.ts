@@ -722,6 +722,255 @@ describe("storage", () => {
       expect(result).toHaveLength(1);
       expect(result[0]?.url).toBe("https://google.com/search");
     });
+
+    describe("grouping options", () => {
+      it("should group results by URL when groupByUrl is true", async () => {
+        const historyItems: HistoryItem[] = [
+          {
+            id: "1",
+            url: "https://example.com",
+            title: "Example - Old Visit",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 10, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "2",
+            url: "https://example.com",
+            title: "Example - New Visit",
+            visitCount: 2,
+            lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "3",
+            url: "https://other.com",
+            title: "Other Site",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+            domain: "other.com",
+          },
+        ];
+        await insertHistories(...historyItems);
+
+        // Without grouping - should return all items
+        const resultWithoutGrouping = await search("example");
+        expect(resultWithoutGrouping).toHaveLength(2);
+
+        // With groupByUrl - should return only the most recent for each URL
+        const resultWithGrouping = await search("example", {
+          groupByUrl: true,
+        });
+        expect(resultWithGrouping).toHaveLength(1);
+        expect(resultWithGrouping[0]?.title).toBe("Example - New Visit");
+        expect(resultWithGrouping[0]?.lastVisitTime).toBe(
+          new Date(2024, 0, 15, 12, 0, 0).getTime(),
+        );
+      });
+
+      it("should group results by title when groupByTitle is true", async () => {
+        const historyItems: HistoryItem[] = [
+          {
+            id: "1",
+            url: "https://example.com/page1",
+            title: "Same Title",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 10, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "2",
+            url: "https://example.com/page2",
+            title: "Same Title",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "3",
+            url: "https://example.com/page3",
+            title: "Different Title",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+            domain: "example.com",
+          },
+        ];
+        await insertHistories(...historyItems);
+
+        // Without grouping - should return all items
+        const resultWithoutGrouping = await search("example");
+        expect(resultWithoutGrouping).toHaveLength(3);
+
+        // With groupByTitle - should return only the most recent for each title
+        const resultWithGrouping = await search("example", {
+          groupByTitle: true,
+        });
+        expect(resultWithGrouping).toHaveLength(2);
+        // Most recent "Same Title" should be page2
+        const sameTitleItem = resultWithGrouping.find(
+          (r) => r.title === "Same Title",
+        );
+        expect(sameTitleItem?.url).toBe("https://example.com/page2");
+      });
+
+      it("should apply both groupByUrl and groupByTitle when both are true", async () => {
+        const historyItems: HistoryItem[] = [
+          {
+            id: "1",
+            url: "https://example.com",
+            title: "Title A",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 10, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "2",
+            url: "https://example.com",
+            title: "Title A",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "3",
+            url: "https://other.com",
+            title: "Title A",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+            domain: "other.com",
+          },
+          {
+            id: "4",
+            url: "https://another.com",
+            title: "Title B",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 9, 0, 0).getTime(),
+            domain: "another.com",
+          },
+        ];
+        await insertHistories(...historyItems);
+
+        // With both options - URL grouping first, then title grouping
+        const result = await search("title", {
+          groupByUrl: true,
+          groupByTitle: true,
+        });
+
+        // After URL grouping: example.com (newest), other.com, another.com = 3 items
+        // After title grouping: "Title A" keeps only most recent (example.com at 12:00), "Title B" keeps another.com
+        expect(result).toHaveLength(2);
+        expect(result.map((r) => r.url)).toContain("https://example.com");
+        expect(result.map((r) => r.url)).toContain("https://another.com");
+      });
+
+      it("should return results sorted by lastVisitTime descending after grouping", async () => {
+        const historyItems: HistoryItem[] = [
+          {
+            id: "1",
+            url: "https://oldest.com",
+            title: "Oldest",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 9, 0, 0).getTime(),
+            domain: "oldest.com",
+          },
+          {
+            id: "2",
+            url: "https://oldest.com",
+            title: "Oldest Updated",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 10, 0, 0).getTime(),
+            domain: "oldest.com",
+          },
+          {
+            id: "3",
+            url: "https://newest.com",
+            title: "Newest",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+            domain: "newest.com",
+          },
+        ];
+        await insertHistories(...historyItems);
+
+        const result = await search("com", { groupByUrl: true });
+
+        expect(result).toHaveLength(2);
+        // Should be sorted by lastVisitTime descending
+        expect(result[0]?.url).toBe("https://newest.com");
+        expect(result[1]?.url).toBe("https://oldest.com");
+        expect(result[1]?.title).toBe("Oldest Updated"); // Most recent title for oldest.com
+      });
+
+      it("should not group when options are false or undefined", async () => {
+        const historyItems: HistoryItem[] = [
+          {
+            id: "1",
+            url: "https://example.com",
+            title: "Example 1",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 10, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "2",
+            url: "https://example.com",
+            title: "Example 2",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+            domain: "example.com",
+          },
+        ];
+        await insertHistories(...historyItems);
+
+        // No options
+        const resultNoOptions = await search("example");
+        expect(resultNoOptions).toHaveLength(2);
+
+        // Explicit false
+        const resultExplicitFalse = await search("example", {
+          groupByUrl: false,
+          groupByTitle: false,
+        });
+        expect(resultExplicitFalse).toHaveLength(2);
+      });
+
+      it("should handle empty title when groupByTitle is true", async () => {
+        const historyItems: HistoryItem[] = [
+          {
+            id: "1",
+            url: "https://example.com/page1",
+            title: "",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 10, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "2",
+            url: "https://example.com/page2",
+            title: "",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
+            domain: "example.com",
+          },
+          {
+            id: "3",
+            url: "https://example.com/page3",
+            title: "Has Title",
+            visitCount: 1,
+            lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
+            domain: "example.com",
+          },
+        ];
+        await insertHistories(...historyItems);
+
+        const result = await search("example", { groupByTitle: true });
+
+        // Empty titles should be grouped together, keeping the most recent
+        expect(result).toHaveLength(2);
+        const emptyTitleItem = result.find((r) => r.title === "");
+        expect(emptyTitleItem?.url).toBe("https://example.com/page2");
+      });
+    });
   });
 
   describe("getRecentHistories", () => {
