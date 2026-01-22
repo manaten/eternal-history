@@ -44,7 +44,7 @@ export const Root: FC<RootProps> = ({
     <main
       className={`
         mx-auto flex min-h-screen w-full max-w-[900px] flex-col items-stretch
-        gap-4 px-4 py-4
+        gap-4 p-4
         md:gap-6 md:px-6 md:py-8
       `}
     >
