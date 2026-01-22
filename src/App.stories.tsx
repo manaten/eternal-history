@@ -3,6 +3,10 @@ import { expect, within } from "storybook/test";
 
 import App from "./App";
 
+// VRT（Visual Regression Testing）用の固定日付
+// 2024年1月15日 12:00:00 (JST)
+const FIXED_DATE = new Date(2024, 0, 15, 12, 0, 0).getTime();
+
 // Chrome APIをモック
 const mockChromeBookmarks = {
   search: async () => [
@@ -10,7 +14,7 @@ const mockChromeBookmarks = {
       id: "1",
       title: "React Documentation",
       url: "https://react.dev",
-      dateAdded: Date.now() - 1000 * 60 * 60,
+      dateAdded: FIXED_DATE - 1000 * 60 * 60,
     },
   ],
   get: async () => [],
@@ -40,7 +44,7 @@ const mockChromeHistory = {
       id: "1",
       url: "https://react.dev",
       title: "React - The library for web and native user interfaces",
-      lastVisitTime: Date.now() - 1000 * 60 * 60,
+      lastVisitTime: FIXED_DATE - 1000 * 60 * 60,
       visitCount: 10,
     },
   ],
