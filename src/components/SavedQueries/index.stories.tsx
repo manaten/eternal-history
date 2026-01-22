@@ -17,12 +17,16 @@ const meta: Meta<typeof SavedQueries> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// VRT（Visual Regression Testing）用の固定日付
+// 2024年1月15日 12:00:00 (JST)
+const FIXED_DATE = new Date(2024, 0, 15, 12, 0, 0).getTime();
+
 export const Default: Story = {
   args: {
     queries: [
-      { id: "1", query: "react", createdAt: Date.now() - 1000 },
-      { id: "2", query: "typescript", createdAt: Date.now() - 2000 },
-      { id: "3", query: "storybook", createdAt: Date.now() - 3000 },
+      { id: "1", query: "react", createdAt: FIXED_DATE - 1000 },
+      { id: "2", query: "typescript", createdAt: FIXED_DATE - 2000 },
+      { id: "3", query: "storybook", createdAt: FIXED_DATE - 3000 },
     ],
     currentQuery: "react",
   },
@@ -30,19 +34,19 @@ export const Default: Story = {
 
 export const SingleQuery: Story = {
   args: {
-    queries: [{ id: "1", query: "react hooks", createdAt: Date.now() }],
+    queries: [{ id: "1", query: "react hooks", createdAt: FIXED_DATE }],
   },
 };
 
 export const ManyQueries: Story = {
   args: {
     queries: [
-      { id: "1", query: "react", createdAt: Date.now() - 1000 },
-      { id: "2", query: "typescript", createdAt: Date.now() - 2000 },
-      { id: "3", query: "storybook", createdAt: Date.now() - 3000 },
-      { id: "4", query: "chrome extension", createdAt: Date.now() - 4000 },
-      { id: "5", query: "history api", createdAt: Date.now() - 5000 },
-      { id: "6", query: "bookmark management", createdAt: Date.now() - 6000 },
+      { id: "1", query: "react", createdAt: FIXED_DATE - 1000 },
+      { id: "2", query: "typescript", createdAt: FIXED_DATE - 2000 },
+      { id: "3", query: "storybook", createdAt: FIXED_DATE - 3000 },
+      { id: "4", query: "chrome extension", createdAt: FIXED_DATE - 4000 },
+      { id: "5", query: "history api", createdAt: FIXED_DATE - 5000 },
+      { id: "6", query: "bookmark management", createdAt: FIXED_DATE - 6000 },
     ],
     currentQuery: "react",
   },
@@ -54,14 +58,14 @@ export const LongQueries: Story = {
       {
         id: "1",
         query: "very long search query that might overflow",
-        createdAt: Date.now() - 1000,
+        createdAt: FIXED_DATE - 1000,
       },
       {
         id: "2",
         query: "another extremely long query text that should be truncated",
-        createdAt: Date.now() - 2000,
+        createdAt: FIXED_DATE - 2000,
       },
-      { id: "3", query: "short", createdAt: Date.now() - 3000 },
+      { id: "3", query: "short", createdAt: FIXED_DATE - 3000 },
     ],
   },
 };
@@ -75,9 +79,9 @@ export const Empty: Story = {
 export const WithActiveQuery: Story = {
   args: {
     queries: [
-      { id: "1", query: "react", createdAt: Date.now() - 1000 },
-      { id: "2", query: "typescript", createdAt: Date.now() - 2000 },
-      { id: "3", query: "storybook", createdAt: Date.now() - 3000 },
+      { id: "1", query: "react", createdAt: FIXED_DATE - 1000 },
+      { id: "2", query: "typescript", createdAt: FIXED_DATE - 2000 },
+      { id: "3", query: "storybook", createdAt: FIXED_DATE - 3000 },
     ],
     currentQuery: "typescript",
   },

@@ -29,12 +29,16 @@ const meta: Meta<typeof HistoryItem> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// VRT（Visual Regression Testing）用の固定日付
+// 2024年1月15日 12:00:00 (JST)
+const FIXED_DATE = new Date(2024, 0, 15, 12, 0, 0).getTime();
+
 const mockHistoryItem = {
   id: "1",
   url: "https://example.com",
   title: "Example Website",
   visitCount: 5,
-  lastVisitTime: Date.now(),
+  lastVisitTime: FIXED_DATE,
   domain: "example.com",
 };
 
@@ -68,7 +72,7 @@ export const RecentVisit: Story = {
   args: {
     item: {
       ...mockHistoryItem,
-      lastVisitTime: Date.now() - 5 * 60 * 1000, // 5 minutes ago
+      lastVisitTime: FIXED_DATE - 5 * 60 * 1000, // 5 minutes ago
     },
   },
 };
@@ -77,7 +81,7 @@ export const OldVisit: Story = {
   args: {
     item: {
       ...mockHistoryItem,
-      lastVisitTime: Date.now() - 24 * 60 * 60 * 1000, // 24 hours ago
+      lastVisitTime: FIXED_DATE - 24 * 60 * 60 * 1000, // 24 hours ago
     },
   },
 };
@@ -90,7 +94,7 @@ export const GitHubExample: Story = {
       title:
         "GitHub - facebook/react: The library for web and native user interfaces",
       visitCount: 10,
-      lastVisitTime: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
+      lastVisitTime: FIXED_DATE - 2 * 60 * 60 * 1000, // 2 hours ago
       domain: "github.com",
     },
   },
@@ -104,7 +108,7 @@ export const ExtremelyLongText: Story = {
       title:
         "これは非常に長いタイトルのテストケースです。このタイトルは確実にコンポーネントの幅を超えて、レイアウトに問題を引き起こす可能性があります。省略記号が正しく表示されるかテストするためのものです。",
       visitCount: 1,
-      lastVisitTime: Date.now(),
+      lastVisitTime: FIXED_DATE,
       domain:
         "this-is-an-extremely-long-domain-name-that-should-definitely-overflow-and-cause-layout-issues-if-not-handled-properly.example.com",
     },
@@ -119,7 +123,7 @@ export const WithSearchHighlight: Story = {
       title:
         "GitHub - facebook/react: The library for web and native user interfaces",
       visitCount: 15,
-      lastVisitTime: Date.now() - 30 * 60 * 1000, // 30 minutes ago
+      lastVisitTime: FIXED_DATE - 30 * 60 * 1000, // 30 minutes ago
       domain: "github.com",
     },
     searchQuery: "github react",
@@ -133,7 +137,7 @@ export const WithJapaneseHighlight: Story = {
       url: "https://ja.wikipedia.org/wiki/プログラミング",
       title: "プログラミング - Wikipedia",
       visitCount: 8,
-      lastVisitTime: Date.now() - 60 * 60 * 1000, // 1 hour ago
+      lastVisitTime: FIXED_DATE - 60 * 60 * 1000, // 1 hour ago
       domain: "ja.wikipedia.org",
     },
     searchQuery: "プログラミング wiki",
@@ -147,7 +151,7 @@ export const WithPartialHighlight: Story = {
       url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference",
       title: "JavaScript reference - JavaScript | MDN",
       visitCount: 12,
-      lastVisitTime: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
+      lastVisitTime: FIXED_DATE - 2 * 60 * 60 * 1000, // 2 hours ago
       domain: "developer.mozilla.org",
     },
     searchQuery: "script mdn",
@@ -161,7 +165,7 @@ export const WithMultipleMatches: Story = {
       url: "https://react.dev/learn/react-developer-tools",
       title: "React Developer Tools – React",
       visitCount: 5,
-      lastVisitTime: Date.now() - 45 * 60 * 1000, // 45 minutes ago
+      lastVisitTime: FIXED_DATE - 45 * 60 * 1000, // 45 minutes ago
       domain: "react.dev",
     },
     searchQuery: "react developer",

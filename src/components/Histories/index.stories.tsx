@@ -15,13 +15,17 @@ const meta: Meta<typeof Histories> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// VRT（Visual Regression Testing）用の固定日付
+// 2024年1月15日 12:00:00 (JST)
+const FIXED_DATE = new Date(2024, 0, 15, 12, 0, 0).getTime();
+
 const mockHistoryItems: HistoryItem[] = [
   {
     id: "1",
     url: "https://react.dev",
     title: "React - The library for web and native user interfaces",
     visitCount: 15,
-    lastVisitTime: Date.now() - 1 * 60 * 60 * 1000, // 1 hour ago
+    lastVisitTime: FIXED_DATE - 1 * 60 * 60 * 1000, // 1 hour ago
     domain: "react.dev",
   },
   {
@@ -29,7 +33,7 @@ const mockHistoryItems: HistoryItem[] = [
     url: "https://github.com/facebook/react",
     title: "GitHub - facebook/react",
     visitCount: 8,
-    lastVisitTime: Date.now() - 2 * 60 * 60 * 1000, // 2 hours ago
+    lastVisitTime: FIXED_DATE - 2 * 60 * 60 * 1000, // 2 hours ago
     domain: "github.com",
   },
   {
@@ -37,7 +41,7 @@ const mockHistoryItems: HistoryItem[] = [
     url: "https://stackoverflow.com/questions/tagged/react",
     title: "Newest Questions - Stack Overflow",
     visitCount: 3,
-    lastVisitTime: Date.now() - 25 * 60 * 60 * 1000, // Yesterday
+    lastVisitTime: FIXED_DATE - 25 * 60 * 60 * 1000, // Yesterday
     domain: "stackoverflow.com",
   },
   {
@@ -45,7 +49,7 @@ const mockHistoryItems: HistoryItem[] = [
     url: "https://www.typescriptlang.org/",
     title: "TypeScript: JavaScript With Syntax For Types",
     visitCount: 5,
-    lastVisitTime: Date.now() - 25 * 60 * 60 * 1000 - 3 * 60 * 60 * 1000, // Yesterday, different time
+    lastVisitTime: FIXED_DATE - 25 * 60 * 60 * 1000 - 3 * 60 * 60 * 1000, // Yesterday, different time
     domain: "typescriptlang.org",
   },
 ];
@@ -84,9 +88,8 @@ export const LargeDataset: Story = {
       id: `item-${i}`,
       url: `https://example-${i}.com`,
       title: `Example Website ${i + 1} - Some interesting content here`,
-      visitCount: Math.floor(Math.random() * 20) + 1,
-      lastVisitTime:
-        Date.now() - Math.floor(Math.random() * 48 * 60 * 60 * 1000), // Random time in last 48 hours
+      visitCount: (i % 20) + 1, // Deterministic visit count
+      lastVisitTime: FIXED_DATE - i * 2 * 60 * 60 * 1000, // Each item 2 hours apart
       domain: `example-${i}.com`,
     })),
     isLoading: false,
