@@ -93,8 +93,7 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
       >
         <span
           className={`
-            w-full min-w-0 truncate text-sm leading-normal font-medium
-            text-gray-800
+            w-full min-w-0 truncate text-sm/normal font-medium text-gray-800
           `}
           title={item.title || item.url}
         >

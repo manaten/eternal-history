@@ -20,7 +20,7 @@ const TermExample = ({ term, text }: { term: string; text: string }) => (
     >
       {term}
     </code>
-    <span className='text-sm leading-normal text-gray-600'>{text}</span>
+    <span className='text-sm/normal text-gray-600'>{text}</span>
   </div>
 );
 
