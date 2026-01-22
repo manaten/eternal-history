@@ -24,7 +24,7 @@ const renderHighlightedText = (
       return (
         <mark
           key={index}
-          className='rounded bg-yellow-100 px-1 py-0.5 text-yellow-900'
+          className='rounded-sm bg-yellow-100 px-1 py-0.5 text-yellow-900'
         >
           {part.content}
         </mark>
@@ -72,8 +72,8 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
     >
       <span
         className={`
-          min-w-[2.5rem] text-right text-xs font-medium text-gray-400
-          md:min-w-[3rem] md:text-sm
+          min-w-10 text-right text-xs font-medium text-gray-400
+          md:min-w-12 md:text-sm
         `}
       >
         {time}
@@ -81,30 +81,27 @@ export const HistoryItem: FC<HistoryItemProps> = memo(function HistoryItem({
       <img
         src={favicon}
         className={`
-          size-4 flex-shrink-0 rounded object-cover
+          size-4 shrink-0 rounded-sm object-cover
           md:size-5
         `}
       />
       <div
         className={`
-          flex w-full min-w-0 flex-grow flex-col items-start gap-1 text-left
+          flex w-full min-w-0 grow flex-col items-start gap-1 text-left
           leading-normal
         `}
       >
         <span
           className={`
-            w-full min-w-0 overflow-hidden text-sm leading-normal font-medium
-            text-ellipsis whitespace-nowrap text-gray-800
+            w-full min-w-0 truncate text-sm leading-normal font-medium
+            text-gray-800
           `}
           title={item.title || item.url}
         >
           {renderHighlightedText(item.title || item.url, searchQuery, "title")}
         </span>
         <span
-          className={`
-            w-full min-w-0 overflow-hidden text-xs font-normal text-ellipsis
-            whitespace-nowrap text-gray-400
-          `}
+          className={`w-full min-w-0 truncate text-xs font-normal text-gray-400`}
           title={item.url}
         >
           {renderHighlightedText(item.url, searchQuery, "url")}

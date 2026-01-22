@@ -41,7 +41,7 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
   return (
     <div
       className={`
-        fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4
+        fixed inset-0 z-1000 flex items-center justify-center bg-black/50 p-4
       `}
       onClick={handleBackdropClick}
     >
@@ -61,8 +61,8 @@ export const HelpModal: FC<HelpModalProps> = ({ isOpen, onClose }) => {
       >
         <div
           className={`
-            mb-6 flex items-center justify-between border-b border-gray-200 pt-4
-            pr-1 pb-4 pl-6
+            mb-6 flex items-center justify-between border-b border-gray-200 py-4
+            pr-1 pl-6
           `}
         >
           <h2 className='m-0 text-2xl font-semibold text-gray-800'>

@@ -45,9 +45,9 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             onClick={() => onQueryClick(savedQuery.query)}
             className={classNames(
               `
-                max-w-[150px] cursor-pointer overflow-hidden border-none
-                bg-transparent px-2 py-1.5 text-xs font-medium text-ellipsis
-                whitespace-nowrap text-white transition-colors duration-200
+                max-w-[150px] cursor-pointer truncate border-none bg-transparent
+                px-2 py-1.5 text-xs font-medium text-white transition-colors
+                duration-200
                 md:max-w-[200px] md:px-2.5 md:py-1.5 md:text-sm
               `,
               currentQuery === savedQuery.query && "font-semibold",
@@ -62,7 +62,7 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
             type='button'
             onClick={() => onQueryRemove(savedQuery.id)}
             className={`
-              flex w-7 flex-shrink-0 cursor-pointer items-center justify-center
+              flex w-7 shrink-0 cursor-pointer items-center justify-center
               border-l border-white/20 bg-transparent px-2 py-1.5 text-sm
               font-semibold text-white transition-all duration-200
               hover:bg-red-500 hover:text-white

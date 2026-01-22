@@ -54,7 +54,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
           type='button'
           onClick={handleSaveQuery}
           className={`
-            absolute top-1/2 right-2 flex h-10 w-10 -translate-y-1/2
+            absolute top-1/2 right-2 flex size-10 -translate-y-1/2
             cursor-pointer items-center justify-center rounded-lg border-none
             bg-primary text-xl font-semibold text-white shadow-sm transition-all
             duration-200
