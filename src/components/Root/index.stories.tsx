@@ -18,13 +18,17 @@ const meta: Meta<typeof Root> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+// VRT（Visual Regression Testing）用の固定日付
+// 2024年1月15日 12:00:00 (JST)
+const FIXED_DATE = new Date(2024, 0, 15, 12, 0, 0).getTime();
+
 const mockHistoryItems: HistoryItem[] = [
   {
     id: "1",
     url: "https://react.dev",
     title: "React - The library for web and native user interfaces",
     visitCount: 15,
-    lastVisitTime: Date.now() - 1 * 60 * 60 * 1000,
+    lastVisitTime: FIXED_DATE - 1 * 60 * 60 * 1000,
     domain: "react.dev",
   },
   {
@@ -32,7 +36,7 @@ const mockHistoryItems: HistoryItem[] = [
     url: "https://github.com/facebook/react",
     title: "GitHub - facebook/react",
     visitCount: 8,
-    lastVisitTime: Date.now() - 2 * 60 * 60 * 1000,
+    lastVisitTime: FIXED_DATE - 2 * 60 * 60 * 1000,
     domain: "github.com",
   },
   {
@@ -40,7 +44,7 @@ const mockHistoryItems: HistoryItem[] = [
     url: "https://stackoverflow.com/questions/tagged/react",
     title: "Newest Questions - Stack Overflow",
     visitCount: 3,
-    lastVisitTime: Date.now() - 25 * 60 * 60 * 1000,
+    lastVisitTime: FIXED_DATE - 25 * 60 * 60 * 1000,
     domain: "stackoverflow.com",
   },
 ];
