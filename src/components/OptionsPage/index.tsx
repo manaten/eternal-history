@@ -27,7 +27,7 @@ export const OptionsPage: FC<OptionsPageProps> = ({
       <div className='flex min-h-screen items-center justify-center'>
         <div
           className={`
-            h-8 w-8 animate-spin rounded-full border-4 border-primary
+            size-8 animate-spin rounded-full border-4 border-primary
             border-t-transparent
           `}
         />
@@ -65,7 +65,7 @@ export const OptionsPage: FC<OptionsPageProps> = ({
               checked={settings.search.groupByUrl}
               onChange={(e) => onGroupByUrlChange(e.target.checked)}
               className={`
-                h-5 w-5 cursor-pointer rounded border-gray-300 text-primary
+                size-5 cursor-pointer rounded-sm border-gray-300 text-primary
                 focus:ring-2 focus:ring-primary/20
               `}
             />
@@ -81,7 +81,7 @@ export const OptionsPage: FC<OptionsPageProps> = ({
               checked={settings.search.groupByTitle}
               onChange={(e) => onGroupByTitleChange(e.target.checked)}
               className={`
-                h-5 w-5 cursor-pointer rounded border-gray-300 text-primary
+                size-5 cursor-pointer rounded-sm border-gray-300 text-primary
                 focus:ring-2 focus:ring-primary/20
               `}
             />
