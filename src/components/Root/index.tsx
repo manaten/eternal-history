@@ -1,5 +1,6 @@
 import { FC, useState } from "react";
 
+import { t } from "../../i18n";
 import { SavedQuery } from "../../lib/savedQueries";
 import { HistoryItem } from "../../types/HistoryItem";
 import { FloatingButton } from "../FloatingButton";
@@ -70,6 +71,8 @@ export const Root: FC<RootProps> = ({
       <FloatingButton
         icon='options'
         onClick={handleOpenOptions}
+        ariaLabel={t("optionsButton.openOptions")}
+        title={t("optionsButton.options")}
         className={`
           bottom-20
           md:bottom-[104px]
@@ -78,6 +81,8 @@ export const Root: FC<RootProps> = ({
       <FloatingButton
         icon='help'
         onClick={handleOpenHelp}
+        ariaLabel={t("helpButton.openHelp")}
+        title={t("helpButton.help")}
         className={`
           bottom-4
           md:bottom-6

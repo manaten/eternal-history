@@ -1,8 +1,6 @@
 import classNames from "classnames";
 import { FC } from "react";
 
-import { t } from "../../i18n";
-
 type IconType = "help" | "options";
 
 const GearIcon: FC = () => (
@@ -22,39 +20,26 @@ const GearIcon: FC = () => (
   </svg>
 );
 
-const ICON_CONFIG: Record<
-  IconType,
-  {
-    icon: React.ReactNode;
-    ariaLabelKey: "helpButton.openHelp" | "optionsButton.openOptions";
-    titleKey: "helpButton.help" | "optionsButton.options";
-  }
-> = {
-  help: {
-    icon: "?",
-    ariaLabelKey: "helpButton.openHelp",
-    titleKey: "helpButton.help",
-  },
-  options: {
-    icon: <GearIcon />,
-    ariaLabelKey: "optionsButton.openOptions",
-    titleKey: "optionsButton.options",
-  },
+const ICONS: Record<IconType, React.ReactNode> = {
+  help: "?",
+  options: <GearIcon />,
 };
 
 interface FloatingButtonProps {
   icon: IconType;
   onClick: () => void;
+  ariaLabel: string;
+  title: string;
   className?: string;
 }
 
 export const FloatingButton: FC<FloatingButtonProps> = ({
   icon,
   onClick,
+  ariaLabel,
+  title,
   className,
 }) => {
-  const config = ICON_CONFIG[icon];
-
   return (
     <button
       className={classNames(
@@ -69,10 +54,10 @@ export const FloatingButton: FC<FloatingButtonProps> = ({
         className,
       )}
       onClick={onClick}
-      aria-label={t(config.ariaLabelKey)}
-      title={t(config.titleKey)}
+      aria-label={ariaLabel}
+      title={title}
     >
-      {config.icon}
+      {ICONS[icon]}
     </button>
   );
 };
