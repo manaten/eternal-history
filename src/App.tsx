@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { Root } from "./components/Root";
+import { Root } from "./components/history/Root";
 import { t } from "./i18n";
 import {
   getSavedQueries,
