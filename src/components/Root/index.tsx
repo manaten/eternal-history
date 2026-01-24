@@ -71,7 +71,7 @@ export const Root: FC<RootProps> = ({
       <FloatingButton
         icon='options'
         onClick={handleOpenOptions}
-        ariaLabel={t("optionsButton.openOptions")}
+        aria-label={t("optionsButton.openOptions")}
         title={t("optionsButton.options")}
         className={`
           bottom-20
@@ -81,7 +81,7 @@ export const Root: FC<RootProps> = ({
       <FloatingButton
         icon='help'
         onClick={handleOpenHelp}
-        ariaLabel={t("helpButton.openHelp")}
+        aria-label={t("helpButton.openHelp")}
         title={t("helpButton.help")}
         className={`
           bottom-4

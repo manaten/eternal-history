@@ -17,7 +17,7 @@ export const Help: Story = {
   args: {
     icon: "help",
     onClick: () => console.log("Help button clicked"),
-    ariaLabel: "Open help",
+    "aria-label": "Open help",
     title: "Help",
     className: "bottom-4 md:bottom-6",
   },
@@ -27,7 +27,7 @@ export const Options: Story = {
   args: {
     icon: "options",
     onClick: () => console.log("Options button clicked"),
-    ariaLabel: "Open options",
+    "aria-label": "Open options",
     title: "Options",
     className: "bottom-20 md:bottom-[104px]",
   },

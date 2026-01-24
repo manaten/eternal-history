@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { FC } from "react";
+import { ComponentPropsWithoutRef, FC } from "react";
 
 type IconType = "help" | "options";
 
@@ -25,20 +25,15 @@ const ICONS: Record<IconType, React.ReactNode> = {
   options: <GearIcon />,
 };
 
-interface FloatingButtonProps {
+interface FloatingButtonProps extends ComponentPropsWithoutRef<"button"> {
   icon: IconType;
-  onClick: () => void;
-  ariaLabel: string;
-  title: string;
   className?: string;
 }
 
 export const FloatingButton: FC<FloatingButtonProps> = ({
   icon,
-  onClick,
-  ariaLabel,
-  title,
   className,
+  ...props
 }) => {
   return (
     <button
@@ -53,9 +48,7 @@ export const FloatingButton: FC<FloatingButtonProps> = ({
         `,
         className,
       )}
-      onClick={onClick}
-      aria-label={ariaLabel}
-      title={title}
+      {...props}
     >
       {ICONS[icon]}
     </button>
