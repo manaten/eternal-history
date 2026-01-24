@@ -1,6 +1,5 @@
 import pMap from "p-map";
 
-import { uniqBy } from "./array";
 import {
   getOrCreateFolder,
   isUnderFolder,
@@ -10,9 +9,10 @@ import {
   deserializeBookmarkToHistoryItem,
   serializeHistoryItemToBookmark,
 } from "./bookmark-serializer";
-import { dateToFolderNames, getDateArray } from "./date";
-import { parseSearchQuery } from "./query";
 import { HistoryItem } from "../types/HistoryItem";
+import { uniqBy } from "../util/array";
+import { dateToFolderNames, getDateArray } from "../util/date";
+import { parseSearchQuery } from "../util/query";
 
 export interface SearchOptions {
   groupByUrl?: boolean;
