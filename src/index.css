@@ -14,8 +14,6 @@
   --color-theme-900: #064e3b;
   --color-theme-base: #10b981;
   --color-theme-hover: #056996;
-  --color-theme-gradient-start: #10b981;
-  --color-theme-gradient-end: #063b4e;
 
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -78,8 +76,7 @@
   --color-theme-900: #064e3b;
   --color-theme-base: #10b981;
   --color-theme-hover: #056996;
-  --color-theme-gradient-start: #10b981;
-  --color-theme-gradient-end: #063b4e;
+  --background-image: linear-gradient(135deg, #10b981 0%, #063b4e 100%);
 }
 
 :root[data-theme="blue"] {
@@ -95,8 +92,7 @@
   --color-theme-900: #1e3a8a;
   --color-theme-base: #3b82f6;
   --color-theme-hover: #1d4ed8;
-  --color-theme-gradient-start: #3b82f6;
-  --color-theme-gradient-end: #1e293b;
+  --background-image: linear-gradient(135deg, #3b82f6 0%, #1e293b 100%);
 }
 
 :root[data-theme="lime"] {
@@ -112,8 +108,7 @@
   --color-theme-900: #365314;
   --color-theme-base: #84cc16;
   --color-theme-hover: #65a30d;
-  --color-theme-gradient-start: #84cc16;
-  --color-theme-gradient-end: #1e3a1a;
+  --background-image: linear-gradient(135deg, #84cc16 0%, #1e3a1a 100%);
 }
 
 :root[data-theme="red"] {
@@ -129,8 +124,7 @@
   --color-theme-900: #7f1d1d;
   --color-theme-base: #ef4444;
   --color-theme-hover: #dc2626;
-  --color-theme-gradient-start: #ef4444;
-  --color-theme-gradient-end: #3b1e1e;
+  --background-image: linear-gradient(135deg, #ef4444 0%, #3b1e1e 100%);
 }
 
 :root[data-theme="purple"] {
@@ -146,8 +140,7 @@
   --color-theme-900: #581c87;
   --color-theme-base: #a855f7;
   --color-theme-hover: #7e22ce;
-  --color-theme-gradient-start: #a855f7;
-  --color-theme-gradient-end: #2e1a3b;
+  --background-image: linear-gradient(135deg, #a855f7 0%, #2e1a3b 100%);
 }
 
 body {
@@ -159,11 +152,7 @@ body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
     "Cantarell", sans-serif;
-  background-image: linear-gradient(
-    135deg,
-    var(--color-theme-gradient-start) 0%,
-    var(--color-theme-gradient-end) 100%
-  );
+  background-image: var(--background-image, none);
   background-size: 100vw 100vh;
   background-repeat: no-repeat;
   background-attachment: fixed;
