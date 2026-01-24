@@ -76,7 +76,12 @@
   --color-theme-900: #064e3b;
   --color-theme-base: #10b981;
   --color-theme-hover: #056996;
-  --background-image: linear-gradient(135deg, #10b981 0%, #063b4e 100%);
+  --color-theme-gradient-end: #063b4e;
+  --background-image: linear-gradient(
+    135deg,
+    var(--color-theme-base) 0%,
+    var(--color-theme-gradient-end) 100%
+  );
 }
 
 :root[data-theme="blue"] {
@@ -92,7 +97,12 @@
   --color-theme-900: #1e3a8a;
   --color-theme-base: #3b82f6;
   --color-theme-hover: #1d4ed8;
-  --background-image: linear-gradient(135deg, #3b82f6 0%, #1e293b 100%);
+  --color-theme-gradient-end: #1e293b;
+  --background-image: linear-gradient(
+    135deg,
+    var(--color-theme-base) 0%,
+    var(--color-theme-gradient-end) 100%
+  );
 }
 
 :root[data-theme="lime"] {
@@ -108,7 +118,12 @@
   --color-theme-900: #365314;
   --color-theme-base: #84cc16;
   --color-theme-hover: #65a30d;
-  --background-image: linear-gradient(135deg, #84cc16 0%, #1e3a1a 100%);
+  --color-theme-gradient-end: #1e3a1a;
+  --background-image: linear-gradient(
+    135deg,
+    var(--color-theme-base) 0%,
+    var(--color-theme-gradient-end) 100%
+  );
 }
 
 :root[data-theme="red"] {
@@ -124,7 +139,12 @@
   --color-theme-900: #7f1d1d;
   --color-theme-base: #ef4444;
   --color-theme-hover: #dc2626;
-  --background-image: linear-gradient(135deg, #ef4444 0%, #3b1e1e 100%);
+  --color-theme-gradient-end: #3b1e1e;
+  --background-image: linear-gradient(
+    135deg,
+    var(--color-theme-base) 0%,
+    var(--color-theme-gradient-end) 100%
+  );
 }
 
 :root[data-theme="purple"] {
@@ -140,7 +160,12 @@
   --color-theme-900: #581c87;
   --color-theme-base: #a855f7;
   --color-theme-hover: #7e22ce;
-  --background-image: linear-gradient(135deg, #a855f7 0%, #2e1a3b 100%);
+  --color-theme-gradient-end: #2e1a3b;
+  --background-image: linear-gradient(
+    135deg,
+    var(--color-theme-base) 0%,
+    var(--color-theme-gradient-end) 100%
+  );
 }
 
 body {
