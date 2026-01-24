@@ -19,11 +19,13 @@ export const Default: Story = {
     initialSettings: DEFAULT_SETTINGS,
     onSave: fn(),
     onReset: fn().mockResolvedValue(DEFAULT_SETTINGS),
+    onThemeChange: fn(),
   },
 };
 
 export const Checked: Story = {
   args: {
+    ...Default.args,
     initialSettings: {
       ...DEFAULT_SETTINGS,
       theme: "blue",
@@ -32,7 +34,5 @@ export const Checked: Story = {
         groupByUrl: true,
       },
     },
-    onSave: fn(),
-    onReset: fn().mockResolvedValue(DEFAULT_SETTINGS),
   },
 };

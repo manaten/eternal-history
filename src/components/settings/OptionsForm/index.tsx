@@ -2,8 +2,7 @@ import { FC, ReactNode, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { t } from "../../../i18n";
-import { applyTheme } from "../../../lib/theme";
-import { Settings } from "../../../types/Settings";
+import { Settings, ThemeColor } from "../../../types/Settings";
 import { Button } from "../../common/Button";
 import { CheckBoxWithLabel } from "../../common/CheckBoxWithLabel";
 import { ThemeSelector } from "../ThemeSelector";
@@ -24,16 +23,18 @@ interface OptionsFormProps {
   initialSettings: Settings;
   onSave: (settings: Settings) => Promise<void>;
   onReset: () => Promise<Settings>;
+  onThemeChange?: (theme: ThemeColor) => void;
 }
 
 export const OptionsForm: FC<OptionsFormProps> = ({
   initialSettings,
   onSave,
   onReset,
+  onThemeChange,
 }) => {
   const [saved, setSaved] = useState(false);
 
-  const { register, handleSubmit, reset, watch } = useForm<Settings>({
+  const { register, handleSubmit, reset } = useForm<Settings>({
     defaultValues: initialSettings,
   });
 
@@ -41,16 +42,6 @@ export const OptionsForm: FC<OptionsFormProps> = ({
   useEffect(() => {
     reset(initialSettings);
   }, [initialSettings, reset]);
-
-  // Apply theme changes in real-time for preview
-  useEffect(() => {
-    const subscription = watch((value) => {
-      if (value.theme) {
-        applyTheme(value.theme);
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [watch]);
 
   const onSubmit = async (data: Settings) => {
     await onSave(data);
@@ -69,7 +60,13 @@ export const OptionsForm: FC<OptionsFormProps> = ({
     <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6'>
       {/* Theme Settings */}
       <OptionsSection title={t("options.theme")}>
-        <ThemeSelector radioProps={register("theme")} />
+        <ThemeSelector
+          radioProps={register("theme", {
+            onChange: (e) => {
+              onThemeChange?.(e.target.value as ThemeColor);
+            },
+          })}
+        />
       </OptionsSection>
 
       {/* Search Settings */}
