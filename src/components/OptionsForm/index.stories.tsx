@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 
 import { OptionsForm } from "./index";
 import { DEFAULT_SETTINGS } from "../../lib/settings";
@@ -17,12 +18,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     initialSettings: DEFAULT_SETTINGS,
-    onSave: async (settings) => {
-      console.log("Save clicked with settings:", settings);
-    },
-    onReset: async () => {
-      console.log("Reset clicked");
-      return DEFAULT_SETTINGS;
-    },
+    onSave: fn(),
+    onReset: fn().mockResolvedValue(DEFAULT_SETTINGS),
   },
 };

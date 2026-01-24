@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 
 import { Button } from "./index";
 
@@ -17,7 +18,7 @@ export const Primary: Story = {
   args: {
     variant: "primary",
     children: "Save",
-    onClick: () => console.log("Primary button clicked"),
+    onClick: fn(),
   },
 };
 
@@ -25,7 +26,7 @@ export const Secondary: Story = {
   args: {
     variant: "secondary",
     children: "Reset",
-    onClick: () => console.log("Secondary button clicked"),
+    onClick: fn(),
   },
 };
 
@@ -49,6 +50,6 @@ export const LongText: Story = {
   args: {
     variant: "primary",
     children: "Save All Changes to Database",
-    onClick: () => console.log("Long text button clicked"),
+    onClick: fn(),
   },
 };

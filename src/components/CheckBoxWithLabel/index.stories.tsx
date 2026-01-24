@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 
 import { CheckBoxWithLabel } from "./index";
 
@@ -16,7 +17,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     label: "Enable this option",
-    onChange: (e) => console.log("Changed to:", e.target.checked),
+    onChange: fn(),
   },
 };
 
@@ -24,6 +25,6 @@ export const LongLabel: Story = {
   args: {
     label:
       "This is a very long label that demonstrates how the checkbox handles lengthy text content",
-    onChange: (e) => console.log("Changed to:", e.target.checked),
+    onChange: fn(),
   },
 };
