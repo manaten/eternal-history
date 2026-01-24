@@ -22,14 +22,14 @@ export const Default: Story = {
   },
 };
 
-export const WithBlueTheme: Story = {
+export const Checked: Story = {
   args: {
     initialSettings: {
       ...DEFAULT_SETTINGS,
       theme: "blue",
       search: {
         groupByTitle: true,
-        groupByUrl: false,
+        groupByUrl: true,
       },
     },
     onSave: fn(),
