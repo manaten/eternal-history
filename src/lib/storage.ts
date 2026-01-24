@@ -1,5 +1,6 @@
 import pMap from "p-map";
 
+import { uniqBy } from "./array";
 import {
   getOrCreateFolder,
   isUnderFolder,
@@ -205,32 +206,12 @@ function groupHistories(
 
   // URLでグルーピング（最初に出現したものを残す = 最新のもの）
   const afterUrlGrouping = options.groupByUrl
-    ? sorted.reduce<{ seen: Set<string>; result: HistoryItem[] }>(
-        (acc, item) =>
-          acc.seen.has(item.url)
-            ? acc
-            : {
-                seen: new Set([...acc.seen, item.url]),
-                result: [...acc.result, item],
-              },
-        { seen: new Set(), result: [] },
-      ).result
+    ? uniqBy(sorted, (item) => item.url)
     : sorted;
 
   // タイトルでグルーピング
   const afterTitleGrouping = options.groupByTitle
-    ? afterUrlGrouping.reduce<{ seen: Set<string>; result: HistoryItem[] }>(
-        (acc, item) => {
-          const title = item.title || "";
-          return acc.seen.has(title)
-            ? acc
-            : {
-                seen: new Set([...acc.seen, title]),
-                result: [...acc.result, item],
-              };
-        },
-        { seen: new Set(), result: [] },
-      ).result
+    ? uniqBy(afterUrlGrouping, (item) => item.title || "")
     : afterUrlGrouping;
 
   return afterTitleGrouping;
