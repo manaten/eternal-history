@@ -26,6 +26,7 @@
     "version": "node scripts/update-manifest-version.ts && git add public/manifest.json"
   },
   "dependencies": {
+    "@material-design-icons/svg": "^0.14.15",
     "classnames": "^2.5.1",
     "p-map": "^7.0.3",
     "react": "^19.2.3",
@@ -72,6 +73,7 @@
     "typescript": "5.9.3",
     "typescript-eslint": "^8.53.1",
     "vite": "^7.3.1",
+    "vite-plugin-svgr": "^4.5.0",
     "vitest": "^4.0.15"
   }
 }
