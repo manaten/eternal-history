@@ -1,26 +1,8 @@
-import { FC, memo } from "react";
+import { FC } from "react";
 
 import { t } from "../../i18n";
 import { Settings } from "../../types/Settings";
-
-const CheckBoxWithLabel: FC<{
-  label: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}> = memo(({ label, checked, onChange }) => (
-  <label className='flex cursor-pointer items-center gap-3'>
-    <input
-      type='checkbox'
-      checked={checked}
-      onChange={(e) => onChange(e.target.checked)}
-      className={`
-        size-5 cursor-pointer rounded-sm border-gray-300 text-primary
-        focus:ring-2 focus:ring-primary/20
-      `}
-    />
-    <span className='text-sm text-gray-700'>{label}</span>
-  </label>
-));
+import { CheckBoxWithLabel } from "../CheckBoxWithLabel";
 
 interface OptionsPageProps {
   settings: Settings;
