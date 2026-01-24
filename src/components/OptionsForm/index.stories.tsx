@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { OptionsPage } from "./index";
+import { OptionsForm } from "./index";
 import { DEFAULT_SETTINGS } from "../../lib/settings";
 
-const meta: Meta<typeof OptionsPage> = {
-  title: "Components/OptionsPage",
-  component: OptionsPage,
+const meta: Meta<typeof OptionsForm> = {
+  title: "Components/OptionsForm",
+  component: OptionsForm,
   parameters: {
-    layout: "fullscreen",
+    layout: "centered",
   },
 };
 
@@ -24,12 +24,5 @@ export const Default: Story = {
       console.log("Reset clicked");
       return DEFAULT_SETTINGS;
     },
-  },
-};
-
-export const Loading: Story = {
-  args: {
-    ...Default.args,
-    initialSettings: undefined,
   },
 };

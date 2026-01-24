@@ -10,9 +10,7 @@ function OptionsApp() {
   );
 
   useEffect(() => {
-    getSettings().then((s) => {
-      setInitialSettings(s);
-    });
+    getSettings().then(setInitialSettings);
   }, []);
 
   const handleSave = useCallback(async (settings: Settings) => {
@@ -28,7 +26,6 @@ function OptionsApp() {
   return (
     <OptionsPage
       initialSettings={initialSettings}
-      isLoading={initialSettings === undefined}
       onSave={handleSave}
       onReset={handleReset}
     />
