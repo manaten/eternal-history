@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "A Chrome extension make history unlimited and searchable.",
   "scripts": {
     "build-storybook": "storybook build",
