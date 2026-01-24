@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, ReactNode, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { t } from "../../../i18n";
@@ -7,6 +7,18 @@ import { Settings } from "../../../types/Settings";
 import { Button } from "../../common/Button";
 import { CheckBoxWithLabel } from "../../common/CheckBoxWithLabel";
 import { ThemeSelector } from "../ThemeSelector";
+
+interface OptionsSectionProps {
+  title: string;
+  children: ReactNode;
+}
+
+const OptionsSection: FC<OptionsSectionProps> = ({ title, children }) => (
+  <section className='rounded-xl bg-white p-6 shadow-md'>
+    <h2 className='mb-4 text-lg font-semibold text-gray-800'>{title}</h2>
+    {children}
+  </section>
+);
 
 interface OptionsFormProps {
   initialSettings: Settings;
@@ -56,20 +68,12 @@ export const OptionsForm: FC<OptionsFormProps> = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6'>
       {/* Theme Settings */}
-      <section className='rounded-xl bg-white p-6 shadow-md'>
-        <h2 className='mb-4 text-lg font-semibold text-gray-800'>
-          {t("options.theme")}
-        </h2>
-
+      <OptionsSection title={t("options.theme")}>
         <ThemeSelector radioProps={register("theme")} />
-      </section>
+      </OptionsSection>
 
       {/* Search Settings */}
-      <section className='rounded-xl bg-white p-6 shadow-md'>
-        <h2 className='mb-4 text-lg font-semibold text-gray-800'>
-          {t("options.search")}
-        </h2>
-
+      <OptionsSection title={t("options.search")}>
         <div className='flex flex-col gap-4'>
           {/* Group by URL */}
           <CheckBoxWithLabel
@@ -83,7 +87,7 @@ export const OptionsForm: FC<OptionsFormProps> = ({
             {...register("search.groupByTitle")}
           />
         </div>
-      </section>
+      </OptionsSection>
 
       {/* Action buttons */}
       <div className='flex flex-wrap items-center gap-3'>
