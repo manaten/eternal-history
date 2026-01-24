@@ -33,7 +33,7 @@ export const ThemeSelector: FC<ThemeSelectorProps> = ({ radioProps }) => {
           <div
             className='
               size-8 rounded-full transition-all
-              peer-checked:ring-4 peer-checked:ring-theme-base
+              peer-checked:[box-shadow:0_0_0_3px_white,0_0_0_5px_var(--color-theme-base)]
               peer-not-checked:hover:ring-2
               peer-not-checked:hover:ring-theme-base/30
             '
