@@ -1,6 +1,6 @@
 import { FC } from "react";
 
-import { t } from "../../i18n";
+import { t } from "../../../i18n";
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
   <h3 className='m-0 mb-4 text-xl font-semibold text-gray-800'>{children}</h3>

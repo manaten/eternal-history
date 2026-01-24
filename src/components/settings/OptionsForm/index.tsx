@@ -1,10 +1,10 @@
 import { FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { t } from "../../i18n";
-import { Settings } from "../../types/Settings";
-import { Button } from "../Button";
-import { CheckBoxWithLabel } from "../CheckBoxWithLabel";
+import { t } from "../../../i18n";
+import { Settings } from "../../../types/Settings";
+import { Button } from "../../common/Button";
+import { CheckBoxWithLabel } from "../../common/CheckBoxWithLabel";
 
 interface OptionsFormProps {
   initialSettings: Settings;

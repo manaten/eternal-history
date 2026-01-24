@@ -1,9 +1,9 @@
 import { FC, memo, useState, useCallback } from "react";
 
-import { HistoryItem as HistoryItemType } from "../../types/HistoryItem";
+import { HistoryItem as HistoryItemType } from "../../../types/HistoryItem";
+import { Spinner } from "../../common/Spinner";
 import { HistoryDropdown } from "../HistoryDropdown";
 import { HistoryItem } from "../HistoryItem";
-import { Spinner } from "../Spinner";
 
 interface HistoriesProps {
   history: HistoryItemType[];

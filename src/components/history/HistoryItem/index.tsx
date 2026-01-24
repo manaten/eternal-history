@@ -1,8 +1,8 @@
 import classNames from "classnames";
 import { FC, memo } from "react";
 
-import { HistoryItem as HistoryItemType } from "../../types/HistoryItem";
-import { highlightText } from "../../util/highlight";
+import { HistoryItem as HistoryItemType } from "../../../types/HistoryItem";
+import { highlightText } from "../../../util/highlight";
 
 interface HistoryItemProps {
   className?: string;

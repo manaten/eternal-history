@@ -1,6 +1,6 @@
 import { FC, memo, useState } from "react";
 
-import { SavedQuery } from "../../lib/savedQueries";
+import { SavedQuery } from "../../../lib/savedQueries";
 import { SavedQueries } from "../SavedQueries";
 import { SearchBox } from "../SearchBox";
 

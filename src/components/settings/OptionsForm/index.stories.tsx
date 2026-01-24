@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
 import { OptionsForm } from "./index";
-import { DEFAULT_SETTINGS } from "../../lib/settings";
+import { DEFAULT_SETTINGS } from "../../../lib/settings";
 
 const meta: Meta<typeof OptionsForm> = {
   title: "Components/OptionsForm",

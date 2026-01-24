@@ -1,8 +1,8 @@
 import { FC, useMemo } from "react";
 
-import { t } from "../../i18n";
-import { HistoryItem } from "../../types/HistoryItem";
-import { Dropdown } from "../Dropdown";
+import { t } from "../../../i18n";
+import { HistoryItem } from "../../../types/HistoryItem";
+import { Dropdown } from "../../common/Dropdown";
 
 interface HistoryDropdownProps {
   item: HistoryItem;

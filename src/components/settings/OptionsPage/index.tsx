@@ -1,9 +1,9 @@
 import { ComponentProps, FC } from "react";
 
-import { t } from "../../i18n";
-import { Settings } from "../../types/Settings";
+import { t } from "../../../i18n";
+import { Settings } from "../../../types/Settings";
+import { Spinner } from "../../common/Spinner";
 import { OptionsForm } from "../OptionsForm";
-import { Spinner } from "../Spinner";
 
 interface OptionsPageProps extends Omit<
   ComponentProps<typeof OptionsForm>,

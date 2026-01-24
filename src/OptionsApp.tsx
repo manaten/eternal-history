@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { OptionsPage } from "./components/OptionsPage";
+import { OptionsPage } from "./components/settings/OptionsPage";
 import { getSettings, resetSettings, saveSettings } from "./lib/settings";
 import { Settings } from "./types/Settings";
 

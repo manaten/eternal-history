@@ -1,9 +1,9 @@
 import { FC, useState } from "react";
 
-import { t } from "../../i18n";
-import { SavedQuery } from "../../lib/savedQueries";
-import { HistoryItem } from "../../types/HistoryItem";
-import { FloatingButton } from "../FloatingButton";
+import { t } from "../../../i18n";
+import { SavedQuery } from "../../../lib/savedQueries";
+import { HistoryItem } from "../../../types/HistoryItem";
+import { FloatingButton } from "../../common/FloatingButton";
 import { Header } from "../Header";
 import { HelpModal } from "../HelpModal";
 import { Histories } from "../Histories";
