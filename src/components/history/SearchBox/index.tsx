@@ -43,8 +43,8 @@ export const SearchBox: FC<SearchBoxProps> = ({
             w-full rounded-xl border-2 border-transparent bg-white p-4 pr-14
             pl-5 text-base font-normal text-gray-800 shadow-md outline-none
             placeholder:font-normal placeholder:text-gray-400
-            focus:-translate-y-px focus:border-primary focus:shadow-md
-            focus:ring-4 focus:ring-primary/10
+            focus:-translate-y-px focus:border-theme-base focus:shadow-md
+            focus:ring-4 focus:ring-theme-base/10
             disabled:cursor-not-allowed disabled:bg-gray-100
             disabled:text-gray-400 disabled:shadow-sm
           `}
@@ -56,9 +56,9 @@ export const SearchBox: FC<SearchBoxProps> = ({
           className={`
             absolute top-1/2 right-2 flex size-10 -translate-y-1/2
             cursor-pointer items-center justify-center rounded-lg border-none
-            bg-primary text-xl font-semibold text-white shadow-sm transition-all
-            duration-200
-            hover:not-disabled:scale-105 hover:not-disabled:bg-primary-hover
+            bg-theme-base text-xl font-semibold text-white shadow-sm
+            transition-all duration-200
+            hover:not-disabled:scale-105 hover:not-disabled:bg-theme-hover
             hover:not-disabled:shadow-md
             active:not-disabled:scale-95
             disabled:scale-100 disabled:cursor-not-allowed disabled:bg-gray-100

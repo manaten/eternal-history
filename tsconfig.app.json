@@ -28,5 +28,5 @@
 
     "types": ["vitest/importMeta", "@types/chrome"]
   },
-  "include": ["src", ".storybook/*.ts"]
+  "include": ["src", ".storybook/*.ts", ".storybook/*.tsx"]
 }

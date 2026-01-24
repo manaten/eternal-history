@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { OptionsPage } from "./components/settings/OptionsPage";
 import { getSettings, resetSettings, saveSettings } from "./lib/settings";
+import { applyTheme } from "./lib/theme";
 import { Settings } from "./types/Settings";
 
 function OptionsApp() {
@@ -28,6 +29,7 @@ function OptionsApp() {
       initialSettings={initialSettings}
       onSave={handleSave}
       onReset={handleReset}
+      onThemeChange={applyTheme}
     />
   );
 }

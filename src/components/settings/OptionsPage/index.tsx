@@ -14,8 +14,7 @@ interface OptionsPageProps extends Omit<
 
 export const OptionsPage: FC<OptionsPageProps> = ({
   initialSettings,
-  onSave,
-  onReset,
+  ...props
 }) => {
   if (!initialSettings) {
     return (
@@ -41,11 +40,7 @@ export const OptionsPage: FC<OptionsPageProps> = ({
         {t("options.title")}
       </h1>
 
-      <OptionsForm
-        initialSettings={initialSettings}
-        onSave={onSave}
-        onReset={onReset}
-      />
+      <OptionsForm initialSettings={initialSettings} {...props} />
     </main>
   );
 };
