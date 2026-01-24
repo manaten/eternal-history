@@ -9,12 +9,12 @@ const ICONS: Record<IconType, React.ReactNode> = {
   options: <SettingsIcon />,
 };
 
-interface FloatingButtonProps extends ComponentPropsWithoutRef<"button"> {
+interface ActionButtonProps extends ComponentPropsWithoutRef<"button"> {
   icon: IconType;
   className?: string;
 }
 
-export const FloatingButton: FC<FloatingButtonProps> = ({
+export const ActionButton: FC<ActionButtonProps> = ({
   icon,
   className,
   ...props
@@ -23,12 +23,12 @@ export const FloatingButton: FC<FloatingButtonProps> = ({
     <button
       className={classNames(
         `
-          fixed right-4 z-100 flex size-12 cursor-pointer items-center
-          justify-center rounded-full bg-slate-50 text-xl font-semibold
-          text-gray-800 shadow-lg transition-all duration-200
+          flex size-12 cursor-pointer items-center justify-center rounded-full
+          bg-slate-50 text-xl font-semibold text-gray-800 shadow-lg
+          transition-all duration-200
           hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-600
           active:translate-y-0
-          md:right-6 md:size-14 md:text-2xl
+          md:size-14 md:text-2xl
         `,
         className,
       )}
