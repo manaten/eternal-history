@@ -16,14 +16,15 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    settings: DEFAULT_SETTINGS,
-    saved: false,
+    initialSettings: DEFAULT_SETTINGS,
     isLoading: false,
-    onGroupByUrlChange: (value) => console.log("Group by URL changed:", value),
-    onGroupByTitleChange: (value) =>
-      console.log("Group by title changed:", value),
-    onSave: () => console.log("Save clicked"),
-    onReset: () => console.log("Reset clicked"),
+    onSave: async (settings) => {
+      console.log("Save clicked with settings:", settings);
+    },
+    onReset: async () => {
+      console.log("Reset clicked");
+      return DEFAULT_SETTINGS;
+    },
   },
 };
 
@@ -34,17 +35,10 @@ export const Loading: Story = {
   },
 };
 
-export const Saved: Story = {
-  args: {
-    ...Default.args,
-    saved: true,
-  },
-};
-
 export const GroupByUrlEnabled: Story = {
   args: {
     ...Default.args,
-    settings: {
+    initialSettings: {
       ...DEFAULT_SETTINGS,
       search: {
         ...DEFAULT_SETTINGS.search,
@@ -57,7 +51,7 @@ export const GroupByUrlEnabled: Story = {
 export const GroupByTitleEnabled: Story = {
   args: {
     ...Default.args,
-    settings: {
+    initialSettings: {
       ...DEFAULT_SETTINGS,
       search: {
         ...DEFAULT_SETTINGS.search,
@@ -70,7 +64,7 @@ export const GroupByTitleEnabled: Story = {
 export const BothGroupingEnabled: Story = {
   args: {
     ...Default.args,
-    settings: {
+    initialSettings: {
       ...DEFAULT_SETTINGS,
       search: {
         groupByUrl: true,

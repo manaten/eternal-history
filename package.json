@@ -29,7 +29,8 @@
     "classnames": "^2.5.1",
     "p-map": "^7.0.3",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "react-hook-form": "^7.71.1"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.1",
