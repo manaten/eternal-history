@@ -3,7 +3,7 @@ import { FC, useState } from "react";
 import { t } from "../../../i18n";
 import { SavedQuery } from "../../../lib/savedQueries";
 import { HistoryItem } from "../../../types/HistoryItem";
-import { FloatingButton } from "../../common/FloatingButton";
+import { ActionButton } from "../../common/ActionButton";
 import { Header } from "../Header";
 import { HelpModal } from "../HelpModal";
 import { Histories } from "../Histories";
@@ -68,24 +68,24 @@ export const Root: FC<RootProps> = ({
         searchQuery={searchQuery}
         onDeleteItem={onDeleteHistoryItem}
       />
-      <FloatingButton
+      <ActionButton
         icon='options'
         onClick={handleOpenOptions}
         aria-label={t("optionsButton.openOptions")}
         title={t("optionsButton.options")}
         className={`
-          bottom-20
-          md:bottom-[104px]
+          fixed right-4 bottom-20 z-100
+          md:right-6 md:bottom-[104px]
         `}
       />
-      <FloatingButton
+      <ActionButton
         icon='help'
         onClick={handleOpenHelp}
         aria-label={t("helpButton.openHelp")}
         title={t("helpButton.help")}
         className={`
-          bottom-4
-          md:bottom-6
+          fixed right-4 bottom-4 z-100
+          md:right-6 md:bottom-6
         `}
       />
       <HelpModal isOpen={isHelpModalOpen} onClose={handleCloseHelp} />

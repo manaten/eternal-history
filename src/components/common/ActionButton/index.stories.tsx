@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import { FloatingButton } from "./index";
+import { ActionButton } from "./index";
 
-const meta: Meta<typeof FloatingButton> = {
-  component: FloatingButton,
+const meta: Meta<typeof ActionButton> = {
+  component: ActionButton,
   parameters: {
-    layout: "fullscreen",
+    layout: "centered",
   },
 };
 
@@ -19,7 +19,6 @@ export const Help: Story = {
     onClick: fn(),
     "aria-label": "Open help",
     title: "Help",
-    className: "bottom-4 md:bottom-6",
   },
 };
 
@@ -29,6 +28,5 @@ export const Options: Story = {
     onClick: fn(),
     "aria-label": "Open options",
     title: "Options",
-    className: "bottom-20 md:bottom-[104px]",
   },
 };
