@@ -2,6 +2,8 @@ import type { Preview } from "@storybook/react-vite";
 import { useEffect } from "react";
 
 import { applyTheme } from "../src/lib/theme";
+import { ThemeColor } from "../src/types/Settings";
+
 import "../src/index.css";
 
 const preview: Preview = {
@@ -17,7 +19,7 @@ const preview: Preview = {
           { value: "lime", title: "Lime" },
           { value: "red", title: "Red" },
           { value: "purple", title: "Purple" },
-        ],
+        ] satisfies { value: ThemeColor; title: string }[],
         dynamicTitle: true,
       },
     },
