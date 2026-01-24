@@ -3,7 +3,6 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Header } from "./index";
 
 const meta: Meta<typeof Header> = {
-  title: "Components/Header",
   component: Header,
   parameters: {
     layout: "centered",

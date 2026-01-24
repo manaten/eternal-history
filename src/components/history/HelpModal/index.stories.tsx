@@ -4,7 +4,6 @@ import { fn } from "storybook/test";
 import { HelpModal } from "./index";
 
 const meta: Meta<typeof HelpModal> = {
-  title: "Components/HelpModal",
   component: HelpModal,
   parameters: {
     layout: "fullscreen",

@@ -5,7 +5,6 @@ import { expect } from "storybook/test";
 import { Dropdown } from "./index";
 
 const meta: Meta<typeof Dropdown> = {
-  title: "Components/Dropdown",
   component: Dropdown,
   parameters: {
     layout: "centered",

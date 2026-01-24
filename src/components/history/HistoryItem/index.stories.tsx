@@ -3,7 +3,6 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { HistoryItem } from "./index";
 
 const meta: Meta<typeof HistoryItem> = {
-  title: "Components/HistoryItem",
   component: HistoryItem,
   parameters: {
     layout: "centered",

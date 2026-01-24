@@ -5,7 +5,6 @@ import { OptionsPage } from "./index";
 import { DEFAULT_SETTINGS } from "../../../lib/settings";
 
 const meta: Meta<typeof OptionsPage> = {
-  title: "Components/OptionsPage",
   component: OptionsPage,
   parameters: {
     layout: "fullscreen",

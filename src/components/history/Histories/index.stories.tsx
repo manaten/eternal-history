@@ -4,7 +4,6 @@ import { Histories } from "./index";
 import type { HistoryItem } from "../../../types/HistoryItem";
 
 const meta: Meta<typeof Histories> = {
-  title: "Components/Histories",
   component: Histories,
   parameters: {
     layout: "centered",

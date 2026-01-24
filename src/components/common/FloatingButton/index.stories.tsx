@@ -4,7 +4,6 @@ import { fn } from "storybook/test";
 import { FloatingButton } from "./index";
 
 const meta: Meta<typeof FloatingButton> = {
-  title: "Components/FloatingButton",
   component: FloatingButton,
   parameters: {
     layout: "fullscreen",

@@ -4,7 +4,6 @@ import { HistoryDropdown } from "./index";
 import { HistoryItem } from "../../../types/HistoryItem";
 
 const meta: Meta<typeof HistoryDropdown> = {
-  title: "Components/HistoryDropdown",
   component: HistoryDropdown,
   parameters: {
     layout: "centered",

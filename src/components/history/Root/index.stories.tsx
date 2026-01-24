@@ -4,7 +4,6 @@ import { Root } from "./index";
 import type { HistoryItem } from "../../../types/HistoryItem";
 
 const meta: Meta<typeof Root> = {
-  title: "Components/Root",
   component: Root,
   parameters: {
     layout: "fullscreen",

@@ -4,7 +4,6 @@ import { fn } from "storybook/test";
 import { CheckBoxWithLabel } from "./index";
 
 const meta: Meta<typeof CheckBoxWithLabel> = {
-  title: "Components/CheckBoxWithLabel",
   component: CheckBoxWithLabel,
   parameters: {
     layout: "centered",

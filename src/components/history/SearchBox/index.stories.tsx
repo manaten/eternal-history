@@ -3,7 +3,6 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { SearchBox } from "./index";
 
 const meta: Meta<typeof SearchBox> = {
-  title: "Components/SearchBox",
   component: SearchBox,
   parameters: {
     layout: "centered",

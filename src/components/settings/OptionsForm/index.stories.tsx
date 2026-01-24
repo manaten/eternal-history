@@ -5,7 +5,6 @@ import { OptionsForm } from "./index";
 import { DEFAULT_SETTINGS } from "../../../lib/settings";
 
 const meta: Meta<typeof OptionsForm> = {
-  title: "Components/OptionsForm",
   component: OptionsForm,
   parameters: {
     layout: "centered",
