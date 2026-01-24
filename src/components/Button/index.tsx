@@ -1,22 +1,9 @@
 import classNames from "classnames";
 import { ComponentPropsWithoutRef, FC, memo } from "react";
 
-type ButtonVariant = "primary" | "secondary";
-
 interface ButtonProps extends ComponentPropsWithoutRef<"button"> {
-  variant?: ButtonVariant;
+  variant?: "primary" | "secondary";
 }
-
-const variantStyles: Record<ButtonVariant, string> = {
-  primary: `
-    bg-primary text-white shadow-md
-    not-disabled:hover:bg-primary-hover not-disabled:hover:shadow-lg
-  `,
-  secondary: `
-    border border-gray-300 bg-white text-gray-700 shadow-sm
-    not-disabled:hover:bg-gray-50 not-disabled:hover:shadow-md
-  `,
-};
 
 export const Button: FC<ButtonProps> = memo(
   ({ variant = "primary", className, children, ...props }) => {
@@ -28,7 +15,16 @@ export const Button: FC<ButtonProps> = memo(
             not-disabled:cursor-pointer
             not-disabled:active:translate-y-0.5
           `,
-          variantStyles[variant],
+          variant === "primary" &&
+            `
+            bg-primary text-white shadow-md
+            not-disabled:hover:bg-primary-hover not-disabled:hover:shadow-lg
+          `,
+          variant === "secondary" &&
+            `
+            border border-gray-300 bg-white text-gray-700 shadow-sm
+            not-disabled:hover:bg-gray-50 not-disabled:hover:shadow-md
+          `,
           className,
         )}
         {...props}
