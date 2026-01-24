@@ -2,6 +2,7 @@ import { FC } from "react";
 
 import { t } from "../../i18n";
 import { Settings } from "../../types/Settings";
+import { Button } from "../Button";
 import { CheckBoxWithLabel } from "../CheckBoxWithLabel";
 
 interface OptionsPageProps {
@@ -77,28 +78,12 @@ export const OptionsPage: FC<OptionsPageProps> = ({
 
       {/* Action buttons */}
       <div className='flex flex-wrap items-center gap-3'>
-        <button
-          onClick={onSave}
-          className={`
-            rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white
-            shadow-md transition-all
-            hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-lg
-            active:translate-y-0
-          `}
-        >
+        <Button variant='primary' onClick={onSave}>
           {t("options.save")}
-        </button>
-        <button
-          onClick={onReset}
-          className={`
-            rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm
-            font-semibold text-gray-700 shadow-sm transition-all
-            hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-md
-            active:translate-y-0
-          `}
-        >
+        </Button>
+        <Button variant='secondary' onClick={onReset}>
           {t("options.reset")}
-        </button>
+        </Button>
         {saved && (
           <span className='text-sm font-medium text-emerald-100'>
             {t("options.saved")}
