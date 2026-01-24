@@ -1,22 +1,10 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-theme="emerald">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Eternal History</title>
     <link rel="icon" href="/assets/favicon.ico" />
-    <script>
-      // Apply theme early to prevent flash
-      (async () => {
-        try {
-          const result = await chrome.storage.sync.get("settings");
-          const theme = result.settings?.theme || "emerald";
-          document.documentElement.setAttribute("data-theme", theme);
-        } catch (e) {
-          // Ignore errors - default theme will be used
-        }
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>
