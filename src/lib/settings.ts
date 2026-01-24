@@ -1,4 +1,4 @@
-import { Settings } from "../types/Settings";
+import { Settings, ThemeColor } from "../types/Settings";
 
 const DEFAULT_SETTINGS: Settings = {
   theme: "emerald",
@@ -9,6 +9,21 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 const STORAGE_KEY = "settings";
+const THEME_STORAGE_KEY = "eternal-history-theme";
+
+/**
+ * Get theme from localStorage (synchronous)
+ */
+export const getThemeFromLocalStorage = (): ThemeColor | null => {
+  return localStorage.getItem(THEME_STORAGE_KEY) as ThemeColor | null;
+};
+
+/**
+ * Save theme to localStorage (internal function)
+ */
+const saveThemeToLocalStorage = (theme: ThemeColor): void => {
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+};
 
 /**
  * Get current settings from Chrome Storage
@@ -37,6 +52,8 @@ export const getSettings = async (): Promise<Settings> => {
  */
 export const saveSettings = async (settings: Settings): Promise<void> => {
   await chrome.storage.sync.set({ [STORAGE_KEY]: settings });
+  // Also save theme to localStorage for synchronous access on page load
+  saveThemeToLocalStorage(settings.theme);
 };
 
 /**

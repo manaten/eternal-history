@@ -3,13 +3,9 @@ import { createRoot } from "react-dom/client";
 
 import "./index.css";
 import OptionsApp from "./OptionsApp";
-import { getSettings } from "./lib/settings";
-import { applyTheme } from "./lib/theme";
+import { initializeTheme } from "./lib/theme";
 
-// Apply theme immediately before rendering
-getSettings().then((settings) => {
-  applyTheme(settings.theme);
-});
+initializeTheme();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
