@@ -3,6 +3,7 @@ import { ComponentProps, FC } from "react";
 import { t } from "../../i18n";
 import { Settings } from "../../types/Settings";
 import { OptionsForm } from "../OptionsForm";
+import { Spinner } from "../Spinner";
 
 interface OptionsPageProps extends Omit<
   ComponentProps<typeof OptionsForm>,
@@ -19,12 +20,7 @@ export const OptionsPage: FC<OptionsPageProps> = ({
   if (!initialSettings) {
     return (
       <div className='flex min-h-screen items-center justify-center'>
-        <div
-          className={`
-            size-8 animate-spin rounded-full border-4 border-primary
-            border-t-transparent
-          `}
-        />
+        <Spinner size='large' />
       </div>
     );
   }
