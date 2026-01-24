@@ -20,7 +20,7 @@ export const CheckBoxWithLabel = forwardRef<
       type='checkbox'
       ref={ref}
       className={`
-        size-5 cursor-pointer rounded-sm border-gray-300 text-theme-base
+        size-5 cursor-pointer rounded-sm border-gray-300
         focus:ring-2 focus:ring-theme-base/20
       `}
       {...inputProps}

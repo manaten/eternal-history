@@ -74,14 +74,15 @@
   --color-theme-700: #047857;
   --color-theme-800: #065f46;
   --color-theme-900: #064e3b;
-  --color-theme-base: #10b981;
-  --color-theme-hover: #056996;
+  --color-theme-base: var(--color-theme-500);
+  --color-theme-hover: var(--color-theme-700);
   --color-theme-gradient-end: #063b4e;
   --background-image: linear-gradient(
     135deg,
     var(--color-theme-base) 0%,
     var(--color-theme-gradient-end) 100%
   );
+  accent-color: var(--color-theme-600);
 }
 
 :root[data-theme="blue"] {
@@ -95,14 +96,15 @@
   --color-theme-700: #1d4ed8;
   --color-theme-800: #1e40af;
   --color-theme-900: #1e3a8a;
-  --color-theme-base: #3b82f6;
-  --color-theme-hover: #1d4ed8;
+  --color-theme-base: var(--color-theme-500);
+  --color-theme-hover: var(--color-theme-700);
   --color-theme-gradient-end: #1e293b;
   --background-image: linear-gradient(
     135deg,
     var(--color-theme-base) 0%,
     var(--color-theme-gradient-end) 100%
   );
+  accent-color: var(--color-theme-600);
 }
 
 :root[data-theme="lime"] {
@@ -116,14 +118,15 @@
   --color-theme-700: #4d7c0f;
   --color-theme-800: #3f6212;
   --color-theme-900: #365314;
-  --color-theme-base: #84cc16;
-  --color-theme-hover: #65a30d;
+  --color-theme-base: var(--color-theme-500);
+  --color-theme-hover: var(--color-theme-600);
   --color-theme-gradient-end: #1e3a1a;
   --background-image: linear-gradient(
     135deg,
     var(--color-theme-base) 0%,
     var(--color-theme-gradient-end) 100%
   );
+  accent-color: var(--color-theme-600);
 }
 
 :root[data-theme="red"] {
@@ -137,14 +140,15 @@
   --color-theme-700: #b91c1c;
   --color-theme-800: #991b1b;
   --color-theme-900: #7f1d1d;
-  --color-theme-base: #ef4444;
-  --color-theme-hover: #dc2626;
+  --color-theme-base: var(--color-theme-500);
+  --color-theme-hover: var(--color-theme-600);
   --color-theme-gradient-end: #3b1e1e;
   --background-image: linear-gradient(
     135deg,
     var(--color-theme-base) 0%,
     var(--color-theme-gradient-end) 100%
   );
+  accent-color: var(--color-theme-600);
 }
 
 :root[data-theme="purple"] {
@@ -158,14 +162,15 @@
   --color-theme-700: #7e22ce;
   --color-theme-800: #6b21a8;
   --color-theme-900: #581c87;
-  --color-theme-base: #a855f7;
-  --color-theme-hover: #7e22ce;
+  --color-theme-base: var(--color-theme-500);
+  --color-theme-hover: var(--color-theme-700);
   --color-theme-gradient-end: #2e1a3b;
   --background-image: linear-gradient(
     135deg,
     var(--color-theme-base) 0%,
     var(--color-theme-gradient-end) 100%
   );
+  accent-color: var(--color-theme-600);
 }
 
 body {
