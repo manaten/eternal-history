@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { fn } from "storybook/test";
 
 import { HelpModal } from "./index";
 
@@ -16,13 +17,13 @@ type Story = StoryObj<typeof meta>;
 export const Open: Story = {
   args: {
     isOpen: true,
-    onClose: () => console.log("Modal closed"),
+    onClose: fn(),
   },
 };
 
 export const Closed: Story = {
   args: {
     isOpen: false,
-    onClose: () => console.log("Modal closed"),
+    onClose: fn(),
   },
 };
