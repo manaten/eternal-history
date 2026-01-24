@@ -1,7 +1,26 @@
-import { FC } from "react";
+import { FC, memo } from "react";
 
 import { t } from "../../i18n";
-import { Settings } from "../../lib/settings";
+import { Settings } from "../../types/Settings";
+
+const CheckBoxWithLabel: FC<{
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}> = memo(({ label, checked, onChange }) => (
+  <label className='flex cursor-pointer items-center gap-3'>
+    <input
+      type='checkbox'
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className={`
+        size-5 cursor-pointer rounded-sm border-gray-300 text-primary
+        focus:ring-2 focus:ring-primary/20
+      `}
+    />
+    <span className='text-sm text-gray-700'>{label}</span>
+  </label>
+));
 
 interface OptionsPageProps {
   settings: Settings;
@@ -59,36 +78,18 @@ export const OptionsPage: FC<OptionsPageProps> = ({
 
         <div className='flex flex-col gap-4'>
           {/* Group by URL */}
-          <label className='flex cursor-pointer items-center gap-3'>
-            <input
-              type='checkbox'
-              checked={settings.search.groupByUrl}
-              onChange={(e) => onGroupByUrlChange(e.target.checked)}
-              className={`
-                size-5 cursor-pointer rounded-sm border-gray-300 text-primary
-                focus:ring-2 focus:ring-primary/20
-              `}
-            />
-            <span className='text-sm text-gray-700'>
-              {t("options.groupByUrl")}
-            </span>
-          </label>
+          <CheckBoxWithLabel
+            label={t("options.groupByUrl")}
+            checked={settings.search.groupByUrl}
+            onChange={onGroupByUrlChange}
+          />
 
           {/* Group by Title */}
-          <label className='flex cursor-pointer items-center gap-3'>
-            <input
-              type='checkbox'
-              checked={settings.search.groupByTitle}
-              onChange={(e) => onGroupByTitleChange(e.target.checked)}
-              className={`
-                size-5 cursor-pointer rounded-sm border-gray-300 text-primary
-                focus:ring-2 focus:ring-primary/20
-              `}
-            />
-            <span className='text-sm text-gray-700'>
-              {t("options.groupByTitle")}
-            </span>
-          </label>
+          <CheckBoxWithLabel
+            label={t("options.groupByTitle")}
+            checked={settings.search.groupByTitle}
+            onChange={onGroupByTitleChange}
+          />
         </div>
       </section>
 

@@ -1,17 +1,4 @@
-/**
- * Settings persistence using Chrome Storage Sync API
- */
-
-export interface SearchSettings {
-  /** Whether to group results with the same URL */
-  groupByUrl: boolean;
-  /** Whether to group results with the same title */
-  groupByTitle: boolean;
-}
-
-export interface Settings {
-  search: SearchSettings;
-}
+import { Settings } from "../types/Settings";
 
 const DEFAULT_SETTINGS: Settings = {
   search: {
