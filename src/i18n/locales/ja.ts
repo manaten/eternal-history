@@ -50,6 +50,12 @@ export const ja = {
 
   // Options page
   "options.title": "Eternal History オプション",
+  "options.theme": "テーマ",
+  "options.themeEmerald": "緑",
+  "options.themeBlue": "青",
+  "options.themeLime": "黄緑",
+  "options.themeRed": "赤",
+  "options.themePurple": "紫",
   "options.search": "検索設定",
   "options.groupByUrl": "同一URLの検索結果をまとめる",
   "options.groupByTitle": "同一タイトルの検索結果をまとめる",

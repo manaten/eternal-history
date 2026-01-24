@@ -22,7 +22,7 @@ export const Spinner: FC<SpinnerProps> = ({ size = "medium", className }) => {
     >
       <div
         className={classNames(
-          "animate-spin rounded-full border-white/20 border-t-primary",
+          "animate-spin rounded-full border-white/20 border-t-theme-base",
           sizeClasses[size],
         )}
       />

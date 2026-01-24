@@ -47,6 +47,12 @@ export const en = {
 
   // Options page
   "options.title": "Eternal History Options",
+  "options.theme": "Theme",
+  "options.themeEmerald": "Emerald",
+  "options.themeBlue": "Blue",
+  "options.themeLime": "Lime",
+  "options.themeRed": "Red",
+  "options.themePurple": "Purple",
   "options.search": "Search Settings",
   "options.groupByUrl": "Group results with the same URL",
   "options.groupByTitle": "Group results with the same title",

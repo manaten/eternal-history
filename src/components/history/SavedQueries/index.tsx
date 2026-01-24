@@ -33,7 +33,7 @@ export const SavedQueries: FC<SavedQueriesProps> = ({
               flex items-stretch overflow-hidden rounded-lg border
               border-white/20 bg-white/10 text-white/80 shadow-sm
               backdrop-blur-[10px] transition-all duration-200
-              hover:-translate-y-px hover:border-primary hover:bg-white/20
+              hover:-translate-y-px hover:border-theme-base hover:bg-white/20
               hover:shadow-md
               active:translate-y-0
             `,

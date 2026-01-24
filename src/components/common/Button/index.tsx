@@ -17,8 +17,8 @@ export const Button: FC<ButtonProps> = memo(
           `,
           variant === "primary" &&
             `
-            bg-primary text-white shadow-md
-            not-disabled:hover:bg-primary-hover not-disabled:hover:shadow-lg
+            bg-theme-base text-white shadow-md
+            not-disabled:hover:bg-theme-hover not-disabled:hover:shadow-lg
           `,
           variant === "secondary" &&
             `

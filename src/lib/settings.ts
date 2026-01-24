@@ -1,6 +1,7 @@
 import { Settings } from "../types/Settings";
 
 const DEFAULT_SETTINGS: Settings = {
+  theme: "emerald",
   search: {
     groupByUrl: false,
     groupByTitle: false,
