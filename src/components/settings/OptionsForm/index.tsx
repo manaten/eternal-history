@@ -3,9 +3,10 @@ import { useForm } from "react-hook-form";
 
 import { t } from "../../../i18n";
 import { applyTheme } from "../../../lib/theme";
-import { Settings, ThemeColor } from "../../../types/Settings";
+import { Settings } from "../../../types/Settings";
 import { Button } from "../../common/Button";
 import { CheckBoxWithLabel } from "../../common/CheckBoxWithLabel";
+import { ThemeSelector } from "../ThemeSelector";
 
 interface OptionsFormProps {
   initialSettings: Settings;
@@ -24,9 +25,6 @@ export const OptionsForm: FC<OptionsFormProps> = ({
     defaultValues: initialSettings,
   });
 
-  // Watch theme changes for live preview
-  const currentTheme = watch("theme");
-
   // Update form when initialSettings changes (e.g., after reset)
   useEffect(() => {
     reset(initialSettings);
@@ -34,10 +32,13 @@ export const OptionsForm: FC<OptionsFormProps> = ({
 
   // Apply theme changes in real-time for preview
   useEffect(() => {
-    if (currentTheme) {
-      applyTheme(currentTheme);
-    }
-  }, [currentTheme]);
+    const subscription = watch((value) => {
+      if (value.theme) {
+        applyTheme(value.theme);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const onSubmit = async (data: Settings) => {
     await onSave(data);
@@ -52,14 +53,6 @@ export const OptionsForm: FC<OptionsFormProps> = ({
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const themes: { value: ThemeColor; title: string }[] = [
-    { value: "emerald", title: t("options.themeEmerald") },
-    { value: "blue", title: t("options.themeBlue") },
-    { value: "lime", title: t("options.themeLime") },
-    { value: "red", title: t("options.themeRed") },
-    { value: "purple", title: t("options.themePurple") },
-  ];
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6'>
       {/* Theme Settings */}
@@ -68,35 +61,7 @@ export const OptionsForm: FC<OptionsFormProps> = ({
           {t("options.theme")}
         </h2>
 
-        <div className='flex flex-wrap gap-3'>
-          {themes.map((theme) => (
-            <label
-              key={theme.value}
-              className='relative cursor-pointer'
-              title={theme.title}
-            >
-              <input
-                type='radio'
-                value={theme.value}
-                {...register("theme")}
-                className='sr-only'
-              />
-              <div
-                className={`
-                  size-8 rounded-full transition-all
-                  ${
-                    currentTheme === theme.value
-                      ? "ring-4 ring-theme-base"
-                      : "hover:ring-2 hover:ring-theme-base/30"
-                  }
-                `}
-                style={{
-                  background: `var(--color-${theme.value}-500)`,
-                }}
-              />
-            </label>
-          ))}
-        </div>
+        <ThemeSelector radioProps={register("theme")} />
       </section>
 
       {/* Search Settings */}
