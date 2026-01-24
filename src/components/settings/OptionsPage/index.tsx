@@ -41,6 +41,21 @@ export const OptionsPage: FC<OptionsPageProps> = ({
       </h1>
 
       <OptionsForm initialSettings={initialSettings} {...props} />
+
+      <footer className='mt-auto pt-8 text-center text-sm text-gray-400'>
+        Eternal History by{" "}
+        <a
+          href='https://manaten.net'
+          target='_blank'
+          rel='noopener noreferrer'
+          className='
+            text-emerald-400 underline transition-colors
+            hover:text-white
+          '
+        >
+          manaten
+        </a>
+      </footer>
     </main>
   );
 };
