@@ -21,3 +21,14 @@ export const Default: Story = {
     },
   },
 };
+
+export const Checked: Story = {
+  args: {
+    radioProps: {
+      name: "theme",
+      onChange: fn(),
+      defaultChecked: true,
+      defaultValue: "emerald",
+    },
+  },
+};

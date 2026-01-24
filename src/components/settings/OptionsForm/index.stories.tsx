@@ -21,3 +21,18 @@ export const Default: Story = {
     onReset: fn().mockResolvedValue(DEFAULT_SETTINGS),
   },
 };
+
+export const WithBlueTheme: Story = {
+  args: {
+    initialSettings: {
+      ...DEFAULT_SETTINGS,
+      theme: "blue",
+      search: {
+        groupByTitle: true,
+        groupByUrl: false,
+      },
+    },
+    onSave: fn(),
+    onReset: fn().mockResolvedValue(DEFAULT_SETTINGS),
+  },
+};
