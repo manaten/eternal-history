@@ -1,9 +1,10 @@
 import { FC, useState } from "react";
 
+import { t } from "../../i18n";
 import { SavedQuery } from "../../lib/savedQueries";
 import { HistoryItem } from "../../types/HistoryItem";
+import { FloatingButton } from "../FloatingButton";
 import { Header } from "../Header";
-import { HelpButton } from "../HelpButton";
 import { HelpModal } from "../HelpModal";
 import { Histories } from "../Histories";
 
@@ -40,6 +41,10 @@ export const Root: FC<RootProps> = ({
     setIsHelpModalOpen(false);
   };
 
+  const handleOpenOptions = () => {
+    chrome.runtime.openOptionsPage();
+  };
+
   return (
     <main
       className={`
@@ -63,7 +68,26 @@ export const Root: FC<RootProps> = ({
         searchQuery={searchQuery}
         onDeleteItem={onDeleteHistoryItem}
       />
-      <HelpButton onClick={handleOpenHelp} />
+      <FloatingButton
+        icon='options'
+        onClick={handleOpenOptions}
+        aria-label={t("optionsButton.openOptions")}
+        title={t("optionsButton.options")}
+        className={`
+          bottom-20
+          md:bottom-[104px]
+        `}
+      />
+      <FloatingButton
+        icon='help'
+        onClick={handleOpenHelp}
+        aria-label={t("helpButton.openHelp")}
+        title={t("helpButton.help")}
+        className={`
+          bottom-4
+          md:bottom-6
+        `}
+      />
       <HelpModal isOpen={isHelpModalOpen} onClose={handleCloseHelp} />
     </main>
   );

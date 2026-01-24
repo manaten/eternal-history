@@ -40,4 +40,17 @@ export const en = {
   "helpModal.savingQueries": "Saving Queries",
   "helpModal.savingQueriesDescription":
     'Click the "+" button next to the search box to save frequently used queries for quick access.',
+
+  // Options button
+  "optionsButton.openOptions": "Open options",
+  "optionsButton.options": "Options",
+
+  // Options page
+  "options.title": "Eternal History Options",
+  "options.search": "Search Settings",
+  "options.groupByUrl": "Group results with the same URL",
+  "options.groupByTitle": "Group results with the same title",
+  "options.save": "Save",
+  "options.reset": "Reset to defaults",
+  "options.saved": "Settings saved!",
 } as const;

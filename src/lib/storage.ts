@@ -1,5 +1,6 @@
 import pMap from "p-map";
 
+import { uniqBy } from "./array";
 import {
   getOrCreateFolder,
   isUnderFolder,
@@ -12,6 +13,11 @@ import {
 import { dateToFolderNames, getDateArray } from "./date";
 import { parseSearchQuery } from "./query";
 import { HistoryItem } from "../types/HistoryItem";
+
+export interface SearchOptions {
+  groupByUrl?: boolean;
+  groupByTitle?: boolean;
+}
 
 export const ROOT_FOLDER_NAME = "Eternal History";
 
@@ -184,12 +190,41 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
 }
 
 /**
+ * 検索結果をグルーピングします。
+ * 同一URLまたは同一タイトルの結果をまとめ、最新のものだけを残します。
+ */
+function groupHistories(
+  items: HistoryItem[],
+  options?: SearchOptions,
+): HistoryItem[] {
+  if (!options?.groupByUrl && !options?.groupByTitle) {
+    return items;
+  }
+
+  // 最新順にソート
+  const sorted = [...items].sort((a, b) => b.lastVisitTime - a.lastVisitTime);
+
+  // URLでグルーピング（最初に出現したものを残す = 最新のもの）
+  const afterUrlGrouping = options.groupByUrl
+    ? uniqBy(sorted, (item) => item.url)
+    : sorted;
+
+  // タイトルでグルーピング
+  const afterTitleGrouping = options.groupByTitle
+    ? uniqBy(afterUrlGrouping, (item) => item.title || "")
+    : afterUrlGrouping;
+
+  return afterTitleGrouping;
+}
+
+/**
  * 保存された履歴アイテムを検索します。
  * クエリ文字列をスペースで分割し、すべての単語がタイトルまたはURLに含まれるアイテムを返します。
  * site:example.com構文でドメイン検索も可能です。
  * 検索対象は "Eternal History" フォルダ配下のブックマークのみです。
  *
  * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能、site:ドメイン指定可能）
+ * @param options - 検索オプション（groupByUrl, groupByTitle）
  * @returns マッチした履歴アイテムの配列を返すPromise
  *
  * @example
@@ -206,6 +241,9 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
  * // ドメイン検索と単語の組み合わせ
  * const results4 = await search("site:google.com search");
  *
+ * // グルーピングオプション付き検索
+ * const results5 = await search("google", { groupByUrl: true });
+ *
  * // 検索結果を表示
  * results2.forEach(item => {
  *   console.log(`${item.title}: ${item.url}`);
@@ -215,7 +253,10 @@ async function insertHistoryAsBookmark(history: HistoryItem) {
  * const empty = await search("   "); // []
  * ```
  */
-export async function search(query: string): Promise<HistoryItem[]> {
+export async function search(
+  query: string,
+  options?: SearchOptions,
+): Promise<HistoryItem[]> {
   if (!rootFolderId) {
     return [];
   }
@@ -232,7 +273,7 @@ export async function search(query: string): Promise<HistoryItem[]> {
   const bookmarks = await searchHistoriesByQuery(nonExcludeTerms[0].term);
 
   // フィルタリング
-  return bookmarks.filter((bookmark) => {
+  const filtered = bookmarks.filter((bookmark) => {
     const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
 
     return parsedTerms.every((parsedTerm) => {
@@ -255,6 +296,9 @@ export async function search(query: string): Promise<HistoryItem[]> {
       return searchText.includes(parsedTerm.term);
     });
   });
+
+  // グルーピング処理
+  return groupHistories(filtered, options);
 }
 
 async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {

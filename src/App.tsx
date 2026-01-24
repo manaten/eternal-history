@@ -8,6 +8,7 @@ import {
   removeSavedQuery,
   SavedQuery,
 } from "./lib/savedQueries";
+import { getSettings } from "./lib/settings";
 import {
   search,
   initializeStorage,
@@ -53,7 +54,7 @@ function App() {
     try {
       await initializeStorage();
       const results: HistoryItem[] = trimmedQuery
-        ? await search(trimmedQuery)
+        ? await search(trimmedQuery, (await getSettings()).search)
         : await getRecentHistories(3);
       setHistory(results);
     } catch (error) {

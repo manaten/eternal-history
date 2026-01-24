@@ -43,4 +43,17 @@ export const ja = {
   "helpModal.savingQueries": "クエリの保存",
   "helpModal.savingQueriesDescription":
     "検索ボックス横の「+」ボタンをクリックすることでクエリの保存ができます。よく使うクエリを保存し、すばやくアクセスできます。",
+
+  // Options button
+  "optionsButton.openOptions": "オプションを開く",
+  "optionsButton.options": "オプション",
+
+  // Options page
+  "options.title": "Eternal History オプション",
+  "options.search": "検索設定",
+  "options.groupByUrl": "同一URLの検索結果をまとめる",
+  "options.groupByTitle": "同一タイトルの検索結果をまとめる",
+  "options.save": "保存",
+  "options.reset": "初期設定に戻す",
+  "options.saved": "設定を保存しました！",
 } as const satisfies Record<keyof typeof en, string>;

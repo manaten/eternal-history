@@ -11,6 +11,7 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
+  "options_page": "options.html",
   "icons": {
     "16": "assets/icon16.png",
     "32": "assets/icon32.png",
