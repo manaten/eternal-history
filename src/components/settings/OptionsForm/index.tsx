@@ -52,12 +52,12 @@ export const OptionsForm: FC<OptionsFormProps> = ({
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const themes: { value: ThemeColor; label: string }[] = [
-    { value: "emerald", label: t("options.themeEmerald") },
-    { value: "blue", label: t("options.themeBlue") },
-    { value: "lime", label: t("options.themeLime") },
-    { value: "red", label: t("options.themeRed") },
-    { value: "purple", label: t("options.themePurple") },
+  const themes: { value: ThemeColor; title: string }[] = [
+    { value: "emerald", title: t("options.themeEmerald") },
+    { value: "blue", title: t("options.themeBlue") },
+    { value: "lime", title: t("options.themeLime") },
+    { value: "red", title: t("options.themeRed") },
+    { value: "purple", title: t("options.themePurple") },
   ];
 
   return (
@@ -69,22 +69,31 @@ export const OptionsForm: FC<OptionsFormProps> = ({
         </h2>
 
         <div className='flex flex-wrap gap-3'>
-          {themes.map(({ value, label }) => (
+          {themes.map((theme) => (
             <label
-              key={value}
-              className={`
-                flex cursor-pointer items-center gap-2 rounded-lg border-2 px-4
-                py-2 transition-all
-                hover:border-gray-300 hover:bg-gray-50
-              `}
+              key={theme.value}
+              className='relative cursor-pointer'
+              title={theme.title}
             >
               <input
                 type='radio'
-                value={value}
+                value={theme.value}
                 {...register("theme")}
-                className='size-4 cursor-pointer accent-theme-base'
+                className='sr-only'
               />
-              <span className='text-sm font-medium text-gray-700'>{label}</span>
+              <div
+                className={`
+                  size-8 rounded-full transition-all
+                  ${
+                    currentTheme === theme.value
+                      ? "ring-4 ring-theme-base"
+                      : "hover:ring-2 hover:ring-theme-base/30"
+                  }
+                `}
+                style={{
+                  background: `var(--color-${theme.value}-500)`,
+                }}
+              />
             </label>
           ))}
         </div>
