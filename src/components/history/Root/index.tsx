@@ -16,6 +16,7 @@ interface RootProps {
   savedQueries: SavedQuery[];
   onSavedQueryRemove: (id: string) => void;
   isLoading: boolean;
+  isTruncated?: boolean;
   onDeleteHistoryItem?: (item: HistoryItem) => void;
   initialSearchQuery?: string;
 }
@@ -28,6 +29,7 @@ export const Root: FC<RootProps> = ({
   savedQueries,
   onSavedQueryRemove,
   isLoading,
+  isTruncated,
   onDeleteHistoryItem,
   initialSearchQuery,
 }: RootProps) => {
@@ -66,6 +68,7 @@ export const Root: FC<RootProps> = ({
         history={history}
         isLoading={isLoading}
         searchQuery={searchQuery}
+        isTruncated={isTruncated}
         onDeleteItem={onDeleteHistoryItem}
       />
       <ActionButton

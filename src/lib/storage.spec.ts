@@ -19,6 +19,7 @@ import {
   search,
   getRecentHistories,
   ROOT_FOLDER_NAME,
+  MAX_SEARCH_RESULTS,
   resetStorageForTesting,
 } from "./storage";
 import { HistoryItem } from "../types/HistoryItem";
@@ -969,6 +970,62 @@ describe("storage", () => {
         expect(result).toHaveLength(2);
         const emptyTitleItem = result.find((r) => r.title === "");
         expect(emptyTitleItem?.url).toBe("https://example.com/page2");
+      });
+    });
+
+    describe("result limit", () => {
+      it(`should cap results at MAX_SEARCH_RESULTS and keep the most recent`, async () => {
+        const overCap = MAX_SEARCH_RESULTS + 100;
+        const baseTime = new Date(2024, 0, 1, 0, 0, 0).getTime();
+        const historyItems: HistoryItem[] = Array.from(
+          { length: overCap },
+          (_, i) => ({
+            id: `cap-${i}`,
+            url: `https://example.com/page${i}`,
+            title: `Truncate Test ${i}`,
+            visitCount: 1,
+            // index が大きいほど新しい
+            lastVisitTime: baseTime + i * 60 * 60 * 1000,
+            domain: "example.com",
+          }),
+        );
+        await insertHistories(...historyItems);
+
+        const result = await search("truncate");
+
+        expect(result).toHaveLength(MAX_SEARCH_RESULTS);
+
+        // 最新順にソートされていること
+        const lastVisitTimes = result.map((r) => r.lastVisitTime);
+        const sorted = [...lastVisitTimes].sort((a, b) => b - a);
+        expect(lastVisitTimes).toEqual(sorted);
+
+        // 最古の 100 件 (index 0..99) が落とされていること
+        const titles = new Set(result.map((r) => r.title));
+        expect(titles.has(`Truncate Test 0`)).toBe(false);
+        expect(titles.has(`Truncate Test 99`)).toBe(false);
+        // 最新の 1 件 (index overCap-1) は残っていること
+        expect(titles.has(`Truncate Test ${overCap - 1}`)).toBe(true);
+      });
+
+      it("should return all results when count is below the cap", async () => {
+        const baseTime = new Date(2024, 0, 1, 0, 0, 0).getTime();
+        const historyItems: HistoryItem[] = Array.from(
+          { length: 5 },
+          (_, i) => ({
+            id: `under-${i}`,
+            url: `https://example.com/under${i}`,
+            title: `Under Cap ${i}`,
+            visitCount: 1,
+            lastVisitTime: baseTime + i * 60 * 60 * 1000,
+            domain: "example.com",
+          }),
+        );
+        await insertHistories(...historyItems);
+
+        const result = await search("under");
+
+        expect(result).toHaveLength(5);
       });
     });
   });

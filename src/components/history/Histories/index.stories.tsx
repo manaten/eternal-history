@@ -94,3 +94,11 @@ export const LargeDataset: Story = {
     isLoading: false,
   },
 };
+
+export const Truncated: Story = {
+  args: {
+    history: mockHistoryItems,
+    isLoading: false,
+    isTruncated: true,
+  },
+};

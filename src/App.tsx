@@ -14,6 +14,7 @@ import {
   initializeStorage,
   getRecentHistories,
   deleteHistoryItem,
+  MAX_SEARCH_RESULTS,
 } from "./lib/storage";
 import { HistoryItem } from "./types/HistoryItem";
 
@@ -44,6 +45,7 @@ function App() {
   );
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTruncated, setIsTruncated] = useState(false);
 
   const getHistory = useCallback(async (query = "") => {
     const trimmedQuery = query.trim();
@@ -57,6 +59,9 @@ function App() {
         ? await search(trimmedQuery, (await getSettings()).search)
         : await getRecentHistories(3);
       setHistory(results);
+      setIsTruncated(
+        trimmedQuery !== "" && results.length === MAX_SEARCH_RESULTS,
+      );
     } catch (error) {
       console.error("Failed to get history:", error);
     } finally {
@@ -131,6 +136,7 @@ function App() {
       savedQueries={savedQueries}
       onSavedQueryRemove={handleRemoveSavedQuery}
       isLoading={isLoading}
+      isTruncated={isTruncated}
       onDeleteHistoryItem={handleDeleteHistoryItem}
       initialSearchQuery={initialSearchQuery}
     />

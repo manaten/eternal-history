@@ -12,6 +12,10 @@ export const ja = {
   "searchBox.placeholder": "履歴を検索...",
   "searchBox.saveQuery": "クエリを保存",
 
+  // Histories
+  "histories.truncatedMessage":
+    "最新の{count}件のみ表示しています。さらに絞り込むには検索クエリに語を追加してください。",
+
   // History item
   "historyItem.deleteItem": "履歴を削除",
   "historyItem.openInNewTab": "新しいタブで開く",
