@@ -1,6 +1,42 @@
 import pMap from "p-map";
 
 /**
+ * `chrome.bookmarks.get` の結果をモジュールスコープでメモ化したラッパー。
+ * 検索時の親フォルダ走査で同じ ID への問い合わせが大量に発生するため、
+ * 重複呼び出しを除去します。並列実行を考慮して in-flight の Promise を
+ * 保持しています。
+ *
+ * 不整合が起こりうるのはユーザーが手動でフォルダを移動・改名した場合のみ。
+ */
+const bookmarkCache = new Map<
+  string,
+  Promise<chrome.bookmarks.BookmarkTreeNode | undefined>
+>();
+
+export async function getBookmarkCached(
+  id: string,
+): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
+  const cached = bookmarkCache.get(id);
+  if (cached) {
+    return cached;
+  }
+
+  const promise = chrome.bookmarks.get(id).then(
+    (nodes) => nodes[0],
+    () => undefined,
+  );
+  // eslint-disable-next-line functional/immutable-data
+  bookmarkCache.set(id, promise);
+  return promise;
+}
+
+// Test helper
+export function resetBookmarkCacheForTesting() {
+  // eslint-disable-next-line functional/immutable-data
+  bookmarkCache.clear();
+}
+
+/**
  * フォルダを取得または作成します。
  * 指定された親フォルダ内に指定されたタイトルのフォルダが存在する場合はそのIDを返し、
  * 存在しない場合は新しいフォルダを作成してそのIDを返します。
@@ -72,12 +108,8 @@ export async function isUnderFolder(
       return true;
     }
 
-    try {
-      const parent = await chrome.bookmarks.get(currentId);
-      return await checkParent(parent[0]?.parentId);
-    } catch {
-      return false;
-    }
+    const parent = await getBookmarkCached(currentId);
+    return await checkParent(parent?.parentId);
   };
 
   return await checkParent(bookmark.parentId);

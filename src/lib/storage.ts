@@ -4,6 +4,8 @@ import {
   getOrCreateFolder,
   isUnderFolder,
   getAllBookmarksInFolder,
+  getBookmarkCached,
+  resetBookmarkCacheForTesting,
 } from "./bookmark";
 import {
   deserializeBookmarkToHistoryItem,
@@ -28,6 +30,7 @@ let rootFolderId: string | null = null;
 // Test helper function to reset storage state
 export function resetStorageForTesting() {
   rootFolderId = null;
+  resetBookmarkCacheForTesting();
 }
 
 /**
@@ -64,8 +67,7 @@ async function getLastVisitTimeFromPath(
         return [];
       }
 
-      const parent = await chrome.bookmarks.get(currentId);
-      const parentNode = parent[0];
+      const parentNode = await getBookmarkCached(currentId);
       if (!parentNode || parentNode.title === ROOT_FOLDER_NAME) {
         return [];
       }
