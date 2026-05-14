@@ -12,6 +12,7 @@ import {
 import { HistoryItem } from "../types/HistoryItem";
 import { uniqBy } from "../util/array";
 import { dateToFolderNames, getDateArray } from "../util/date";
+import { perfReport, PerfReport } from "../util/perf";
 import { parseSearchQuery } from "../util/query";
 
 export interface SearchOptions {
@@ -96,16 +97,19 @@ async function getLastVisitTimeFromPath(
 
 async function convertBookmarkToHistoryItem(
   bookmark: chrome.bookmarks.BookmarkTreeNode,
+  report?: PerfReport,
 ): Promise<HistoryItem> {
   const item = deserializeBookmarkToHistoryItem(bookmark);
 
-  // If no precise timestamp from metadata, fall back to folder-based calculation
-  const lastVisitTime =
-    item.lastVisitTime || (await getLastVisitTimeFromPath(bookmark));
+  if (item.lastVisitTime) {
+    return item;
+  }
 
+  // If no precise timestamp from metadata, fall back to folder-based calculation
+  report?.count("pathFallback");
   return {
     ...item,
-    lastVisitTime,
+    lastVisitTime: await getLastVisitTimeFromPath(bookmark),
   };
 }
 
@@ -257,6 +261,8 @@ export async function search(
   query: string,
   options?: SearchOptions,
 ): Promise<HistoryItem[]> {
+  const report = perfReport(`search(${JSON.stringify(query)})`);
+
   if (!rootFolderId) {
     return [];
   }
@@ -270,55 +276,83 @@ export async function search(
   }
 
   // まず最初の非除外単語で全体から検索
-  const bookmarks = await searchHistoriesByQuery(nonExcludeTerms[0].term);
+  const bookmarks = await searchHistoriesByQuery(
+    nonExcludeTerms[0].term,
+    report,
+  );
 
   // フィルタリング
-  const filtered = bookmarks.filter((bookmark) => {
-    const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
+  const filtered = await report.span("filter", () =>
+    bookmarks.filter((bookmark) => {
+      const searchText = `${bookmark.title} ${bookmark.url}`.toLowerCase();
 
-    return parsedTerms.every((parsedTerm) => {
-      // 除外条件
-      if (parsedTerm.type === "exclude") {
-        return !searchText.includes(parsedTerm.term);
-      }
-
-      // site:条件は hostname に対してチェック
-      if (parsedTerm.type === "site") {
-        try {
-          const url = new URL(bookmark.url);
-          return url.hostname.includes(parsedTerm.term);
-        } catch {
-          return false;
+      return parsedTerms.every((parsedTerm) => {
+        // 除外条件
+        if (parsedTerm.type === "exclude") {
+          return !searchText.includes(parsedTerm.term);
         }
-      }
 
-      // text条件は title と url 全体に対してチェック
-      return searchText.includes(parsedTerm.term);
-    });
-  });
+        // site:条件は hostname に対してチェック
+        if (parsedTerm.type === "site") {
+          try {
+            const url = new URL(bookmark.url);
+            return url.hostname.includes(parsedTerm.term);
+          } catch {
+            return false;
+          }
+        }
+
+        // text条件は title と url 全体に対してチェック
+        return searchText.includes(parsedTerm.term);
+      });
+    }),
+  );
+  report.count("filtered", filtered.length);
 
   // グルーピング処理
-  return groupHistories(filtered, options);
+  const grouped = await report.span("group", () =>
+    groupHistories(filtered, options),
+  );
+  report.count("grouped", grouped.length);
+
+  report.log();
+  return grouped;
 }
 
-async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {
+async function searchHistoriesByQuery(
+  query: string,
+  report: PerfReport,
+): Promise<HistoryItem[]> {
   if (!rootFolderId) {
     return [];
   }
 
-  const bookmarks = await chrome.bookmarks.search({ query });
-  return (
-    await pMap(bookmarks, async (bookmark) => {
-      if (
-        bookmark.url &&
-        rootFolderId &&
-        (await isUnderFolder(bookmark, rootFolderId))
-      ) {
-        return await convertBookmarkToHistoryItem(bookmark);
-      }
-      return null;
-    })
-  ).filter((item) => item !== null);
+  const bookmarks = await report.span("bookmarks.search", () =>
+    chrome.bookmarks.search({ query }),
+  );
+  report.count("hits", bookmarks.length);
+
+  const underRoot = (
+    await report.span("isUnderFolder", () =>
+      pMap(bookmarks, async (bookmark) => {
+        if (
+          bookmark.url &&
+          rootFolderId &&
+          (await isUnderFolder(bookmark, rootFolderId))
+        ) {
+          return bookmark;
+        }
+        return null;
+      }),
+    )
+  ).filter((b) => b !== null);
+  report.count("underRoot", underRoot.length);
+
+  return report.span("convert", () =>
+    pMap(underRoot, (bookmark) =>
+      convertBookmarkToHistoryItem(bookmark, report),
+    ),
+  );
 }
 
 /**
@@ -395,13 +429,14 @@ export async function deleteHistoryItem(
 export async function getRecentHistories(
   days: number = 3,
 ): Promise<HistoryItem[]> {
+  const report = perfReport(`getRecentHistories(${days})`);
+
   if (!rootFolderId) {
     return [];
   }
 
-  const dayBookmarksArrays = await pMap(
-    getDateArray(new Date(), -days),
-    async (targetDate) => {
+  const dayBookmarksArrays = await report.span("collectDays", () =>
+    pMap(getDateArray(new Date(), -days), async (targetDate) => {
       const { year, month, day } = dateToFolderNames(targetDate);
 
       try {
@@ -410,16 +445,23 @@ export async function getRecentHistories(
         const dayFolderId = await getOrCreateFolder(monthFolderId, day);
 
         const bookmarks = await getAllBookmarksInFolder(dayFolderId);
-        return await pMap(bookmarks, convertBookmarkToHistoryItem);
+        return await pMap(bookmarks, (b) =>
+          convertBookmarkToHistoryItem(b, report),
+        );
       } catch (error) {
         console.log(`No bookmarks found for ${year}/${month}/${day}`, error);
         return [];
       }
-    },
+    }),
   );
 
   const historyBookmarks = dayBookmarksArrays.flat();
-  return [...historyBookmarks].sort(
-    (a, b) => b.lastVisitTime - a.lastVisitTime,
+  report.count("items", historyBookmarks.length);
+
+  const sorted = await report.span("sort", () =>
+    [...historyBookmarks].sort((a, b) => b.lastVisitTime - a.lastVisitTime),
   );
+
+  report.log();
+  return sorted;
 }
