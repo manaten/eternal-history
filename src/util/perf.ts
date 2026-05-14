@@ -1,4 +1,4 @@
-const enabled = import.meta.env.DEV;
+const enabled = import.meta.env.VITE_PERF === "1" || import.meta.env.DEV;
 
 export interface PerfReport {
   span<T>(name: string, fn: () => Promise<T> | T): Promise<T>;
