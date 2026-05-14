@@ -24,6 +24,13 @@ export interface SearchOptions {
 
 export const ROOT_FOLDER_NAME = "Eternal History";
 
+/**
+ * 検索結果の最大表示件数。
+ * 大量にヒットしても、UI でレンダリングできる現実的な上限で打ち切る。
+ * ヒット数が多い場合は lastVisitTime 降順で先頭から N 件を返す。
+ */
+export const MAX_SEARCH_RESULTS = 1000;
+
 // eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
 
@@ -317,8 +324,16 @@ export async function search(
   );
   report.count("grouped", grouped.length);
 
+  // 最新順にソートして上限件数で打ち切り
+  const limited = await report.span("limit", () =>
+    [...grouped]
+      .sort((a, b) => b.lastVisitTime - a.lastVisitTime)
+      .slice(0, MAX_SEARCH_RESULTS),
+  );
+  report.count("limited", limited.length);
+
   report.log();
-  return grouped;
+  return limited;
 }
 
 async function searchHistoriesByQuery(
