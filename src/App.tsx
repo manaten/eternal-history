@@ -56,7 +56,11 @@ function App() {
     try {
       await initializeStorage();
       const results: HistoryItem[] = trimmedQuery
-        ? await search(trimmedQuery, (await getSettings()).search)
+        ? await search(
+            trimmedQuery,
+            (await getSettings()).search,
+            MAX_SEARCH_RESULTS,
+          )
         : await getRecentHistories(3);
       setHistory(results);
       setIsTruncated(

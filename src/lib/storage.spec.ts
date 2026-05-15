@@ -19,7 +19,6 @@ import {
   search,
   getRecentHistories,
   ROOT_FOLDER_NAME,
-  MAX_SEARCH_RESULTS,
   resetStorageForTesting,
 } from "./storage";
 import { HistoryItem } from "../types/HistoryItem";
@@ -974,8 +973,9 @@ describe("storage", () => {
     });
 
     describe("result limit", () => {
-      it(`should cap results at MAX_SEARCH_RESULTS and keep the most recent`, async () => {
-        const overCap = MAX_SEARCH_RESULTS + 100;
+      it("should cap results at limit and keep the most recent", async () => {
+        const limit = 5;
+        const overCap = limit + 3;
         const baseTime = new Date(2024, 0, 1, 0, 0, 0).getTime();
         const historyItems: HistoryItem[] = Array.from(
           { length: overCap },
@@ -991,27 +991,26 @@ describe("storage", () => {
         );
         await insertHistories(...historyItems);
 
-        const result = await search("truncate");
+        const result = await search("truncate", undefined, limit);
 
-        expect(result).toHaveLength(MAX_SEARCH_RESULTS);
+        expect(result).toHaveLength(limit);
 
         // 最新順にソートされていること
         const lastVisitTimes = result.map((r) => r.lastVisitTime);
         const sorted = [...lastVisitTimes].sort((a, b) => b - a);
         expect(lastVisitTimes).toEqual(sorted);
 
-        // 最古の 100 件 (index 0..99) が落とされていること
+        // 最古 (index 0) が落とされていること
         const titles = new Set(result.map((r) => r.title));
         expect(titles.has(`Truncate Test 0`)).toBe(false);
-        expect(titles.has(`Truncate Test 99`)).toBe(false);
-        // 最新の 1 件 (index overCap-1) は残っていること
+        // 最新 (index overCap-1) は残っていること
         expect(titles.has(`Truncate Test ${overCap - 1}`)).toBe(true);
       });
 
-      it("should return all results when count is below the cap", async () => {
+      it("should return all results when count is below the limit", async () => {
         const baseTime = new Date(2024, 0, 1, 0, 0, 0).getTime();
         const historyItems: HistoryItem[] = Array.from(
-          { length: 5 },
+          { length: 3 },
           (_, i) => ({
             id: `under-${i}`,
             url: `https://example.com/under${i}`,
@@ -1023,9 +1022,29 @@ describe("storage", () => {
         );
         await insertHistories(...historyItems);
 
-        const result = await search("under");
+        const result = await search("under", undefined, 10);
 
-        expect(result).toHaveLength(5);
+        expect(result).toHaveLength(3);
+      });
+
+      it("should not cap results when limit is not specified", async () => {
+        const baseTime = new Date(2024, 0, 1, 0, 0, 0).getTime();
+        const historyItems: HistoryItem[] = Array.from(
+          { length: 20 },
+          (_, i) => ({
+            id: `nolimit-${i}`,
+            url: `https://example.com/nolimit${i}`,
+            title: `NoLimit Test ${i}`,
+            visitCount: 1,
+            lastVisitTime: baseTime + i * 60 * 60 * 1000,
+            domain: "example.com",
+          }),
+        );
+        await insertHistories(...historyItems);
+
+        const result = await search("nolimit");
+
+        expect(result).toHaveLength(20);
       });
     });
   });

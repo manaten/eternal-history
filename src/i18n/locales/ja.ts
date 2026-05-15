@@ -14,7 +14,7 @@ export const ja = {
 
   // Histories
   "histories.truncatedMessage":
-    "最新の{count}件のみ表示しています。さらに絞り込むには検索クエリに語を追加してください。",
+    "最新の{count}件のみ表示しています。さらに絞り込むには検索クエリを追加してください。",
 
   // History item
   "historyItem.deleteItem": "履歴を削除",

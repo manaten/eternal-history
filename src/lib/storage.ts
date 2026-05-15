@@ -24,9 +24,9 @@ export interface SearchOptions {
 export const ROOT_FOLDER_NAME = "Eternal History";
 
 /**
- * 検索結果の最大表示件数。
- * 大量にヒットしても、UI でレンダリングできる現実的な上限で打ち切る。
- * ヒット数が多い場合は lastVisitTime 降順で先頭から N 件を返す。
+ * 検索結果のデフォルト最大件数。
+ * 大量にヒットしても、UI でレンダリングできる現実的な上限。
+ * search() の `limit` 引数を明示的に指定しない呼び出し側の参照用。
  */
 export const MAX_SEARCH_RESULTS = 1000;
 
@@ -235,6 +235,7 @@ function groupHistories(
  *
  * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能、site:ドメイン指定可能）
  * @param options - 検索オプション（groupByUrl, groupByTitle）
+ * @param limit - 結果の最大件数。lastVisitTime 降順で先頭から N 件を返す（デフォルト: Infinity = 無制限）
  * @returns マッチした履歴アイテムの配列を返すPromise
  *
  * @example
@@ -266,6 +267,7 @@ function groupHistories(
 export async function search(
   query: string,
   options?: SearchOptions,
+  limit: number = Infinity,
 ): Promise<HistoryItem[]> {
   if (!rootFolderId) {
     return [];
@@ -310,10 +312,10 @@ export async function search(
   // グルーピング処理
   const grouped = groupHistories(filtered, options);
 
-  // 最新順にソートして上限件数で打ち切り
+  // 最新順にソートして指定件数で打ち切り
   return [...grouped]
     .sort((a, b) => b.lastVisitTime - a.lastVisitTime)
-    .slice(0, MAX_SEARCH_RESULTS);
+    .slice(0, limit);
 }
 
 async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {
