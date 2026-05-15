@@ -99,6 +99,6 @@ export const Truncated: Story = {
   args: {
     history: mockHistoryItems,
     isLoading: false,
-    isTruncated: true,
+    truncatedAt: 1000,
   },
 };

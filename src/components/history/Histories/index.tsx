@@ -1,7 +1,6 @@
 import { FC, memo, useState, useCallback } from "react";
 
 import { t } from "../../../i18n";
-import { MAX_SEARCH_RESULTS } from "../../../lib/storage";
 import { HistoryItem as HistoryItemType } from "../../../types/HistoryItem";
 import { Spinner } from "../../common/Spinner";
 import { HistoryDropdown } from "../HistoryDropdown";
@@ -11,7 +10,8 @@ interface HistoriesProps {
   history: HistoryItemType[];
   isLoading: boolean;
   searchQuery?: string;
-  isTruncated?: boolean;
+  /** 結果が打ち切られている場合、その上限件数を渡す（未指定なら打ち切り無し） */
+  truncatedAt?: number;
   onDeleteItem?: (item: HistoryItemType) => void;
 }
 
@@ -50,7 +50,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
   history,
   isLoading,
   searchQuery = "",
-  isTruncated = false,
+  truncatedAt,
   onDeleteItem,
 }) {
   const [dropdownState, setDropdownState] = useState<{
@@ -126,7 +126,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
         </div>
       ))}
 
-      {isTruncated && (
+      {truncatedAt !== undefined && (
         <div
           className={`
             px-3 py-2 text-center text-xs text-gray-500
@@ -134,7 +134,7 @@ export const Histories: FC<HistoriesProps> = memo(function Histories({
           `}
         >
           {t("histories.truncatedMessage", {
-            count: String(MAX_SEARCH_RESULTS),
+            count: String(truncatedAt),
           })}
         </div>
       )}

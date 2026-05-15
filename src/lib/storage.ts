@@ -19,16 +19,11 @@ import { parseSearchQuery } from "../util/query";
 export interface SearchOptions {
   groupByUrl?: boolean;
   groupByTitle?: boolean;
+  /** 結果の最大件数。lastVisitTime 降順で先頭から N 件を返す（未指定時は無制限） */
+  limit?: number;
 }
 
 export const ROOT_FOLDER_NAME = "Eternal History";
-
-/**
- * 検索結果のデフォルト最大件数。
- * 大量にヒットしても、UI でレンダリングできる現実的な上限。
- * search() の `limit` 引数を明示的に指定しない呼び出し側の参照用。
- */
-export const MAX_SEARCH_RESULTS = 1000;
 
 // eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
@@ -234,8 +229,7 @@ function groupHistories(
  * 検索対象は "Eternal History" フォルダ配下のブックマークのみです。
  *
  * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能、site:ドメイン指定可能）
- * @param options - 検索オプション（groupByUrl, groupByTitle）
- * @param limit - 結果の最大件数。lastVisitTime 降順で先頭から N 件を返す（デフォルト: Infinity = 無制限）
+ * @param options - 検索オプション（groupByUrl, groupByTitle, limit）
  * @returns マッチした履歴アイテムの配列を返すPromise
  *
  * @example
@@ -267,8 +261,8 @@ function groupHistories(
 export async function search(
   query: string,
   options?: SearchOptions,
-  limit: number = Infinity,
 ): Promise<HistoryItem[]> {
+  const limit = options?.limit ?? Infinity;
   if (!rootFolderId) {
     return [];
   }

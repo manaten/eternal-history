@@ -991,7 +991,7 @@ describe("storage", () => {
         );
         await insertHistories(...historyItems);
 
-        const result = await search("truncate", undefined, limit);
+        const result = await search("truncate", { limit });
 
         expect(result).toHaveLength(limit);
 
@@ -1022,7 +1022,7 @@ describe("storage", () => {
         );
         await insertHistories(...historyItems);
 
-        const result = await search("under", undefined, 10);
+        const result = await search("under", { limit: 10 });
 
         expect(result).toHaveLength(3);
       });
