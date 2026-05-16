@@ -61,6 +61,13 @@ export const mockChromeRuntime = {
   }),
 };
 
+// Mock Chrome history (deleteUrl only — used by bookmark-history-store.delete)
+export const mockChromeHistory = {
+  deleteUrl: vi
+    .fn()
+    .mockImplementation(async (_: { url: string }): Promise<void> => {}),
+};
+
 // Mock implementations
 export const mockChromeBookmarks = {
   get: vi
@@ -85,9 +92,15 @@ export const mockChromeBookmarks = {
       async (query: {
         title?: string;
         query?: string;
+        url?: string;
       }): Promise<MockBookmarkTreeNode[]> => {
         if (query.title) {
           return findBookmarksByTitle(query.title);
+        }
+        if (query.url) {
+          return Array.from(mockBookmarks.values()).filter(
+            (b) => b.url === query.url,
+          );
         }
         if (query.query) {
           return findBookmarksByQuery(query.query);
@@ -215,6 +228,7 @@ export function setupChromeBookmarksMock() {
   global.chrome = {
     bookmarks: mockChromeBookmarks as unknown as typeof chrome.bookmarks,
     runtime: mockChromeRuntime as unknown as typeof chrome.runtime,
+    history: mockChromeHistory as unknown as typeof chrome.history,
   } as unknown as typeof global.chrome;
   mockBookmarks.clear();
   nextId = 1;

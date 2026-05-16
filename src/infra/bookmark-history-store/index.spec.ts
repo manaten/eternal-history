@@ -19,6 +19,7 @@ import {
   setupChromeBookmarksMock,
   resetChromeBookmarksMock,
   mockBookmarkUtils,
+  mockChromeHistory,
 } from "../chrome/__mocks__/chrome_bookmarks.mock";
 
 const insertHistories = (...items: HistoryItem[]) =>
@@ -1167,6 +1168,144 @@ describe("bookmarkHistoryStore", () => {
       );
       expect(result[1]?.lastVisitTime).toBeGreaterThan(
         result[2]?.lastVisitTime ?? 0,
+      );
+    });
+  });
+
+  describe("delete", () => {
+    beforeEach(async () => {
+      resetStorageForTesting();
+      await bookmarkHistoryStore.initialize();
+    });
+
+    it("removes the bookmark under root and mirrors deletion to chrome.history", async () => {
+      const item: HistoryItem = {
+        id: "1",
+        url: "https://example.com",
+        title: "Example",
+        visitCount: 1,
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        domain: "example.com",
+      };
+      await insertHistories(item);
+
+      const beforeCount = mockBookmarkUtils.getAllMockBookmarks().length;
+      const target = mockBookmarkUtils
+        .getAllMockBookmarks()
+        .find((b) => b.url === item.url);
+      expect(target).toBeDefined();
+
+      await bookmarkHistoryStore.delete(item);
+
+      const afterBookmarks = mockBookmarkUtils.getAllMockBookmarks();
+      expect(afterBookmarks).toHaveLength(beforeCount - 1);
+      expect(afterBookmarks.find((b) => b.url === item.url)).toBeUndefined();
+
+      expect(mockChromeHistory.deleteUrl).toHaveBeenCalledTimes(1);
+      expect(mockChromeHistory.deleteUrl).toHaveBeenCalledWith({
+        url: item.url,
+      });
+    });
+
+    it("does not touch bookmarks outside the root folder, but still calls chrome.history.deleteUrl", async () => {
+      // ルート配下に同じ URL の履歴を入れる
+      const item: HistoryItem = {
+        id: "1",
+        url: "https://shared.com",
+        title: "Inside",
+        visitCount: 1,
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
+        domain: "shared.com",
+      };
+      await insertHistories(item);
+
+      // ユーザーが手で作った同じ URL のブックマーク (ルート外) を追加
+      const outsideBookmark = mockBookmarkUtils.addMockBookmark({
+        id: "outside-bookmark",
+        title: "User's own bookmark",
+        url: "https://shared.com",
+        parentId: "user-folder",
+      });
+
+      await bookmarkHistoryStore.delete(item);
+
+      const remaining = mockBookmarkUtils.getAllMockBookmarks();
+      // 外部のブックマークは残っている
+      expect(remaining.find((b) => b.id === outsideBookmark.id)).toBeDefined();
+      // 自前ストア配下のブックマークは消えている
+      expect(
+        remaining.find(
+          (b) => b.url === item.url && b.id !== outsideBookmark.id,
+        ),
+      ).toBeUndefined();
+
+      // chrome.history は無条件に呼ばれる (削除は URL 単位)
+      expect(mockChromeHistory.deleteUrl).toHaveBeenCalledWith({
+        url: item.url,
+      });
+    });
+
+    it("throws when storage is not initialized", async () => {
+      resetStorageForTesting();
+
+      const item: HistoryItem = {
+        id: "1",
+        url: "https://example.com",
+        title: "Example",
+        visitCount: 1,
+        lastVisitTime: Date.now(),
+        domain: "example.com",
+      };
+
+      await expect(bookmarkHistoryStore.delete(item)).rejects.toThrow(
+        "Storage not initialized",
+      );
+      expect(mockChromeHistory.deleteUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("legacy bookmark recovery (no metadata)", () => {
+    beforeEach(async () => {
+      resetStorageForTesting();
+      await bookmarkHistoryStore.initialize();
+    });
+
+    it("reconstructs lastVisitTime from YYYY/MM/DD/HH folder path when metadata is absent", async () => {
+      // 旧バージョンで保存されたかのようにメタデータなしのブックマークを直に配置する
+      const root = mockBookmarkUtils
+        .getAllMockBookmarks()
+        .find((b) => b.title === ROOT_FOLDER_NAME);
+      expect(root).toBeDefined();
+
+      const year = mockBookmarkUtils.addMockBookmark({
+        title: "2024",
+        parentId: root!.id,
+      });
+      const month = mockBookmarkUtils.addMockBookmark({
+        title: "01",
+        parentId: year.id,
+      });
+      const day = mockBookmarkUtils.addMockBookmark({
+        title: "15",
+        parentId: month.id,
+      });
+      const hour = mockBookmarkUtils.addMockBookmark({
+        title: "10",
+        parentId: day.id,
+      });
+      mockBookmarkUtils.addMockBookmark({
+        title: "Legacy Site", // 💾 区切り文字なし = レガシー
+        url: "https://legacy.example.com",
+        parentId: hour.id,
+      });
+
+      const result = await searchHistories(bookmarkHistoryStore, "legacy");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.title).toBe("Legacy Site");
+      // フォルダパスから 2024-01-15 10:00 を復元できていること
+      expect(result[0]?.lastVisitTime).toBe(
+        new Date(2024, 0, 15, 10, 0, 0).getTime(),
       );
     });
   });
