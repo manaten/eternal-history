@@ -4,6 +4,8 @@ import {
   getOrCreateFolder,
   isUnderFolder,
   getAllBookmarksInFolder,
+  getBookmarkCached,
+  resetBookmarkCacheForTesting,
 } from "./bookmark";
 import {
   deserializeBookmarkToHistoryItem,
@@ -17,6 +19,8 @@ import { parseSearchQuery } from "../util/query";
 export interface SearchOptions {
   groupByUrl?: boolean;
   groupByTitle?: boolean;
+  /** 結果の最大件数。lastVisitTime 降順で先頭から N 件を返す（未指定時は無制限） */
+  limit?: number;
 }
 
 export const ROOT_FOLDER_NAME = "Eternal History";
@@ -27,6 +31,7 @@ let rootFolderId: string | null = null;
 // Test helper function to reset storage state
 export function resetStorageForTesting() {
   rootFolderId = null;
+  resetBookmarkCacheForTesting();
 }
 
 /**
@@ -63,8 +68,7 @@ async function getLastVisitTimeFromPath(
         return [];
       }
 
-      const parent = await chrome.bookmarks.get(currentId);
-      const parentNode = parent[0];
+      const parentNode = await getBookmarkCached(currentId);
       if (!parentNode || parentNode.title === ROOT_FOLDER_NAME) {
         return [];
       }
@@ -99,13 +103,14 @@ async function convertBookmarkToHistoryItem(
 ): Promise<HistoryItem> {
   const item = deserializeBookmarkToHistoryItem(bookmark);
 
-  // If no precise timestamp from metadata, fall back to folder-based calculation
-  const lastVisitTime =
-    item.lastVisitTime || (await getLastVisitTimeFromPath(bookmark));
+  if (item.lastVisitTime) {
+    return item;
+  }
 
+  // If no precise timestamp from metadata, fall back to folder-based calculation
   return {
     ...item,
-    lastVisitTime,
+    lastVisitTime: await getLastVisitTimeFromPath(bookmark),
   };
 }
 
@@ -224,7 +229,7 @@ function groupHistories(
  * 検索対象は "Eternal History" フォルダ配下のブックマークのみです。
  *
  * @param query - 検索クエリ文字列（スペース区切りで複数単語指定可能、site:ドメイン指定可能）
- * @param options - 検索オプション（groupByUrl, groupByTitle）
+ * @param options - 検索オプション（groupByUrl, groupByTitle, limit）
  * @returns マッチした履歴アイテムの配列を返すPromise
  *
  * @example
@@ -257,6 +262,7 @@ export async function search(
   query: string,
   options?: SearchOptions,
 ): Promise<HistoryItem[]> {
+  const limit = options?.limit ?? Infinity;
   if (!rootFolderId) {
     return [];
   }
@@ -298,7 +304,12 @@ export async function search(
   });
 
   // グルーピング処理
-  return groupHistories(filtered, options);
+  const grouped = groupHistories(filtered, options);
+
+  // 最新順にソートして指定件数で打ち切り
+  return [...grouped]
+    .sort((a, b) => b.lastVisitTime - a.lastVisitTime)
+    .slice(0, limit);
 }
 
 async function searchHistoriesByQuery(query: string): Promise<HistoryItem[]> {

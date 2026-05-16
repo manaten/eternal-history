@@ -9,6 +9,10 @@ export const en = {
   "searchBox.placeholder": "Search history...",
   "searchBox.saveQuery": "Save query",
 
+  // Histories
+  "histories.truncatedMessage":
+    "Showing only the most recent {count} results. Add more terms to your query to narrow down further.",
+
   // History item
   "historyItem.deleteItem": "Delete item",
   "historyItem.openInNewTab": "Open in new tab",

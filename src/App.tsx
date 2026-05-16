@@ -19,6 +19,12 @@ import { HistoryItem } from "./types/HistoryItem";
 
 const SESSION_STORAGE_KEY = "eternal-history-search-query";
 
+/**
+ * 検索結果として UI に渡す最大件数。
+ * 大量にヒットしても、レンダリングコストとの兼ね合いで現実的な上限で打ち切る。
+ */
+const MAX_SEARCH_RESULTS = 1000;
+
 function getInitialQuery() {
   try {
     return sessionStorage.getItem(SESSION_STORAGE_KEY) ?? "";
@@ -44,6 +50,7 @@ function App() {
   );
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [truncatedAt, setTruncatedAt] = useState<number | undefined>(undefined);
 
   const getHistory = useCallback(async (query = "") => {
     const trimmedQuery = query.trim();
@@ -54,9 +61,17 @@ function App() {
     try {
       await initializeStorage();
       const results: HistoryItem[] = trimmedQuery
-        ? await search(trimmedQuery, (await getSettings()).search)
+        ? await search(trimmedQuery, {
+            ...(await getSettings()).search,
+            limit: MAX_SEARCH_RESULTS,
+          })
         : await getRecentHistories(3);
       setHistory(results);
+      setTruncatedAt(
+        trimmedQuery !== "" && results.length === MAX_SEARCH_RESULTS
+          ? MAX_SEARCH_RESULTS
+          : undefined,
+      );
     } catch (error) {
       console.error("Failed to get history:", error);
     } finally {
@@ -131,6 +146,7 @@ function App() {
       savedQueries={savedQueries}
       onSavedQueryRemove={handleRemoveSavedQuery}
       isLoading={isLoading}
+      truncatedAt={truncatedAt}
       onDeleteHistoryItem={handleDeleteHistoryItem}
       initialSearchQuery={initialSearchQuery}
     />
