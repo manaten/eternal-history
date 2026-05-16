@@ -35,7 +35,6 @@ describe("getOrCreateFolder", () => {
   });
 
   it("should return existing folder id when folder exists", async () => {
-    // Setup existing folder
     mockBookmarkUtils.addMockBookmark({
       id: "existing1",
       title: "Existing Folder",
@@ -58,7 +57,6 @@ describe("getOrCreateFolder", () => {
   });
 
   it("should return existing root folder when found by search", async () => {
-    // Setup existing root folder
     mockBookmarkUtils.addMockBookmark({
       id: "root1",
       title: ROOT_FOLDER_NAME,
@@ -71,7 +69,6 @@ describe("getOrCreateFolder", () => {
   });
 
   it("should ignore bookmarks with URLs when looking for folders", async () => {
-    // Setup bookmark with URL (not a folder)
     mockBookmarkUtils.addMockBookmark({
       id: "bookmark1",
       title: "Test Folder",
@@ -81,7 +78,6 @@ describe("getOrCreateFolder", () => {
 
     const result = await getOrCreateFolder("parent1", "Test Folder");
 
-    // Should create new folder instead of returning bookmark
     expect(result).toBe("1");
     expect(chrome.bookmarks.create).toHaveBeenCalled();
   });
@@ -107,7 +103,6 @@ describe("isUnderFolder", () => {
   });
 
   it("should return true when bookmark is nested under the folder", async () => {
-    // Create hierarchy: rootFolder -> subFolder -> bookmark
     const subFolder = mockBookmarkUtils.addMockBookmark({
       id: "subfolder1",
       title: "Sub Folder",
@@ -165,7 +160,6 @@ describe("isUnderFolder", () => {
   });
 
   it("should return true when bookmark is deeply nested", async () => {
-    // Create deep hierarchy: root -> level1 -> level2 -> level3 -> bookmark
     const level1 = mockBookmarkUtils.addMockBookmark({
       id: "level1",
       title: "Level 1",
@@ -204,7 +198,6 @@ describe("getAllBookmarksInFolder", () => {
   });
 
   it("should return only bookmarks (with URLs) from a folder", async () => {
-    // Setup folder with bookmarks and subfolders
     const bookmark1 = mockBookmarkUtils.addMockBookmark({
       id: "bookmark1",
       title: "Bookmark 1",
@@ -219,7 +212,6 @@ describe("getAllBookmarksInFolder", () => {
       url: "https://example2.com",
     });
 
-    // Add a subfolder (should be ignored)
     mockBookmarkUtils.addMockBookmark({
       id: "subfolder1",
       title: "Sub Folder",
@@ -242,7 +234,6 @@ describe("getAllBookmarksInFolder", () => {
   });
 
   it("should recursively get bookmarks from subfolders", async () => {
-    // Setup nested structure
     const rootBookmark = mockBookmarkUtils.addMockBookmark({
       id: "rootBookmark",
       title: "Root Bookmark",
@@ -271,7 +262,6 @@ describe("getAllBookmarksInFolder", () => {
   });
 
   it("should return empty array when folder has no bookmarks", async () => {
-    // Setup empty folder
     mockBookmarkUtils.addMockBookmark({
       id: "emptyfolder1",
       title: "Empty Folder",
@@ -285,7 +275,6 @@ describe("getAllBookmarksInFolder", () => {
   });
 
   it("should handle deeply nested folder structures", async () => {
-    // Create deep nesting: folder1 -> level1 -> level2 -> bookmark
     const level1 = mockBookmarkUtils.addMockBookmark({
       id: "level1",
       title: "Level 1",
@@ -312,7 +301,6 @@ describe("getAllBookmarksInFolder", () => {
   });
 
   it("should handle folders with only subfolders (no direct bookmarks)", async () => {
-    // Setup folder with only subfolders
     const subFolder1 = mockBookmarkUtils.addMockBookmark({
       id: "subfolder1",
       title: "Sub Folder 1",
@@ -325,7 +313,6 @@ describe("getAllBookmarksInFolder", () => {
       parentId: "folder1",
     });
 
-    // Add bookmarks only in subfolders
     const bookmark1 = mockBookmarkUtils.addMockBookmark({
       id: "bookmark1",
       title: "Bookmark in Sub 1",

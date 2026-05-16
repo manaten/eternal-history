@@ -9,21 +9,23 @@ import {
 } from "vitest";
 
 import {
+  bookmarkHistoryStore,
+  ROOT_FOLDER_NAME,
+  resetStorageForTesting,
+} from "./index";
+import { HistoryItem } from "../../domain/history/HistoryItem";
+import { searchHistories } from "../../domain/history/searchHistories";
+import {
   setupChromeBookmarksMock,
   resetChromeBookmarksMock,
   mockBookmarkUtils,
-} from "./__mocks__/chrome_bookmarks.mock";
-import {
-  initializeStorage,
-  insertHistories,
-  search,
-  getRecentHistories,
-  ROOT_FOLDER_NAME,
-  resetStorageForTesting,
-} from "./storage";
-import { HistoryItem } from "../types/HistoryItem";
+} from "../chrome/__mocks__/chrome_bookmarks.mock";
 
-describe("storage", () => {
+const insertHistories = (...items: HistoryItem[]) =>
+  bookmarkHistoryStore.insert(items);
+const getRecentHistories = (days = 3) => bookmarkHistoryStore.getRecent(days);
+
+describe("bookmarkHistoryStore", () => {
   beforeEach(() => {
     setupChromeBookmarksMock();
     resetChromeBookmarksMock();
@@ -43,10 +45,10 @@ describe("storage", () => {
     vi.useRealTimers();
   });
 
-  describe("initializeStorage", () => {
+  describe("initialize", () => {
     it("should create root folder when it doesn't exist", async () => {
       expect(mockBookmarkUtils.getAllMockBookmarks()).toEqual([]);
-      await initializeStorage();
+      await bookmarkHistoryStore.initialize();
       expect(mockBookmarkUtils.getAllMockBookmarks()).toEqual([
         expect.objectContaining({
           title: ROOT_FOLDER_NAME,
@@ -57,17 +59,15 @@ describe("storage", () => {
     });
 
     it("should use existing root folder when it exists", async () => {
-      // Setup existing root folder
       mockBookmarkUtils.addMockBookmark({
         id: "existing-root",
         title: ROOT_FOLDER_NAME,
       });
 
       const bookmarksBeforeInit = mockBookmarkUtils.getAllMockBookmarks();
-      await initializeStorage();
+      await bookmarkHistoryStore.initialize();
       const bookmarksAfterInit = mockBookmarkUtils.getAllMockBookmarks();
 
-      // Should not create new bookmarks, existing root folder should be used
       expect(bookmarksAfterInit).toEqual(bookmarksBeforeInit);
       expect(bookmarksAfterInit).toHaveLength(1);
       expect(bookmarksAfterInit[0]).toMatchObject({
@@ -77,14 +77,13 @@ describe("storage", () => {
     });
   });
 
-  describe("insertHistories", () => {
+  describe("insert", () => {
     beforeEach(async () => {
       resetStorageForTesting();
-      await initializeStorage();
+      await bookmarkHistoryStore.initialize();
     });
 
     it("should throw error when storage is not initialized", async () => {
-      // Reset storage state without initializing
       resetStorageForTesting();
 
       const historyItem: HistoryItem = {
@@ -92,7 +91,7 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Example",
         visitCount: 1,
-        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
         domain: "example.com",
       };
 
@@ -107,52 +106,43 @@ describe("storage", () => {
         url: "https://example.com",
         title: "Example Site",
         visitCount: 1,
-        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
         domain: "example.com",
       };
 
       await insertHistories(historyItem);
 
       const bookmarks = mockBookmarkUtils.getAllMockBookmarks();
-
-      // Should have: root folder + year + month + day + hour + bookmark = 6 items
       expect(bookmarks).toHaveLength(6);
 
-      // Check root folder exists
       const rootFolder = bookmarks.find((b) => b.title === ROOT_FOLDER_NAME);
       expect(rootFolder).toBeDefined();
 
-      // Check year folder (2024)
       const yearFolder = bookmarks.find(
         (b) => b.title === "2024" && b.parentId === rootFolder?.id,
       );
       expect(yearFolder).toBeDefined();
 
-      // Check month folder (01)
       const monthFolder = bookmarks.find(
         (b) => b.title === "01" && b.parentId === yearFolder?.id,
       );
       expect(monthFolder).toBeDefined();
 
-      // Check day folder (15)
       const dayFolder = bookmarks.find(
         (b) => b.title === "15" && b.parentId === monthFolder?.id,
       );
       expect(dayFolder).toBeDefined();
 
-      // Check hour folder - should be UTC time now
       const hourFolder = bookmarks.find(
-        (b) => b.title === "10" && b.parentId === dayFolder?.id, // UTC time
+        (b) => b.title === "10" && b.parentId === dayFolder?.id,
       );
       expect(hourFolder).toBeDefined();
 
-      // Check bookmark
       const bookmark = bookmarks.find(
         (b) => b.url === "https://example.com" && b.parentId === hourFolder?.id,
       );
       expect(bookmark).toBeDefined();
       expect(bookmark?.url).toBe("https://example.com");
-      // Title should have exact metadata format
       expect(bookmark?.title).toBe(
         'Example Site 💾{"v":1,"t":' +
           new Date(2024, 0, 15, 10, 30, 0).getTime() +
@@ -161,13 +151,12 @@ describe("storage", () => {
     });
 
     it("should update existing bookmark title when URL matches", async () => {
-      // First, create a bookmark with the same URL but different title
       const initialItem: HistoryItem = {
         id: "1",
         url: "https://example.com",
         title: "Old Title",
         visitCount: 1,
-        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
         domain: "example.com",
       };
 
@@ -175,23 +164,20 @@ describe("storage", () => {
       const bookmarksAfterFirst = mockBookmarkUtils.getAllMockBookmarks();
       const initialBookmarkCount = bookmarksAfterFirst.length;
 
-      // Now insert the same URL with a different title
       const updatedItem: HistoryItem = {
         id: "2",
         url: "https://example.com",
         title: "Updated Title",
         visitCount: 1,
-        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00
+        lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
         domain: "example.com",
       };
 
       await insertHistories(updatedItem);
       const bookmarksAfterUpdate = mockBookmarkUtils.getAllMockBookmarks();
 
-      // Should not create new bookmarks, just update the existing one
       expect(bookmarksAfterUpdate).toHaveLength(initialBookmarkCount);
 
-      // Check that the bookmark title was updated (should contain the new title)
       const updatedBookmark = bookmarksAfterUpdate.find(
         (b) => b.url === "https://example.com",
       );
@@ -210,7 +196,7 @@ describe("storage", () => {
           url: "https://site1.com",
           title: "Site 1",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
           domain: "site1.com",
         },
         {
@@ -218,7 +204,7 @@ describe("storage", () => {
           url: "https://site2.com",
           title: "Site 2",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 11, 15, 0).getTime(), // 2024-01-15 11:15:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 11, 15, 0).getTime(),
           domain: "site2.com",
         },
       ];
@@ -226,9 +212,8 @@ describe("storage", () => {
       await insertHistories(...historyItems);
 
       const bookmarks = mockBookmarkUtils.getAllMockBookmarks();
-      expect(bookmarks).toHaveLength(8); // 2 bookmarks + year + month + day + 2 hours + root
+      expect(bookmarks).toHaveLength(8);
 
-      // Check that both bookmarks were created with exact metadata format
       const site1Bookmark = bookmarks.find(
         (b) => b.url === "https://site1.com",
       );
@@ -249,13 +234,11 @@ describe("storage", () => {
           ',"vc":1}',
       );
 
-      // Should have appropriate folder hierarchy for both items
-      // Both items are on same day but different hours, so they should share some folders
       expect(bookmarks.find((b) => b.title === "2024")).toBeDefined();
       expect(bookmarks.find((b) => b.title === "01")).toBeDefined();
       expect(bookmarks.find((b) => b.title === "15")).toBeDefined();
-      expect(bookmarks.find((b) => b.title === "10")).toBeDefined(); // First item: 10:30 UTC
-      expect(bookmarks.find((b) => b.title === "11")).toBeDefined(); // Second item: 11:15 UTC
+      expect(bookmarks.find((b) => b.title === "10")).toBeDefined();
+      expect(bookmarks.find((b) => b.title === "11")).toBeDefined();
     });
 
     it("should embed correct metadata format in bookmark titles", async () => {
@@ -276,8 +259,6 @@ describe("storage", () => {
       );
 
       expect(testBookmark).toBeDefined();
-
-      // Should have correct metadata format
       expect(testBookmark?.title).toBe(
         'Test Site Title 💾{"v":1,"t":' +
           new Date(2009, 1, 13, 23, 31, 30, 123).getTime() +
@@ -286,30 +267,24 @@ describe("storage", () => {
     });
   });
 
-  describe("search", () => {
+  describe("searchHistories (integration via store)", () => {
     beforeEach(async () => {
-      await initializeStorage();
-    });
-
-    it("should return empty array when storage is not initialized", async () => {
-      const result = await search("test");
-      expect(result).toEqual([]);
+      await bookmarkHistoryStore.initialize();
     });
 
     it("should return empty array for empty query", async () => {
-      const result = await search("   ");
+      const result = await searchHistories(bookmarkHistoryStore, "   ");
       expect(result).toEqual([]);
     });
 
     it("should search bookmarks by single term", async () => {
-      // Create some test bookmarks
       const historyItems: HistoryItem[] = [
         {
           id: "1",
           url: "https://google.com",
           title: "Google Search",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(), // 2024-01-15 10:30:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 10, 30, 0).getTime(),
           domain: "google.com",
         },
         {
@@ -317,7 +292,7 @@ describe("storage", () => {
           url: "https://google.com/maps",
           title: "Google Maps",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(), // 2024-01-15 11:00:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 11, 0, 0).getTime(),
           domain: "google.com",
         },
         {
@@ -325,13 +300,13 @@ describe("storage", () => {
           url: "https://yahoo.com",
           title: "Yahoo Search Engine",
           visitCount: 1,
-          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(), // 2024-01-15 12:00:00 UTC
+          lastVisitTime: new Date(2024, 0, 15, 12, 0, 0).getTime(),
           domain: "yahoo.com",
         },
       ];
       await insertHistories(...historyItems);
 
-      const result = await search("google");
+      const result = await searchHistories(bookmarkHistoryStore, "google");
       expect(result).toHaveLength(2);
       const googleSearch = result.find((i) => i.url === "https://google.com");
       expect(googleSearch).toMatchObject({
@@ -350,7 +325,6 @@ describe("storage", () => {
     });
 
     it("should filter results by multiple terms (AND search)", async () => {
-      // Create test bookmarks
       const historyItems: HistoryItem[] = [
         {
           id: "1",
@@ -379,8 +353,10 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      const result = await search("google search");
-      // Should only return the Google Search Engine, not Google Maps or Yahoo
+      const result = await searchHistories(
+        bookmarkHistoryStore,
+        "google search",
+      );
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         url: "https://google.com",
@@ -389,7 +365,6 @@ describe("storage", () => {
     });
 
     it("should only return bookmarks under root folder", async () => {
-      // Add a bookmark inside the root folder structure
       await insertHistories({
         id: "1",
         url: "https://inside.com",
@@ -399,7 +374,6 @@ describe("storage", () => {
         domain: "inside.com",
       });
 
-      // Add a bookmark outside of root folder structure
       mockBookmarkUtils.addMockBookmark({
         id: "outside",
         title: "Outside Bookmark",
@@ -407,22 +381,25 @@ describe("storage", () => {
         parentId: "other-parent",
       });
 
-      const resultInside = await search("inside");
-      const resultOutside = await search("outside");
+      const resultInside = await searchHistories(
+        bookmarkHistoryStore,
+        "inside",
+      );
+      const resultOutside = await searchHistories(
+        bookmarkHistoryStore,
+        "outside",
+      );
 
-      // Should find the bookmark under root folder
       expect(resultInside).toHaveLength(1);
       expect(resultInside[0]).toMatchObject({
         url: "https://inside.com",
         title: "Inside Bookmark",
       });
 
-      // Should not find the bookmark outside root folder
       expect(resultOutside).toEqual([]);
     });
 
     it("should search by site: syntax for domain matching", async () => {
-      // Create test bookmarks with different domains
       const historyItems: HistoryItem[] = [
         {
           id: "1",
@@ -467,8 +444,10 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      // Test exact domain search
-      const googleResult = await search("site:google.com");
+      const googleResult = await searchHistories(
+        bookmarkHistoryStore,
+        "site:google.com",
+      );
       expect(googleResult).toHaveLength(2);
       expect(googleResult.map((r) => r.url)).toContain(
         "https://google.com/search",
@@ -477,14 +456,15 @@ describe("storage", () => {
         "https://maps.google.com",
       );
 
-      // Test partial domain search
-      const yahoResult = await search("site:yahoo");
+      const yahoResult = await searchHistories(
+        bookmarkHistoryStore,
+        "site:yahoo",
+      );
       expect(yahoResult).toHaveLength(1);
       expect(yahoResult[0]?.url).toBe("https://yahoo.com");
     });
 
     it("should combine site: search with regular search terms", async () => {
-      // Create test bookmarks
       const historyItems: HistoryItem[] = [
         {
           id: "1",
@@ -513,8 +493,10 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      // Search for "search" within google.com domain
-      const result = await search("site:google.com search");
+      const result = await searchHistories(
+        bookmarkHistoryStore,
+        "site:google.com search",
+      );
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         url: "https://google.com/search",
@@ -551,8 +533,10 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      // Multiple site: terms should match domains containing both terms
-      const result = await search("site:search site:yahoo");
+      const result = await searchHistories(
+        bookmarkHistoryStore,
+        "site:search site:yahoo",
+      );
       expect(result).toHaveLength(1);
       expect(result[0]?.url).toBe("https://search.yahoo.com");
     });
@@ -570,22 +554,25 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      const result = await search("site:nonexistent.com");
+      const result = await searchHistories(
+        bookmarkHistoryStore,
+        "site:nonexistent.com",
+      );
       expect(result).toEqual([]);
     });
 
     it("should handle invalid URLs gracefully in site: search", async () => {
-      // Add a bookmark with an invalid URL (this shouldn't normally happen, but test defensive coding)
-      const mockBookmark = {
+      mockBookmarkUtils.addMockBookmark({
         id: "invalid",
         title: "Invalid URL Bookmark",
         url: "not-a-valid-url",
         parentId: "some-parent",
-      };
-      mockBookmarkUtils.addMockBookmark(mockBookmark);
+      });
 
-      // This should not throw an error and should simply not match
-      const result = await search("site:example.com");
+      const result = await searchHistories(
+        bookmarkHistoryStore,
+        "site:example.com",
+      );
       expect(result).toEqual([]);
     });
 
@@ -618,8 +605,7 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      // Search for google but exclude ads
-      const result = await search("google -ads");
+      const result = await searchHistories(bookmarkHistoryStore, "google -ads");
       expect(result).toHaveLength(2);
       expect(result.map((r) => r.url)).toContain("https://google.com/search");
       expect(result.map((r) => r.url)).toContain(
@@ -665,8 +651,10 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      // Exclude both ads and spam
-      const result = await search("example -ads -spam");
+      const result = await searchHistories(
+        bookmarkHistoryStore,
+        "example -ads -spam",
+      );
       expect(result).toHaveLength(2);
       expect(result.map((r) => r.url)).toContain("https://example.com/search");
       expect(result.map((r) => r.url)).toContain("https://example.com/content");
@@ -685,7 +673,7 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      const result = await search("-ads -spam");
+      const result = await searchHistories(bookmarkHistoryStore, "-ads -spam");
       expect(result).toEqual([]);
     });
 
@@ -718,7 +706,10 @@ describe("storage", () => {
       ];
       await insertHistories(...historyItems);
 
-      const result = await search("site:google.com -ads");
+      const result = await searchHistories(
+        bookmarkHistoryStore,
+        "site:google.com -ads",
+      );
       expect(result).toHaveLength(1);
       expect(result[0]?.url).toBe("https://google.com/search");
     });
@@ -753,14 +744,17 @@ describe("storage", () => {
         ];
         await insertHistories(...historyItems);
 
-        // Without grouping - should return all items
-        const resultWithoutGrouping = await search("example");
+        const resultWithoutGrouping = await searchHistories(
+          bookmarkHistoryStore,
+          "example",
+        );
         expect(resultWithoutGrouping).toHaveLength(2);
 
-        // With groupByUrl - should return only the most recent for each URL
-        const resultWithGrouping = await search("example", {
-          groupByUrl: true,
-        });
+        const resultWithGrouping = await searchHistories(
+          bookmarkHistoryStore,
+          "example",
+          { groupByUrl: true },
+        );
         expect(resultWithGrouping).toHaveLength(1);
         expect(resultWithGrouping[0]?.title).toBe("Example - New Visit");
         expect(resultWithGrouping[0]?.lastVisitTime).toBe(
@@ -797,16 +791,18 @@ describe("storage", () => {
         ];
         await insertHistories(...historyItems);
 
-        // Without grouping - should return all items
-        const resultWithoutGrouping = await search("example");
+        const resultWithoutGrouping = await searchHistories(
+          bookmarkHistoryStore,
+          "example",
+        );
         expect(resultWithoutGrouping).toHaveLength(3);
 
-        // With groupByTitle - should return only the most recent for each title
-        const resultWithGrouping = await search("example", {
-          groupByTitle: true,
-        });
+        const resultWithGrouping = await searchHistories(
+          bookmarkHistoryStore,
+          "example",
+          { groupByTitle: true },
+        );
         expect(resultWithGrouping).toHaveLength(2);
-        // Most recent "Same Title" should be page2
         const sameTitleItem = resultWithGrouping.find(
           (r) => r.title === "Same Title",
         );
@@ -850,14 +846,11 @@ describe("storage", () => {
         ];
         await insertHistories(...historyItems);
 
-        // With both options - URL grouping first, then title grouping
-        const result = await search("title", {
+        const result = await searchHistories(bookmarkHistoryStore, "title", {
           groupByUrl: true,
           groupByTitle: true,
         });
 
-        // After URL grouping: example.com (newest), other.com, another.com = 3 items
-        // After title grouping: "Title A" keeps only most recent (example.com at 12:00), "Title B" keeps another.com
         expect(result).toHaveLength(2);
         expect(result.map((r) => r.url)).toContain("https://example.com");
         expect(result.map((r) => r.url)).toContain("https://another.com");
@@ -892,13 +885,14 @@ describe("storage", () => {
         ];
         await insertHistories(...historyItems);
 
-        const result = await search("com", { groupByUrl: true });
+        const result = await searchHistories(bookmarkHistoryStore, "com", {
+          groupByUrl: true,
+        });
 
         expect(result).toHaveLength(2);
-        // Should be sorted by lastVisitTime descending
         expect(result[0]?.url).toBe("https://newest.com");
         expect(result[1]?.url).toBe("https://oldest.com");
-        expect(result[1]?.title).toBe("Oldest Updated"); // Most recent title for oldest.com
+        expect(result[1]?.title).toBe("Oldest Updated");
       });
 
       it("should not group when options are false or undefined", async () => {
@@ -922,15 +916,17 @@ describe("storage", () => {
         ];
         await insertHistories(...historyItems);
 
-        // No options
-        const resultNoOptions = await search("example");
+        const resultNoOptions = await searchHistories(
+          bookmarkHistoryStore,
+          "example",
+        );
         expect(resultNoOptions).toHaveLength(2);
 
-        // Explicit false
-        const resultExplicitFalse = await search("example", {
-          groupByUrl: false,
-          groupByTitle: false,
-        });
+        const resultExplicitFalse = await searchHistories(
+          bookmarkHistoryStore,
+          "example",
+          { groupByUrl: false, groupByTitle: false },
+        );
         expect(resultExplicitFalse).toHaveLength(2);
       });
 
@@ -963,9 +959,10 @@ describe("storage", () => {
         ];
         await insertHistories(...historyItems);
 
-        const result = await search("example", { groupByTitle: true });
+        const result = await searchHistories(bookmarkHistoryStore, "example", {
+          groupByTitle: true,
+        });
 
-        // Empty titles should be grouped together, keeping the most recent
         expect(result).toHaveLength(2);
         const emptyTitleItem = result.find((r) => r.title === "");
         expect(emptyTitleItem?.url).toBe("https://example.com/page2");
@@ -984,26 +981,24 @@ describe("storage", () => {
             url: `https://example.com/page${i}`,
             title: `Truncate Test ${i}`,
             visitCount: 1,
-            // index が大きいほど新しい
             lastVisitTime: baseTime + i * 60 * 60 * 1000,
             domain: "example.com",
           }),
         );
         await insertHistories(...historyItems);
 
-        const result = await search("truncate", { limit });
+        const result = await searchHistories(bookmarkHistoryStore, "truncate", {
+          limit,
+        });
 
         expect(result).toHaveLength(limit);
 
-        // 最新順にソートされていること
         const lastVisitTimes = result.map((r) => r.lastVisitTime);
         const sorted = [...lastVisitTimes].sort((a, b) => b - a);
         expect(lastVisitTimes).toEqual(sorted);
 
-        // 最古 (index 0) が落とされていること
         const titles = new Set(result.map((r) => r.title));
         expect(titles.has(`Truncate Test 0`)).toBe(false);
-        // 最新 (index overCap-1) は残っていること
         expect(titles.has(`Truncate Test ${overCap - 1}`)).toBe(true);
       });
 
@@ -1022,7 +1017,9 @@ describe("storage", () => {
         );
         await insertHistories(...historyItems);
 
-        const result = await search("under", { limit: 10 });
+        const result = await searchHistories(bookmarkHistoryStore, "under", {
+          limit: 10,
+        });
 
         expect(result).toHaveLength(3);
       });
@@ -1042,30 +1039,23 @@ describe("storage", () => {
         );
         await insertHistories(...historyItems);
 
-        const result = await search("nolimit");
+        const result = await searchHistories(bookmarkHistoryStore, "nolimit");
 
         expect(result).toHaveLength(20);
       });
     });
   });
 
-  describe("getRecentHistories", () => {
+  describe("getRecent", () => {
     beforeEach(async () => {
-      await initializeStorage();
-    });
-
-    it("should return empty array when storage is not initialized", async () => {
-      const result = await getRecentHistories();
-      expect(result).toEqual([]);
+      await bookmarkHistoryStore.initialize();
     });
 
     it("should get recent histories for default 3 days", async () => {
-      // Use fixed timestamps for predictable testing
-      const today = new Date(2024, 0, 15, 23, 46, 40).getTime(); // 2024-01-15 23:46:40 UTC
-      const yesterday = today - 24 * 60 * 60 * 1000; // 1 day ago
-      const olderDay = today - 5 * 24 * 60 * 60 * 1000; // 5 days ago
+      const today = new Date(2024, 0, 15, 23, 46, 40).getTime();
+      const yesterday = today - 24 * 60 * 60 * 1000;
+      const olderDay = today - 5 * 24 * 60 * 60 * 1000;
 
-      // Add bookmarks for today and yesterday
       await insertHistories(
         {
           id: "1",
@@ -1095,15 +1085,11 @@ describe("storage", () => {
 
       const result = await getRecentHistories();
 
-      // Should return both bookmarks
       expect(result).toHaveLength(2);
-
-      // Should be sorted by lastVisitTime descending (newest first)
       expect(result[0]?.lastVisitTime).toBeGreaterThan(
         result[1]?.lastVisitTime ?? 0,
       );
 
-      // Check the actual items
       const todayItem = result.find((i) => i.url === "https://today.com");
       const yesterdayItem = result.find(
         (i) => i.url === "https://yesterday.com",
@@ -1114,9 +1100,8 @@ describe("storage", () => {
     });
 
     it("should get recent histories for specified number of days", async () => {
-      const today = new Date(2024, 0, 15, 23, 46, 40).getTime(); // Fixed timestamp
+      const today = new Date(2024, 0, 15, 23, 46, 40).getTime();
 
-      // Add a bookmark for today
       await insertHistories({
         id: "1",
         url: "https://recent.com",
@@ -1128,7 +1113,6 @@ describe("storage", () => {
 
       const result = await getRecentHistories(7);
 
-      // Should find the bookmark within 7 days
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         url: "https://recent.com",
@@ -1137,15 +1121,12 @@ describe("storage", () => {
     });
 
     it("should sort results by lastVisitTime descending", async () => {
-      // Use fixed timestamps for predictable testing
-      const baseTime = new Date(2024, 0, 15, 23, 46, 40).getTime(); // Fixed timestamp
+      const baseTime = new Date(2024, 0, 15, 23, 46, 40).getTime();
 
-      // Use specific times that will result in different hour folders on the same day
       const newest = baseTime;
-      const middle = baseTime - 60 * 60 * 1000; // 1 hour ago
-      const oldest = baseTime - 2 * 60 * 60 * 1000; // 2 hours ago
+      const middle = baseTime - 60 * 60 * 1000;
+      const oldest = baseTime - 2 * 60 * 60 * 1000;
 
-      // Add bookmarks in different order than expected result
       await insertHistories(
         {
           id: "1",
@@ -1177,12 +1158,10 @@ describe("storage", () => {
 
       expect(result).toHaveLength(3);
 
-      // Should be sorted by lastVisitTime descending (newest first)
       expect(result[0]?.url).toBe("https://newest.com");
       expect(result[1]?.url).toBe("https://middle.com");
       expect(result[2]?.url).toBe("https://oldest.com");
 
-      // Verify timestamps are in descending order
       expect(result[0]?.lastVisitTime).toBeGreaterThan(
         result[1]?.lastVisitTime ?? 0,
       );

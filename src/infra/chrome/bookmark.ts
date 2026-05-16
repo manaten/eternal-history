@@ -40,19 +40,6 @@ export function resetBookmarkCacheForTesting() {
  * フォルダを取得または作成します。
  * 指定された親フォルダ内に指定されたタイトルのフォルダが存在する場合はそのIDを返し、
  * 存在しない場合は新しいフォルダを作成してそのIDを返します。
- *
- * @param parentId - 親フォルダのID。undefinedの場合はルートフォルダを検索します
- * @param title - 作成または取得するフォルダのタイトル
- * @returns フォルダのIDを返すPromise
- *
- * @example
- * ```typescript
- * // 親フォルダ内にサブフォルダを作成/取得
- * const folderId = await getOrCreateFolder("parent123", "2024");
- *
- * // ルートレベルでフォルダを作成/取得
- * const rootId = await getOrCreateFolder(undefined, "Eternal History");
- * ```
  */
 export async function getOrCreateFolder(
   parentId: string | undefined,
@@ -77,21 +64,6 @@ export async function getOrCreateFolder(
 /**
  * 指定されたブックマークが特定のフォルダの配下にあるかどうかを判定します。
  * 直接の親子関係だけでなく、階層を遡って祖先フォルダも検索します。
- *
- * @param bookmark - 判定対象のブックマークノード
- * @param folderId - 検索対象のフォルダID
- * @returns ブックマークが指定フォルダの配下にある場合はtrue、そうでなければfalseを返すPromise
- *
- * @example
- * ```typescript
- * const bookmark = { id: "b1", parentId: "folder1", title: "Example", url: "https://example.com" };
- *
- * // 直接の親フォルダかチェック
- * const isDirectChild = await isUnderFolder(bookmark, "folder1"); // true
- *
- * // 祖先フォルダかチェック
- * const isAncestor = await isUnderFolder(bookmark, "rootFolder"); // trueまたはfalse
- * ```
  */
 export async function isUnderFolder(
   bookmark: chrome.bookmarks.BookmarkTreeNode,
@@ -116,27 +88,8 @@ export async function isUnderFolder(
 }
 
 /**
- * 指定されたフォルダ内のすべてのブックマーク（URLを持つノード）を再帰的に取得します。
+ * 指定されたフォルダ内のすべてのブックマーク (URLを持つノード) を再帰的に取得します。
  * サブフォルダも含めて階層全体を検索し、フォルダ自体は除外してブックマークのみを返します。
- *
- * @param folderId - 検索対象のフォルダID
- * @returns フォルダ内のすべてのブックマークノードの配列を返すPromise
- *
- * @example
- * ```typescript
- * // フォルダ内のすべてのブックマークを取得
- * const bookmarks = await getAllBookmarksInFolder("folder123");
- *
- * // 結果例: [
- * //   { id: "b1", title: "Example", url: "https://example.com", parentId: "folder123" },
- * //   { id: "b2", title: "Test", url: "https://test.com", parentId: "subfolder456" }
- * // ]
- *
- * // 各ブックマークを処理
- * for (const bookmark of bookmarks) {
- *   console.log(`${bookmark.title}: ${bookmark.url}`);
- * }
- * ```
  */
 export async function getAllBookmarksInFolder(
   folderId: string,
@@ -150,4 +103,46 @@ export async function getAllBookmarksInFolder(
     }
   });
   return bookmarksArrays.flat();
+}
+
+/**
+ * 指定された親フォルダ直下から URL が一致するブックマークを 1 件返します。
+ */
+export async function findBookmarkByUrlInFolder(
+  folderId: string,
+  url: string,
+): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
+  const children = await chrome.bookmarks.getChildren(folderId);
+  return children.find((b) => b.url === url);
+}
+
+export async function createBookmark(
+  parentId: string,
+  title: string,
+  url: string,
+): Promise<chrome.bookmarks.BookmarkTreeNode> {
+  return await chrome.bookmarks.create({ parentId, title, url });
+}
+
+export async function updateBookmarkTitle(
+  id: string,
+  title: string,
+): Promise<void> {
+  await chrome.bookmarks.update(id, { title });
+}
+
+export async function removeBookmark(id: string): Promise<void> {
+  await chrome.bookmarks.remove(id);
+}
+
+export async function searchBookmarks(
+  query: string,
+): Promise<chrome.bookmarks.BookmarkTreeNode[]> {
+  return await chrome.bookmarks.search({ query });
+}
+
+export async function searchBookmarksByUrl(
+  url: string,
+): Promise<chrome.bookmarks.BookmarkTreeNode[]> {
+  return await chrome.bookmarks.search({ url });
 }

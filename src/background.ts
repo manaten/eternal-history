@@ -1,5 +1,5 @@
-import { initializeStorage, insertHistories } from "./lib/storage";
-import { HistoryItem } from "./types/HistoryItem";
+import { HistoryItem } from "./domain/history/HistoryItem";
+import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
 
 function chromeHistoryToHistoryItem(
   historyItem: chrome.history.HistoryItem,
@@ -15,7 +15,7 @@ function chromeHistoryToHistoryItem(
 }
 
 async function initialize() {
-  await initializeStorage();
+  await bookmarkHistoryStore.initialize();
 
   const currentHistory = await chrome.history.search({
     text: "", // 空文字で全件取得対象
@@ -25,14 +25,18 @@ async function initialize() {
 
   console.log("current history:", currentHistory.length);
 
-  await insertHistories(...currentHistory.map(chromeHistoryToHistoryItem));
+  await bookmarkHistoryStore.insert(
+    currentHistory.map(chromeHistoryToHistoryItem),
+  );
   console.log("inserted histories:", currentHistory.length);
 
   chrome.history.onVisited.addListener(async (historyItem) => {
     console.log("add new history:", historyItem);
 
     // 即座に保存
-    await insertHistories(chromeHistoryToHistoryItem(historyItem));
+    await bookmarkHistoryStore.insert([
+      chromeHistoryToHistoryItem(historyItem),
+    ]);
 
     // JSでタイトルが設定される可能性があるため、10秒待って再取得・更新
     setTimeout(async () => {
@@ -49,7 +53,9 @@ async function initialize() {
             console.log(
               `Updating title for: ${updated.url} from: ${historyItem.title} to: ${updated.title}`,
             );
-            await insertHistories(chromeHistoryToHistoryItem(updated));
+            await bookmarkHistoryStore.insert([
+              chromeHistoryToHistoryItem(updated),
+            ]);
           }
         }
       } catch (error) {

@@ -1,4 +1,14 @@
-import type { HistoryItem, BookmarkMetadata } from "../types/HistoryItem.ts";
+import { HistoryItem } from "../../domain/history/HistoryItem";
+
+/**
+ * Bookmark のタイトル内に埋め込むメタデータ。
+ * Bookmark という保存形式に特有の符号化方式であり、ドメインの一部ではない。
+ */
+export interface BookmarkMetadata {
+  v: number; // version
+  t?: number; // precise timestamp
+  vc?: number; // visit count (optional for future use)
+}
 
 const METADATA_SEPARATOR = "💾";
 const CURRENT_VERSION = 1;
@@ -66,9 +76,9 @@ export function serializeHistoryItemToBookmark(item: HistoryItem): {
   url: string;
 } {
   const metadata = {
-    v: CURRENT_VERSION, // Ensure version is set
-    t: item.lastVisitTime, // Use last visit time as timestamp
-    vc: item.visitCount, // Use visit count
+    v: CURRENT_VERSION,
+    t: item.lastVisitTime,
+    vc: item.visitCount,
   };
   const metadataJson = JSON.stringify(metadata);
   return {
@@ -86,7 +96,8 @@ function faviconURL(u: string): string {
 
 /**
  * Deserializes bookmark format to HistoryItem
- * Note: This creates a partial HistoryItem - other fields like id, domain need to be set separately
+ * Note: lastVisitTime may be 0 for legacy bookmarks without metadata;
+ * callers may fall back to folder-based timestamp recovery in that case.
  */
 export function deserializeBookmarkToHistoryItem(
   bookmark: chrome.bookmarks.BookmarkTreeNode,
@@ -97,7 +108,7 @@ export function deserializeBookmarkToHistoryItem(
     url: bookmark.url ?? "",
     title: cleanTitle,
     lastVisitTime: metadata?.t ?? 0,
-    visitCount: metadata?.vc ?? 1, // Default to 1 if not specified
+    visitCount: metadata?.vc ?? 1,
     domain: bookmark.url ? new URL(bookmark.url).hostname : "",
     favicon: bookmark.url ? faviconURL(bookmark.url) : undefined,
   };
