@@ -153,20 +153,4 @@ export default defineConfig(
       "no-restricted-syntax": "off",
     },
   },
-
-  // background.ts は chrome.history からの初期取得とイベント購読を行うため例外。
-  {
-    files: ["src/background.ts"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector:
-            "MemberExpression[object.name='chrome'][property.name='bookmarks']",
-          message:
-            "chrome.bookmarks.* を直接使わず src/infra/chrome/bookmark.ts のラッパを使うこと。",
-        },
-      ],
-    },
-  },
 );
