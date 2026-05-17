@@ -50,7 +50,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           HUSKY=0 npm version ${{ github.event.inputs.version_type }}
-          git push origin main --follow-tags
+          git push --atomic origin main --follow-tags
 
       - name: 🔧 Build extension
         run: npm run build
