@@ -54,6 +54,11 @@ async function convertBookmarkToHistoryItem(
   };
 }
 
+/**
+ * 1 件の履歴を YYYY/MM/DD/HH 階層に保存する。
+ * 同じ時間フォルダ内に同一 URL のブックマークがあれば、タイトル (メタデータ含む) が
+ * 異なるときのみ update する。
+ */
 async function insertOne(history: HistoryItem): Promise<void> {
   if (!rootFolderId) {
     throw new Error("Storage not initialized");
@@ -85,6 +90,7 @@ async function insertOne(history: HistoryItem): Promise<void> {
   }
 }
 
+/** {@link HistoryStore.insert} の実装 */
 async function insert(items: HistoryItem[]): Promise<void> {
   if (!rootFolderId) {
     throw new Error("Storage not initialized");
@@ -97,6 +103,11 @@ async function insert(items: HistoryItem[]): Promise<void> {
   console.log("Inserted histories:", items.length);
 }
 
+/**
+ * {@link HistoryStore.searchCandidates} の実装。
+ * `chrome.bookmarks.search` の native indexing でタイトル/URL 部分一致の候補を集め、
+ * ルートフォルダ (Eternal History) 配下のものだけに絞り込む。
+ */
 async function searchCandidates(term: string): Promise<HistoryItem[]> {
   if (!rootFolderId) {
     return [];
@@ -117,6 +128,13 @@ async function searchCandidates(term: string): Promise<HistoryItem[]> {
   ).filter((item) => item !== null);
 }
 
+/**
+ * {@link HistoryStore.delete} の実装。
+ * Eternal History ルート配下の対応ブックマークを削除した上で、
+ * `chrome.history.deleteUrl` も呼んで Chrome 標準履歴からも消す
+ * (UI 上の「完全に忘れる」意図を満たすため)。
+ * ルート外にあるユーザー自前のブックマークには触らない。
+ */
 async function deleteHistory(item: HistoryItem): Promise<void> {
   if (!rootFolderId) {
     throw new Error("Storage not initialized");
@@ -145,6 +163,11 @@ async function deleteHistory(item: HistoryItem): Promise<void> {
   }
 }
 
+/**
+ * {@link HistoryStore.getRecent} の実装。
+ * 今日から `days` 日前までの日フォルダを舐めてブックマークを収集し、
+ * `lastVisitTime` 降順で返す。フォルダが存在しない日は黙ってスキップする。
+ */
 async function getRecent(days: number): Promise<HistoryItem[]> {
   if (!rootFolderId) {
     return [];

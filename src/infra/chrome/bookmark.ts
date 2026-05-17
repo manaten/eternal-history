@@ -13,6 +13,10 @@ const bookmarkCache = new Map<
   Promise<chrome.bookmarks.BookmarkTreeNode | undefined>
 >();
 
+/**
+ * `chrome.bookmarks.get` のキャッシュ付きラッパ。同一 ID への重複問い合わせを抑制する。
+ * 存在しない ID の場合は `undefined` を返す (throw しない)。
+ */
 export async function getBookmarkCached(
   id: string,
 ): Promise<chrome.bookmarks.BookmarkTreeNode | undefined> {
@@ -116,6 +120,7 @@ export async function findBookmarkByUrlInFolder(
   return children.find((b) => b.url === url);
 }
 
+/** 指定された親フォルダ直下に新規ブックマークを作成する。 */
 export async function createBookmark(
   parentId: string,
   title: string,
@@ -124,6 +129,7 @@ export async function createBookmark(
   return await chrome.bookmarks.create({ parentId, title, url });
 }
 
+/** ブックマークのタイトルだけを更新する (URL は変更しない)。 */
 export async function updateBookmarkTitle(
   id: string,
   title: string,
@@ -131,16 +137,23 @@ export async function updateBookmarkTitle(
   await chrome.bookmarks.update(id, { title });
 }
 
+/** ブックマークを 1 件削除する。フォルダの場合は配下も再帰削除される。 */
 export async function removeBookmark(id: string): Promise<void> {
   await chrome.bookmarks.remove(id);
 }
 
+/**
+ * タイトル/URL に対する Chrome 標準の全文検索。
+ * 検索範囲はブックマーク全体で、特定フォルダ配下に絞りたい場合は呼び出し側で
+ * {@link isUnderFolder} などで再フィルタする。
+ */
 export async function searchBookmarks(
   query: string,
 ): Promise<chrome.bookmarks.BookmarkTreeNode[]> {
   return await chrome.bookmarks.search({ query });
 }
 
+/** URL の完全一致でブックマークを引く。 */
 export async function searchBookmarksByUrl(
   url: string,
 ): Promise<chrome.bookmarks.BookmarkTreeNode[]> {
