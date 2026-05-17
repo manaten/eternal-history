@@ -1,7 +1,5 @@
-import {
-  ParsedSearchQuery,
-  parseSearchQuery,
-} from "../domain/history/SearchQuery";
+import { parseSearchQuery } from "../domain/history/parseSearchQuery";
+import { ParsedSearchQuery } from "../domain/history/types/ParsedSearchQuery";
 
 /**
  * テキスト内の検索クエリにマッチする部分をハイライト用のJSX要素に変換する

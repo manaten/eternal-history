@@ -13,8 +13,8 @@ import {
   ROOT_FOLDER_NAME,
   resetStorageForTesting,
 } from "./index";
-import { HistoryItem } from "../../domain/history/HistoryItem";
 import { searchHistories } from "../../domain/history/searchHistories";
+import { HistoryItem } from "../../domain/history/types/HistoryItem";
 import {
   setupChromeBookmarksMock,
   resetChromeBookmarksMock,

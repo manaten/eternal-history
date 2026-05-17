@@ -1,6 +1,6 @@
 import { FC, useState } from "react";
 
-import { HistoryItem } from "../../../domain/history/HistoryItem";
+import { HistoryItem } from "../../../domain/history/types/HistoryItem";
 import { t } from "../../../i18n";
 import { SavedQuery } from "../../../lib/savedQueries";
 import { ActionButton } from "../../common/ActionButton";

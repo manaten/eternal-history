@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { Root } from "./components/history/Root";
-import { HistoryItem } from "./domain/history/HistoryItem";
 import { searchHistories } from "./domain/history/searchHistories";
+import { HistoryItem } from "./domain/history/types/HistoryItem";
 import { t } from "./i18n";
 import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
 import {

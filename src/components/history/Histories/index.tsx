@@ -1,6 +1,6 @@
 import { FC, memo, useState, useCallback } from "react";
 
-import { HistoryItem as HistoryItemType } from "../../../domain/history/HistoryItem";
+import { HistoryItem as HistoryItemType } from "../../../domain/history/types/HistoryItem";
 import { t } from "../../../i18n";
 import { Spinner } from "../../common/Spinner";
 import { HistoryDropdown } from "../HistoryDropdown";

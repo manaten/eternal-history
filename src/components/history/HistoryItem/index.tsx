@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import { FC, memo } from "react";
 
-import { HistoryItem as HistoryItemType } from "../../../domain/history/HistoryItem";
+import { HistoryItem as HistoryItemType } from "../../../domain/history/types/HistoryItem";
 import { highlightText } from "../../../util/highlight";
 
 interface HistoryItemProps {

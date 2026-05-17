@@ -1,14 +1,9 @@
-import { HistoryItem } from "./HistoryItem";
-import { HistoryStore } from "./HistoryStore";
-import { parseSearchQuery } from "./SearchQuery";
-import { filterByTerms, groupHistories } from "./history-filter";
-
-export interface SearchOptions {
-  groupByUrl?: boolean;
-  groupByTitle?: boolean;
-  /** 結果の最大件数。lastVisitTime 降順で先頭から N 件を返す (未指定時は無制限) */
-  limit?: number;
-}
+import { filterByTerms } from "./filterByTerms";
+import { groupHistories } from "./groupHistories";
+import { parseSearchQuery } from "./parseSearchQuery";
+import { HistoryItem } from "./types/HistoryItem";
+import { HistoryStore } from "./types/HistoryStore";
+import { SearchOptions } from "./types/SearchOptions";
 
 /**
  * 履歴を検索するユースケース。

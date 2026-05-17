@@ -1,4 +1,4 @@
-import { HistoryItem } from "../../domain/history/HistoryItem";
+import { HistoryItem } from "../../domain/history/types/HistoryItem";
 
 /**
  * Chrome 標準の履歴 API への薄いラッパ。

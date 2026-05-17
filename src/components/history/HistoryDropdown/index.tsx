@@ -1,6 +1,6 @@
 import { FC, useMemo } from "react";
 
-import { HistoryItem } from "../../../domain/history/HistoryItem";
+import { HistoryItem } from "../../../domain/history/types/HistoryItem";
 import { t } from "../../../i18n";
 import { Dropdown } from "../../common/Dropdown";
 

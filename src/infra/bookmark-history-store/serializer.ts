@@ -1,4 +1,4 @@
-import { HistoryItem } from "../../domain/history/HistoryItem";
+import { HistoryItem } from "../../domain/history/types/HistoryItem";
 
 /**
  * Bookmark のタイトル内に埋め込むメタデータ。

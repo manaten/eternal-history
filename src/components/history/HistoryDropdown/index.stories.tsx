@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { HistoryDropdown } from "./index";
-import { HistoryItem } from "../../../domain/history/HistoryItem";
+import { HistoryItem } from "../../../domain/history/types/HistoryItem";
 
 const meta: Meta<typeof HistoryDropdown> = {
   component: HistoryDropdown,

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { Root } from "./index";
-import type { HistoryItem } from "../../../domain/history/HistoryItem";
+import type { HistoryItem } from "../../../domain/history/types/HistoryItem";
 
 const meta: Meta<typeof Root> = {
   component: Root,
