@@ -5,8 +5,7 @@ import {
   deserializeBookmarkToHistoryItem,
   serializeHistoryItemToBookmark,
 } from "./serializer";
-import { HistoryItem } from "../../domain/history/types/HistoryItem";
-import { HistoryStore } from "../../domain/history/types/HistoryStore";
+import { HistoryItem, HistoryStore } from "../../domain/history/types";
 import { dateToFolderNames, getDateArray } from "../../util/date";
 import {
   createBookmark,

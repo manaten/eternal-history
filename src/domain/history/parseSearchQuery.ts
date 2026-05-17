@@ -1,4 +1,4 @@
-import { ParsedSearchQuery } from "./types/ParsedSearchQuery";
+import { ParsedSearchQuery } from "./types";
 
 /**
  * 検索クエリを解析して各タームの種類を識別します。

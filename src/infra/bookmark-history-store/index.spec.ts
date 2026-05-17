@@ -14,7 +14,7 @@ import {
   resetStorageForTesting,
 } from "./index";
 import { searchHistories } from "../../domain/history/searchHistories";
-import { HistoryItem } from "../../domain/history/types/HistoryItem";
+import { HistoryItem } from "../../domain/history/types";
 import {
   setupChromeBookmarksMock,
   resetChromeBookmarksMock,

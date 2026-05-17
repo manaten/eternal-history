@@ -1,5 +1,4 @@
-import { HistoryItem } from "./types/HistoryItem";
-import { ParsedSearchQuery } from "./types/ParsedSearchQuery";
+import { HistoryItem, ParsedSearchQuery } from "./types";
 
 /**
  * 解析済みクエリのタームをすべて満たす履歴のみを残します (AND 検索)。

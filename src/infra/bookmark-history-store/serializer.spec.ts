@@ -4,7 +4,7 @@ import {
   serializeHistoryItemToBookmark,
   deserializeBookmarkToHistoryItem,
 } from "./serializer";
-import { HistoryItem } from "../../domain/history/types/HistoryItem";
+import { HistoryItem } from "../../domain/history/types";
 import { setupChromeBookmarksMock } from "../chrome/__mocks__/chrome_bookmarks.mock";
 
 describe("bookmark-serializer", () => {

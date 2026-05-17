@@ -1,5 +1,4 @@
-import { GroupingOptions } from "./types/GroupingOptions";
-import { HistoryItem } from "./types/HistoryItem";
+import { GroupingOptions, HistoryItem } from "./types";
 import { uniqBy } from "../../util/array";
 
 /**

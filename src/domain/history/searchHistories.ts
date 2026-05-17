@@ -1,9 +1,7 @@
 import { filterByTerms } from "./filterByTerms";
 import { groupHistories } from "./groupHistories";
 import { parseSearchQuery } from "./parseSearchQuery";
-import { HistoryItem } from "./types/HistoryItem";
-import { HistoryStore } from "./types/HistoryStore";
-import { SearchOptions } from "./types/SearchOptions";
+import { HistoryItem, HistoryStore, SearchOptions } from "./types";
 
 /**
  * 履歴を検索するユースケース。

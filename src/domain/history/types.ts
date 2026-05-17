@@ -1,4 +1,27 @@
-import { HistoryItem } from "./HistoryItem";
+export type HistoryItem = {
+  id: string;
+  url: string;
+  title: string;
+  visitCount: number;
+  lastVisitTime: number;
+  domain: string;
+  favicon?: string;
+};
+
+export type ParsedSearchQuery = {
+  term: string;
+  type: "text" | "site" | "exclude";
+};
+
+export interface GroupingOptions {
+  groupByUrl?: boolean;
+  groupByTitle?: boolean;
+}
+
+export interface SearchOptions extends GroupingOptions {
+  /** 結果の最大件数。lastVisitTime 降順で先頭から N 件を返す (未指定時は無制限) */
+  limit?: number;
+}
 
 /**
  * 履歴アイテムの永続化を抽象化するポート。
