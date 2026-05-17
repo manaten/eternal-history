@@ -1,8 +1,8 @@
 import classNames from "classnames";
 import { FC } from "react";
 
+import { SavedQuery } from "../../../domain/savedQueries";
 import { t } from "../../../i18n";
-import { SavedQuery } from "../../../lib/savedQueries";
 
 interface SavedQueriesProps {
   queries: SavedQuery[];

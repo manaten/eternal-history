@@ -1,8 +1,8 @@
 import { FC, useState } from "react";
 
 import { HistoryItem } from "../../../domain/history/types";
+import { SavedQuery } from "../../../domain/savedQueries";
 import { t } from "../../../i18n";
-import { SavedQuery } from "../../../lib/savedQueries";
 import { ActionButton } from "../../common/ActionButton";
 import { Header } from "../Header";
 import { HelpModal } from "../HelpModal";

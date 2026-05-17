@@ -3,15 +3,15 @@ import { useCallback, useEffect, useState } from "react";
 import { Root } from "./components/history/Root";
 import { searchHistories } from "./domain/history/searchHistories";
 import { HistoryItem } from "./domain/history/types";
-import { t } from "./i18n";
-import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
 import {
   getSavedQueries,
   addSavedQuery,
   removeSavedQuery,
   SavedQuery,
-} from "./lib/savedQueries";
-import { getSettings } from "./lib/settings";
+} from "./domain/savedQueries";
+import { getSettings } from "./domain/settings";
+import { t } from "./i18n";
+import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
 
 const SESSION_STORAGE_KEY = "eternal-history-search-query";
 

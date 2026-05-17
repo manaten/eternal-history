@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { OptionsPage } from "./components/settings/OptionsPage";
-import { getSettings, resetSettings, saveSettings } from "./lib/settings";
-import { applyTheme } from "./lib/theme";
+import { getSettings, resetSettings, saveSettings } from "./domain/settings";
+import { applyTheme } from "./domain/theme";
 import { Settings } from "./types/Settings";
 
 function OptionsApp() {
