@@ -2,6 +2,16 @@ name: Release Extension
 
 on:
   workflow_dispatch:
+    inputs:
+      version_type:
+        description: "Version bump type"
+        required: true
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
   build-and-release:
@@ -39,7 +49,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          HUSKY=0 npm version patch
+          HUSKY=0 npm version ${{ github.event.inputs.version_type }}
           git push origin main --follow-tags
 
       - name: 🔧 Build extension
