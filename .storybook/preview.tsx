@@ -1,7 +1,7 @@
 import type { Preview } from "@storybook/react-vite";
 import { useEffect } from "react";
 
-import { applyTheme } from "../src/lib/theme";
+import { applyTheme } from "../src/domain/theme";
 import { ThemeColor } from "../src/types/Settings";
 
 import "../src/index.css";
