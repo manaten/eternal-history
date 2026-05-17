@@ -3,9 +3,9 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   serializeHistoryItemToBookmark,
   deserializeBookmarkToHistoryItem,
-} from "./bookmark-serializer";
-import { HistoryItem } from "../types/HistoryItem";
-import { setupChromeBookmarksMock } from "./__mocks__/chrome_bookmarks.mock";
+} from "./serializer";
+import { HistoryItem } from "../../domain/history/types";
+import { setupChromeBookmarksMock } from "../chrome/__mocks__/chrome_bookmarks.mock";
 
 describe("bookmark-serializer", () => {
   beforeEach(() => {
@@ -87,8 +87,8 @@ describe("bookmark-serializer", () => {
         id: "bookmark-id",
         url: "https://legacy.com",
         title: "Legacy Site",
-        lastVisitTime: 0, // No metadata, so lastVisitTime is 0
-        visitCount: 1, // Default value
+        lastVisitTime: 0,
+        visitCount: 1,
         domain: "legacy.com",
         favicon:
           "chrome-extension://test-extension-id/_favicon/?pageUrl=https%3A%2F%2Flegacy.com&size=32",
@@ -109,7 +109,7 @@ describe("bookmark-serializer", () => {
       expect(result).toEqual({
         id: "bookmark-id",
         url: "https://malformed.com",
-        title: "Site with 💾{invalid json}", // Keeps original title when parsing fails
+        title: "Site with 💾{invalid json}",
         lastVisitTime: 0,
         visitCount: 1,
         domain: "malformed.com",
@@ -134,7 +134,7 @@ describe("bookmark-serializer", () => {
         url: "https://partial.com",
         title: "Partial Metadata",
         lastVisitTime: 1234567890123,
-        visitCount: 1, // Default when not specified
+        visitCount: 1,
         domain: "partial.com",
         favicon:
           "chrome-extension://test-extension-id/_favicon/?pageUrl=https%3A%2F%2Fpartial.com&size=32",
@@ -156,7 +156,7 @@ describe("bookmark-serializer", () => {
       expect(result).toEqual({
         id: "bookmark-id",
         url: "https://multiple.com",
-        title: "Site with 💾 emoji and another", // Should extract only the last metadata
+        title: "Site with 💾 emoji and another",
         lastVisitTime: 1234567890123,
         visitCount: 3,
         domain: "multiple.com",
@@ -179,7 +179,7 @@ describe("bookmark-serializer", () => {
       expect(result).toEqual({
         id: "bookmark-id",
         url: "https://invalid.com",
-        title: 'Invalid Version 💾{"v":"not-a-number","t":1234567890123}', // Falls back to original
+        title: 'Invalid Version 💾{"v":"not-a-number","t":1234567890123}',
         lastVisitTime: 0,
         visitCount: 1,
         domain: "invalid.com",

@@ -1,56 +1,34 @@
-import { initializeStorage, insertHistories } from "./lib/storage";
-import { HistoryItem } from "./types/HistoryItem";
-
-function chromeHistoryToHistoryItem(
-  historyItem: chrome.history.HistoryItem,
-): HistoryItem {
-  return {
-    id: historyItem.id || "",
-    url: historyItem.url ?? "",
-    title: historyItem.title ?? "",
-    visitCount: historyItem.visitCount ?? 0,
-    lastVisitTime: historyItem.lastVisitTime ?? 0,
-    domain: new URL(historyItem.url || "").hostname,
-  };
-}
+import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
+import {
+  getAllBrowserHistory,
+  getLatestHistoryByUrl,
+  onHistoryVisited,
+} from "./infra/chrome/chrome-history";
 
 async function initialize() {
-  await initializeStorage();
+  await bookmarkHistoryStore.initialize();
 
-  const currentHistory = await chrome.history.search({
-    text: "", // 空文字で全件取得対象
-    startTime: 0, // 1970年から現在まで全部
-    maxResults: 999999, // 上限を必要なだけ大きくする
-  });
-
+  const currentHistory = await getAllBrowserHistory();
   console.log("current history:", currentHistory.length);
 
-  await insertHistories(...currentHistory.map(chromeHistoryToHistoryItem));
+  await bookmarkHistoryStore.insert(currentHistory);
   console.log("inserted histories:", currentHistory.length);
 
-  chrome.history.onVisited.addListener(async (historyItem) => {
-    console.log("add new history:", historyItem);
+  onHistoryVisited(async (item) => {
+    console.log("add new history:", item);
 
     // 即座に保存
-    await insertHistories(chromeHistoryToHistoryItem(historyItem));
+    await bookmarkHistoryStore.insert([item]);
 
-    // JSでタイトルが設定される可能性があるため、10秒待って再取得・更新
+    // JS でタイトルが設定される可能性があるため、10 秒待って再取得・更新
     setTimeout(async () => {
       try {
-        const updatedHistory = await chrome.history.search({
-          text: historyItem.url || "",
-          maxResults: 1,
-        });
-
-        if (updatedHistory[0]) {
-          const updated = updatedHistory[0];
-          // タイトルが更新されている場合のみ再保存
-          if (updated.title && updated.title !== historyItem.title) {
-            console.log(
-              `Updating title for: ${updated.url} from: ${historyItem.title} to: ${updated.title}`,
-            );
-            await insertHistories(chromeHistoryToHistoryItem(updated));
-          }
+        const updated = await getLatestHistoryByUrl(item.url);
+        if (updated?.title && updated.title !== item.title) {
+          console.log(
+            `Updating title for: ${updated.url} from: ${item.title} to: ${updated.title}`,
+          );
+          await bookmarkHistoryStore.insert([updated]);
         }
       } catch (error) {
         console.warn("Failed to update history title:", error);

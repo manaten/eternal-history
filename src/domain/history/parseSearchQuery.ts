@@ -1,7 +1,4 @@
-export type ParsedSearchQuery = {
-  term: string;
-  type: "text" | "site" | "exclude";
-};
+import { ParsedSearchQuery } from "./types";
 
 /**
  * 検索クエリを解析して各タームの種類を識別します。
@@ -10,6 +7,9 @@ export type ParsedSearchQuery = {
  * - 通常検索: "term"
  * - サイト検索: "site:example.com"
  * - 除外検索: "-term"
+ *
+ * 除外以外のタームは長さの降順でソートして返します
+ * (最も長い単語を一次検索に使うことで Chrome 側の絞り込みを効かせるため)。
  */
 export function parseSearchQuery(query: string): Array<ParsedSearchQuery> {
   const terms = query

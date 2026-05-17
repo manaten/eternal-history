@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { Root } from "./components/history/Root";
+import { searchHistories } from "./domain/history/searchHistories";
+import { HistoryItem } from "./domain/history/types";
 import { t } from "./i18n";
+import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
 import {
   getSavedQueries,
   addSavedQuery,
@@ -9,13 +12,6 @@ import {
   SavedQuery,
 } from "./lib/savedQueries";
 import { getSettings } from "./lib/settings";
-import {
-  search,
-  initializeStorage,
-  getRecentHistories,
-  deleteHistoryItem,
-} from "./lib/storage";
-import { HistoryItem } from "./types/HistoryItem";
 
 const SESSION_STORAGE_KEY = "eternal-history-search-query";
 
@@ -59,13 +55,13 @@ function App() {
     saveInitialQuery(trimmedQuery);
 
     try {
-      await initializeStorage();
+      await bookmarkHistoryStore.initialize();
       const results: HistoryItem[] = trimmedQuery
-        ? await search(trimmedQuery, {
+        ? await searchHistories(bookmarkHistoryStore, trimmedQuery, {
             ...(await getSettings()).search,
             limit: MAX_SEARCH_RESULTS,
           })
-        : await getRecentHistories(3);
+        : await bookmarkHistoryStore.getRecent(3);
       setHistory(results);
       setTruncatedAt(
         trimmedQuery !== "" && results.length === MAX_SEARCH_RESULTS
@@ -85,7 +81,7 @@ function App() {
         title: item.title || item.url,
       });
       if (confirm(message)) {
-        await deleteHistoryItem(item);
+        await bookmarkHistoryStore.delete(item);
         setHistory((prev) => prev.filter((h) => h.url !== item.url));
       }
     } catch (error) {
