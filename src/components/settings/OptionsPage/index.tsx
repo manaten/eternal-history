@@ -3,6 +3,7 @@ import { ComponentProps, FC } from "react";
 import { t } from "../../../i18n";
 import { Settings } from "../../../types/Settings";
 import { Spinner } from "../../common/Spinner";
+import { DebugTools } from "../DebugTools";
 import { OptionsForm } from "../OptionsForm";
 
 interface OptionsPageProps extends Omit<
@@ -41,6 +42,8 @@ export const OptionsPage: FC<OptionsPageProps> = ({
       </h1>
 
       <OptionsForm initialSettings={initialSettings} {...props} />
+
+      {import.meta.env.DEV && <DebugTools />}
 
       <footer className='mt-auto pt-8 text-center text-sm text-gray-400'>
         Eternal History by{" "}

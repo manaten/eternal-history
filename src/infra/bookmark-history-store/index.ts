@@ -198,6 +198,29 @@ async function getRecent(days: number): Promise<HistoryItem[]> {
 }
 
 /**
+ * デバッグ用途: Eternal History ルート配下の全ブックマーク (URLノード) を返す。
+ * `initialize()` 済みである必要がある。
+ */
+export async function getAllRawBookmarksForDebug(): Promise<
+  chrome.bookmarks.BookmarkTreeNode[]
+> {
+  if (!rootFolderId) {
+    throw new Error("Storage not initialized");
+  }
+  return await getAllBookmarksInFolder(rootFolderId);
+}
+
+/**
+ * デバッグ用途: 生ブックマークを HistoryItem に変換する。
+ * 計測コードから個別ステップの時間を取りたいので公開している。
+ */
+export async function convertBookmarksForDebug(
+  bookmarks: chrome.bookmarks.BookmarkTreeNode[],
+): Promise<HistoryItem[]> {
+  return await pMap(bookmarks, convertBookmarkToHistoryItem);
+}
+
+/**
  * HistoryStore の Chrome bookmarks ベース実装。
  *
  * 履歴は "Eternal History" ルート配下の YYYY/MM/DD/HH 階層にブックマークとして
