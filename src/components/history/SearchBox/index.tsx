@@ -1,6 +1,11 @@
-import { FC } from "react";
+import { FC, KeyboardEvent, useEffect, useState } from "react";
 
 import { t } from "../../../i18n";
+import { requestSuggestions } from "../../../util/suggest";
+import { SearchSuggestions } from "../SearchSuggestions";
+
+const SUGGEST_LIMIT = 10;
+const MIN_QUERY_LEN = 2;
 
 interface SearchBoxProps {
   onSearch: (query: string) => void;
@@ -10,6 +15,25 @@ interface SearchBoxProps {
   isLoading: boolean;
 }
 
+/**
+ * クエリの末尾トークン (空白区切りで最後の単語) を返す。
+ * 入力が空白で終わっている場合は「直前の単語は確定済み」とみなし空文字を返す。
+ */
+function getLastToken(query: string): string {
+  if (query.length === 0 || /\s$/.test(query)) return "";
+  const tokens = query.split(/\s+/);
+  return tokens[tokens.length - 1] ?? "";
+}
+
+/**
+ * クエリの末尾トークンを `replacement` に置換し、後ろに空白を 1 つ付けた文字列を返す。
+ * "github tok" + "tokyucorp" → "github tokyucorp "
+ */
+function replaceLastToken(query: string, replacement: string): string {
+  const tokens = query.split(/\s+/);
+  return [...tokens.slice(0, -1), replacement].join(" ") + " ";
+}
+
 export const SearchBox: FC<SearchBoxProps> = ({
   onSearch,
   onSaveQuery,
@@ -17,11 +41,71 @@ export const SearchBox: FC<SearchBoxProps> = ({
   onSearchQueryChange,
   isLoading,
 }) => {
+  // 「現在のトークンに紐づくサジェスト結果」を一塊で持つ。lastToken が変わると派生的に
+  // suggestions が [] になり、新しい async 結果が届いたタイミングで更新される。
+  // こうすると useEffect 内で setState を同期実行する必要がなく、不要なレンダーも防げる。
+  const [data, setData] = useState<{
+    token: string;
+    suggestions: readonly string[];
+  }>({ token: "", suggestions: [] });
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [focused, setFocused] = useState(false);
+
+  const lastToken = getLastToken(searchQuery);
+
+  useEffect(() => {
+    if (lastToken.length < MIN_QUERY_LEN) return;
+    const cancelled = { current: false };
+    requestSuggestions(lastToken, SUGGEST_LIMIT).then((results) => {
+      if (cancelled.current) return;
+      setData({ token: lastToken, suggestions: results });
+      setSelectedIndex(-1);
+    });
+    return () => {
+      // eslint-disable-next-line functional/immutable-data
+      cancelled.current = true;
+    };
+  }, [lastToken]);
+
+  const suggestions = data.token === lastToken ? data.suggestions : [];
+
+  const applySuggestion = (suggestion: string) => {
+    onSearchQueryChange(replaceLastToken(searchQuery, suggestion));
+    setData({ token: "", suggestions: [] });
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((i) => (i + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex(
+        (i) => (i - 1 + suggestions.length) % suggestions.length,
+      );
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      e.preventDefault();
+      const suggestion = suggestions[selectedIndex];
+      if (suggestion) applySuggestion(suggestion);
+    } else if (e.key === "Tab" && selectedIndex >= 0) {
+      e.preventDefault();
+      const suggestion = suggestions[selectedIndex];
+      if (suggestion) applySuggestion(suggestion);
+    } else if (e.key === "Escape") {
+      setData({ token: "", suggestions: [] });
+      setSelectedIndex(-1);
+    }
+  };
+
   const handleSaveQuery = () => {
     if (searchQuery.trim() && onSaveQuery) {
       onSaveQuery(searchQuery.trim());
     }
   };
+
+  const dropdownVisible = focused && suggestions.length > 0;
 
   return (
     <div className='relative'>
@@ -39,6 +123,10 @@ export const SearchBox: FC<SearchBoxProps> = ({
           onChange={(e) => {
             onSearchQueryChange(e.target.value);
           }}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          autoComplete='off'
           className={`
             w-full rounded-xl border-2 border-transparent bg-white p-4 pr-14
             pl-5 text-base font-normal text-gray-800 shadow-md outline-none
@@ -70,6 +158,14 @@ export const SearchBox: FC<SearchBoxProps> = ({
           +
         </button>
       </form>
+      {dropdownVisible && (
+        <SearchSuggestions
+          suggestions={suggestions}
+          selectedIndex={selectedIndex}
+          onSelect={applySuggestion}
+          onHover={setSelectedIndex}
+        />
+      )}
     </div>
   );
 };

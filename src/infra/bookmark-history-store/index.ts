@@ -198,25 +198,15 @@ async function getRecent(days: number): Promise<HistoryItem[]> {
 }
 
 /**
- * デバッグ用途: Eternal History ルート配下の全ブックマーク (URLノード) を返す。
- * `initialize()` 済みである必要がある。
+ * Eternal History ルート配下の全履歴を返す。
+ * インデックス再構築 (`background.ts` の word-index 初期化) や、デバッグ用の
+ * 全件走査で使う。件数オーダー 10 万を想定しており、決して軽い処理ではない。
  */
-export async function getAllRawBookmarksForDebug(): Promise<
-  chrome.bookmarks.BookmarkTreeNode[]
-> {
+async function getAll(): Promise<HistoryItem[]> {
   if (!rootFolderId) {
     throw new Error("Storage not initialized");
   }
-  return await getAllBookmarksInFolder(rootFolderId);
-}
-
-/**
- * デバッグ用途: 生ブックマークを HistoryItem に変換する。
- * 計測コードから個別ステップの時間を取りたいので公開している。
- */
-export async function convertBookmarksForDebug(
-  bookmarks: chrome.bookmarks.BookmarkTreeNode[],
-): Promise<HistoryItem[]> {
+  const bookmarks = await getAllBookmarksInFolder(rootFolderId);
   return await pMap(bookmarks, convertBookmarkToHistoryItem);
 }
 
@@ -228,10 +218,11 @@ export async function convertBookmarksForDebug(
  *
  * 検索の一次フィルタは chrome.bookmarks.search に委譲しています。
  */
-export const bookmarkHistoryStore: HistoryStore = {
+export const bookmarkHistoryStore = {
   initialize,
   insert,
   delete: deleteHistory,
   getRecent,
+  getAll,
   searchCandidates,
-};
+} satisfies HistoryStore & { getAll: () => Promise<HistoryItem[]> };
