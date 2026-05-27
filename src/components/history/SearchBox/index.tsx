@@ -1,4 +1,4 @@
-import { FC, KeyboardEvent, useEffect, useState } from "react";
+import { FC, KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { t } from "../../../i18n";
 import { requestSuggestions } from "../../../util/suggest";
@@ -50,22 +50,39 @@ export const SearchBox: FC<SearchBoxProps> = ({
   }>({ token: "", suggestions: [] });
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const lastToken = getLastToken(searchQuery);
 
+  // 初期マウント時のみフォーカス。`ref={(e) => e?.focus()}` のように毎レンダーで
+  // focus() を呼ぶと、想定外のタイミングで focus が動いて挙動が読みにくくなるため。
   useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  // サジェスト取得トリガは「lastToken の変化」と「フォーカス取得」の 2 つ。
+  // 後者を含めるのは、background 一時障害で空配列を掴んだまま固まるケースを
+  // blur→refocus で復旧できるようにするため。
+  useEffect(() => {
+    if (!focused) return;
     if (lastToken.length < MIN_QUERY_LEN) return;
     const cancelled = { current: false };
-    requestSuggestions(lastToken, SUGGEST_LIMIT).then((results) => {
-      if (cancelled.current) return;
-      setData({ token: lastToken, suggestions: results });
-      setSelectedIndex(-1);
-    });
+    requestSuggestions(lastToken, SUGGEST_LIMIT)
+      .then((results) => {
+        if (cancelled.current) return;
+        setData({ token: lastToken, suggestions: results });
+        setSelectedIndex(-1);
+      })
+      .catch((e) => {
+        // 一時障害時は state を更新せず、前回の有効結果を保持する。
+        // 次の lastToken 変化 or refocus でリトライが走る。
+        console.warn("suggest fetch failed:", e);
+      });
     return () => {
       // eslint-disable-next-line functional/immutable-data
       cancelled.current = true;
     };
-  }, [lastToken]);
+  }, [lastToken, focused]);
 
   const suggestions = data.token === lastToken ? data.suggestions : [];
 
@@ -116,7 +133,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
         }}
       >
         <input
-          ref={(e) => e?.focus()}
+          ref={inputRef}
           type='text'
           placeholder={t("searchBox.placeholder")}
           value={searchQuery}
