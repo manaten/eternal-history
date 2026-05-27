@@ -8,14 +8,33 @@ import {
 import {
   analyzeTexts,
   approximateMapSizeBytes,
+  approximatePrefixIndexSizeBytes,
   bucketByCount,
   bucketByLength,
+  buildPrefixIndex,
+  filterNoise,
+  lookupSuggestions,
   topWords,
 } from "../../../util/wordAnalysis";
 import { Button } from "../../common/Button";
 
 const COUNT_THRESHOLDS = [1, 2, 5, 10, 30, 100];
 const TOP_N = 30;
+const MIN_COUNT = 2;
+const SUGGEST_LIMIT = 10;
+const LOOKUP_ITERATIONS = 1000;
+const SAMPLE_QUERIES = [
+  "to",
+  "プラ",
+  "東急",
+  "Co",
+  "検索",
+  "Gi",
+  "あ",
+  "tok",
+  "GitH",
+  "プラス",
+];
 
 /**
  * インクリメンタルサジェストの実現可能性を測るための計測ボタン。
@@ -81,13 +100,69 @@ export const DebugTools: FC = () => {
         ),
       );
 
-      console.log(`[7] top ${TOP_N} words:`);
+      console.log(`[7] top ${TOP_N} words (raw):`);
       console.table(
         topWords(result.wordCounts, TOP_N).map(([word, count]) => ({
           word,
           count,
         })),
       );
+
+      // --- フィルタ後 ---
+      const t4 = performance.now();
+      const filtered = filterNoise(result.wordCounts, MIN_COUNT);
+      const t5 = performance.now();
+      const filteredSize = approximateMapSizeBytes(filtered);
+      console.log(
+        `[8] filter noise (1文字/2文字英かなのみ/count<${MIN_COUNT}): ${(t5 - t4).toFixed(1)} ms\n` +
+          `    uniqueWords : ${filtered.size.toLocaleString()} ` +
+          `(removed ${(result.wordCounts.size - filtered.size).toLocaleString()})\n` +
+          `    map size    : ~${(filteredSize / 1024).toFixed(1)} KB`,
+      );
+
+      console.log(`[9] top ${TOP_N} words (filtered):`);
+      console.table(
+        topWords(filtered, TOP_N).map(([word, count]) => ({ word, count })),
+      );
+
+      // --- prefix index ---
+      const t6 = performance.now();
+      const prefixIndex = buildPrefixIndex(filtered);
+      const t7 = performance.now();
+      const prefixSize = approximatePrefixIndexSizeBytes(prefixIndex);
+      const listLens = [...prefixIndex.values()].map((l) => l.length);
+      const maxListLen = listLens.length > 0 ? Math.max(...listLens) : 0;
+      const avgListLen =
+        listLens.length > 0
+          ? listLens.reduce((a, b) => a + b, 0) / listLens.length
+          : 0;
+      console.log(
+        `[10] build prefix index (2-char → words): ${(t7 - t6).toFixed(1)} ms\n` +
+          `    prefixes    : ${prefixIndex.size.toLocaleString()}\n` +
+          `    avg list len: ${avgListLen.toFixed(1)}\n` +
+          `    max list len: ${maxListLen}\n` +
+          `    index size  : ~${(prefixSize / 1024).toFixed(1)} KB`,
+      );
+
+      // --- lookup benchmark ---
+      console.log(
+        `[11] lookup benchmark (${LOOKUP_ITERATIONS} iterations per query):`,
+      );
+      const lookupResults = SAMPLE_QUERIES.map((query) => {
+        const start = performance.now();
+        const final =
+          Array.from({ length: LOOKUP_ITERATIONS }, () =>
+            lookupSuggestions(prefixIndex, filtered, query, SUGGEST_LIMIT),
+          ).at(-1) ?? [];
+        const elapsed = performance.now() - start;
+        return {
+          query,
+          "avg μs/lookup": ((elapsed * 1000) / LOOKUP_ITERATIONS).toFixed(2),
+          "result count": final.length,
+          "top match": final[0] ? `${final[0][0]} (${final[0][1]})` : "—",
+        };
+      });
+      console.table(lookupResults);
 
       console.groupEnd();
     } catch (e) {

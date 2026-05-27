@@ -100,6 +100,106 @@ export function topWords(
 /**
  * Map のメモリサイズ概算 (JSON 文字列長; UTF-16 換算なのでバイト数は ×2 目安)。
  */
-export function approximateMapSizeBytes(map: Map<string, number>): number {
+export function approximateMapSizeBytes(
+  map: Map<string, number | readonly string[]>,
+): number {
   return JSON.stringify([...map]).length * 2;
+}
+
+const RE_ALPHA_ONLY = /^[a-zA-Z]+$/;
+// U+3040–U+309F (Hiragana block)
+const RE_HIRAGANA_ONLY = /^[぀-ゟ]+$/;
+// U+30A0–U+30FF (Katakana block) + U+FF66–U+FF9F (Halfwidth Katakana)
+const RE_KATAKANA_ONLY = /^[゠-ヿｦ-ﾟ]+$/;
+
+/**
+ * サジェスト候補としてノイズとみなすかを判定する。
+ * - 1 文字単語 (助詞・記号・単漢字) は除外
+ * - 2 文字でアルファベット / ひらがな / カタカナのみの単語は除外
+ *   (例: "に", "ID", "あの", "プラ" は弾く)
+ * - 漢字を 1 文字でも含む 2 文字単語は残す (例: "東急", "検索")
+ * - 3 文字以上はそのまま残す
+ */
+export function isNoiseWord(word: string): boolean {
+  if (word.length <= 1) return true;
+  if (word.length === 2) {
+    return (
+      RE_ALPHA_ONLY.test(word) ||
+      RE_HIRAGANA_ONLY.test(word) ||
+      RE_KATAKANA_ONLY.test(word)
+    );
+  }
+  return false;
+}
+
+/**
+ * ノイズ単語と低頻度語をフィルタした新しい Map を返す。
+ */
+export function filterNoise(
+  wordCounts: Map<string, number>,
+  minCount: number,
+): Map<string, number> {
+  const result = new Map<string, number>();
+  for (const [word, count] of wordCounts) {
+    if (count < minCount) continue;
+    if (isNoiseWord(word)) continue;
+    // eslint-disable-next-line functional/immutable-data
+    result.set(word, count);
+  }
+  return result;
+}
+
+/**
+ * 単語の先頭 2 文字 → 単語リストの索引を作る。
+ * "tok" のような入力時、`index.get("to")` を取って startsWith フィルタするだけで
+ * 候補を絞り込める。1 文字目だけだと候補が爆発するので 2 文字をキーにする。
+ */
+export function buildPrefixIndex(
+  wordCounts: Map<string, number>,
+): Map<string, string[]> {
+  const index = new Map<string, string[]>();
+  for (const word of wordCounts.keys()) {
+    if (word.length < 2) continue;
+    const prefix = word.slice(0, 2);
+    const list = index.get(prefix);
+    if (list) {
+      // eslint-disable-next-line functional/immutable-data
+      list.push(word);
+    } else {
+      // eslint-disable-next-line functional/immutable-data
+      index.set(prefix, [word]);
+    }
+  }
+  return index;
+}
+
+/**
+ * 先頭 2 文字索引のサイズを JSON 換算で概算する。
+ */
+export function approximatePrefixIndexSizeBytes(
+  index: Map<string, string[]>,
+): number {
+  return JSON.stringify([...index]).length * 2;
+}
+
+/**
+ * prefix index を引いてサジェスト候補を返す。クエリは 2 文字以上を前提。
+ * 結果は出現回数の降順で `limit` 件まで。
+ */
+export function lookupSuggestions(
+  index: Map<string, string[]>,
+  wordCounts: Map<string, number>,
+  query: string,
+  limit: number,
+): readonly [string, number][] {
+  if (query.length < 2) return [];
+  const candidates = index.get(query.slice(0, 2)) ?? [];
+  const matched =
+    query.length === 2
+      ? candidates
+      : candidates.filter((w) => w.startsWith(query));
+  return matched
+    .map((w) => [w, wordCounts.get(w) ?? 0] as [string, number])
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit);
 }
