@@ -50,7 +50,7 @@ describe("buildWordIndex", () => {
     ]);
     expect(index.wordCounts.get("GitHub")).toBe(2);
     expect(index.wordCounts.get("GitLab")).toBe(1);
-    expect(index.prefixIndex.get("Gi")).toEqual(
+    expect(index.prefixIndex.get("gi")).toEqual(
       expect.arrayContaining(["GitHub", "GitLab"]),
     );
   });
@@ -72,14 +72,14 @@ describe("addText (差分更新)", () => {
     const index = buildWordIndex(["GitHub"]);
     addText(index, "GitHub");
     expect(index.wordCounts.get("GitHub")).toBe(2);
-    expect(index.prefixIndex.get("Gi")).toEqual(["GitHub"]);
+    expect(index.prefixIndex.get("gi")).toEqual(["GitHub"]);
   });
 
   it("新規単語は wordCounts と prefixIndex の両方に追加", () => {
     const index = createEmptyWordIndex();
     addText(index, "GitLab");
     expect(index.wordCounts.get("GitLab")).toBe(1);
-    expect(index.prefixIndex.get("Gi")).toEqual(["GitLab"]);
+    expect(index.prefixIndex.get("gi")).toEqual(["GitLab"]);
   });
 });
 
@@ -117,5 +117,32 @@ describe("lookupSuggestions", () => {
 
   it("該当 prefix がない場合は空配列", () => {
     expect(lookupSuggestions(index, "Xy", 10)).toEqual([]);
+  });
+
+  describe("大文字小文字無視", () => {
+    it("小文字クエリで大文字始まりの単語にマッチする", () => {
+      expect(lookupSuggestions(index, "git", 10)).toEqual(["GitHub", "GitLab"]);
+    });
+
+    it("大文字クエリで小文字始まりの単語にもマッチする", () => {
+      const caseIndex = buildWordIndex(["github github github gitlab"]);
+      expect(lookupSuggestions(caseIndex, "GIT", 10)).toEqual([
+        "github",
+        "gitlab",
+      ]);
+    });
+
+    it("大文字小文字違いのバリアントは合算して 1 件に畳まれる", () => {
+      // GitHub が 3 回、github が 2 回。合算 5 回で 1 件、表示は頻度の高い "GitHub"
+      const mixedIndex = buildWordIndex(["GitHub GitHub GitHub github github"]);
+      const results = lookupSuggestions(mixedIndex, "git", 10);
+      expect(results).toEqual(["GitHub"]);
+    });
+
+    it("クエリと大文字小文字違いの完全一致バリアントも自身として除外", () => {
+      const mixedIndex = buildWordIndex(["GitHub GitHub"]);
+      expect(lookupSuggestions(mixedIndex, "github", 10)).toEqual([]);
+      expect(lookupSuggestions(mixedIndex, "GITHUB", 10)).toEqual([]);
+    });
   });
 });

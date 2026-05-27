@@ -37,9 +37,11 @@ function addWord(index: WordIndex, word: string): void {
   // eslint-disable-next-line functional/immutable-data
   index.wordCounts.set(word, (prev ?? 0) + 1);
 
-  // 新規単語のみ prefix index に追加 (既存単語は既に登録済み)
+  // 新規単語のみ prefix index に追加 (既存単語は既に登録済み)。
+  // キーは toLowerCase() してアルファベットの大文字小文字を畳む。
+  // 日本語は toLowerCase() で変化しないので影響なし。
   if (prev === undefined) {
-    const prefix = word.slice(0, PREFIX_KEY_LEN);
+    const prefix = word.toLowerCase().slice(0, PREFIX_KEY_LEN);
     const list = index.prefixIndex.get(prefix);
     if (list) {
       // eslint-disable-next-line functional/immutable-data
@@ -67,8 +69,14 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
  * クエリの prefix で候補を絞り込み、出現回数の降順で `limit` 件まで返す。
  *
  * - 1 文字クエリは候補が広がりすぎるので空配列を返す
- * - 2 文字クエリは prefix index の該当バケットをそのまま返す (フィルタ不要で最速)
+ * - 2 文字クエリは prefix index の該当バケットをそのまま返す (再フィルタ不要)
  * - 3 文字以上は該当バケットを startsWith で再フィルタ
+ *
+ * 大文字小文字の扱い:
+ * クエリも単語も `toLowerCase()` してから比較する。同じ単語の大文字小文字違いの
+ * バリアント (例: "GitHub" と "github") は出現回数を合算した上で、もっとも頻度の
+ * 高いバリアントを代表として 1 件に集約する。日本語は toLowerCase() で変化しない
+ * のでこの処理は無影響。
  *
  * 出現回数が極端に少ない単語は自然に下位へ落ちて表示されないので、明示的な閾値は持たない。
  */
@@ -78,17 +86,42 @@ export function lookupSuggestions(
   limit: number,
 ): readonly string[] {
   if (query.length < PREFIX_KEY_LEN) return [];
+  const lowerQuery = query.toLowerCase();
   const candidates =
-    index.prefixIndex.get(query.slice(0, PREFIX_KEY_LEN)) ?? [];
+    index.prefixIndex.get(lowerQuery.slice(0, PREFIX_KEY_LEN)) ?? [];
   const matched =
     query.length === PREFIX_KEY_LEN
       ? candidates
-      : candidates.filter((w) => w.startsWith(query));
-  // 完全一致の単語自身は候補から除外 (ユーザーが既に打ち切っているため)
-  const withoutSelf = matched.filter((w) => w !== query);
-  return withoutSelf
-    .map((w) => [w, index.wordCounts.get(w) ?? 0] as const)
-    .sort((a, b) => b[1] - a[1])
+      : candidates.filter((w) => w.toLowerCase().startsWith(lowerQuery));
+
+  // 大文字小文字違いのバリアントを 1 グループに畳む。各グループ内で最頻バリアントを
+  // 表示用に選び、合算カウントでグループ間ソート。
+  const groups = new Map<
+    string,
+    { display: string; displayCount: number; totalCount: number }
+  >();
+  for (const w of matched) {
+    const lower = w.toLowerCase();
+    if (lower === lowerQuery) continue; // 入力と完全一致するバリアントは候補から除外
+    const count = index.wordCounts.get(w) ?? 0;
+    const existing = groups.get(lower);
+    if (!existing) {
+      // eslint-disable-next-line functional/immutable-data
+      groups.set(lower, { display: w, displayCount: count, totalCount: count });
+    } else {
+      const display = count > existing.displayCount ? w : existing.display;
+      const displayCount = Math.max(count, existing.displayCount);
+      // eslint-disable-next-line functional/immutable-data
+      groups.set(lower, {
+        display,
+        displayCount,
+        totalCount: existing.totalCount + count,
+      });
+    }
+  }
+
+  return [...groups.values()]
+    .sort((a, b) => b.totalCount - a.totalCount)
     .slice(0, limit)
-    .map(([w]) => w);
+    .map((g) => g.display);
 }

@@ -16,5 +16,7 @@ export interface WordIndex {
 /**
  * ノイズ判定ロジックやセグメンタ仕様に互換性のない変更を加えたらインクリメントする。
  * `loadWordIndex` がバージョン不一致を検出したら null を返し、フル再構築が走る。
+ *
+ * v2: prefixIndex のキーを小文字化し、ルックアップを大文字小文字無視に変更。
  */
-export const WORD_INDEX_SCHEMA_VERSION = 1;
+export const WORD_INDEX_SCHEMA_VERSION = 2;
