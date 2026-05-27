@@ -13,6 +13,15 @@ interface OptionsPageProps extends Omit<
   initialSettings: Settings | undefined;
 }
 
+/**
+ * dev ビルド (`npm run build:dev`) かどうかを実行時に判定する。
+ * `build:dev` は manifest 名末尾に "(dev)" を付ける運用なので、それで識別する。
+ * Vite の `import.meta.env.DEV` は dev server 限定で、`build:dev` でも false になる。
+ */
+function isDevBuild(): boolean {
+  return chrome.runtime.getManifest().name.endsWith("(dev)");
+}
+
 export const OptionsPage: FC<OptionsPageProps> = ({
   initialSettings,
   ...props
@@ -43,7 +52,7 @@ export const OptionsPage: FC<OptionsPageProps> = ({
 
       <OptionsForm initialSettings={initialSettings} {...props} />
 
-      {import.meta.env.DEV && <DebugTools />}
+      {isDevBuild() && <DebugTools />}
 
       <footer className='mt-auto pt-8 text-center text-sm text-gray-400'>
         Eternal History by{" "}
