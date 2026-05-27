@@ -50,6 +50,9 @@ export const SearchBox: FC<SearchBoxProps> = ({
   }>({ token: "", suggestions: [] });
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [focused, setFocused] = useState(false);
+  // 検索実行や Escape で「今は出さないで」と意思表示された状態。
+  // 次にユーザーが文字を打つ or フォーカスし直すと解除される。
+  const [dismissed, setDismissed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const lastToken = getLastToken(searchQuery);
@@ -111,7 +114,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
       const suggestion = suggestions[selectedIndex];
       if (suggestion) applySuggestion(suggestion);
     } else if (e.key === "Escape") {
-      setData({ token: "", suggestions: [] });
+      setDismissed(true);
       setSelectedIndex(-1);
     }
   };
@@ -122,13 +125,14 @@ export const SearchBox: FC<SearchBoxProps> = ({
     }
   };
 
-  const dropdownVisible = focused && suggestions.length > 0;
+  const dropdownVisible = focused && suggestions.length > 0 && !dismissed;
 
   return (
     <div className='relative'>
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          setDismissed(true);
           onSearch(searchQuery);
         }}
       >
@@ -138,10 +142,14 @@ export const SearchBox: FC<SearchBoxProps> = ({
           placeholder={t("searchBox.placeholder")}
           value={searchQuery}
           onChange={(e) => {
+            setDismissed(false);
             onSearchQueryChange(e.target.value);
           }}
           onKeyDown={handleKeyDown}
-          onFocus={() => setFocused(true)}
+          onFocus={() => {
+            setFocused(true);
+            setDismissed(false);
+          }}
           onBlur={() => setFocused(false)}
           autoComplete='off'
           className={`
