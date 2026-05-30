@@ -4,23 +4,28 @@ import {
   getLatestHistoryByUrl,
   onHistoryVisited,
 } from "./infra/chrome/chrome-history";
-import { initWordIndexService } from "./infra/word-index-service";
+import {
+  createWordIndexService,
+  makeWordIndexMessageListener,
+} from "./infra/word-index-service";
 
 /**
- * WordIndex サービスはモジュール読み込み時 (= SW wake 時) に登録される。
- * メッセージリスナーの同期登録が必要なため、await の前に呼ぶ。
+ * WordIndex サービスはモジュール読み込み時 (= SW wake 時) に組み立てる。
+ * `chrome.runtime.onMessage.addListener` は同期登録が要件なので、await の前に呼ぶ。
  *
- * onVisited からは `scheduleRebuild()` で「いつかブックマーク全件から再構築して」と
- * 依頼するだけ。差分更新は持たず、サービス内部の debounce + queue が実体ビルドを
- * 集約する (race / 二重カウントが構造的に発生しない)。
+ * onVisited からは `scheduleRebuild()` で「いつか再構築して」と依頼するだけ。
+ * 差分更新は持たず、サービス内部の debounce + queue が実体ビルドを集約する。
  */
-const wordIndexService = initWordIndexService({
+const wordIndexService = createWordIndexService({
   getSourceTexts: async () => {
     await bookmarkHistoryStore.initialize();
     const items = await bookmarkHistoryStore.getAll();
     return items.map((it) => it.title);
   },
 });
+chrome.runtime.onMessage.addListener(
+  makeWordIndexMessageListener(wordIndexService),
+);
 
 async function initialize() {
   await bookmarkHistoryStore.initialize();

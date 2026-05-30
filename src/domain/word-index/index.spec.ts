@@ -1,11 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  addText,
-  buildWordIndex,
-  createEmptyWordIndex,
-  lookupSuggestions,
-} from "./index";
+import { buildWordIndex, lookupSuggestions } from "./index";
 import { isNoiseWord } from "./noise";
 
 describe("isNoiseWord", () => {
@@ -67,22 +62,6 @@ describe("buildWordIndex", () => {
   });
 });
 
-describe("addText (差分更新)", () => {
-  it("既存単語のカウントだけ増やし prefix index は重複追加しない", () => {
-    const index = buildWordIndex(["GitHub"]);
-    addText(index, "GitHub");
-    expect(index.wordCounts.get("GitHub")).toBe(2);
-    expect(index.prefixIndex.get("gi")).toEqual(["GitHub"]);
-  });
-
-  it("新規単語は wordCounts と prefixIndex の両方に追加", () => {
-    const index = createEmptyWordIndex();
-    addText(index, "GitLab");
-    expect(index.wordCounts.get("GitLab")).toBe(1);
-    expect(index.prefixIndex.get("gi")).toEqual(["GitLab"]);
-  });
-});
-
 describe("lookupSuggestions", () => {
   const index = buildWordIndex([
     "GitHub GitHub GitHub", // GitHub: 3
@@ -137,6 +116,17 @@ describe("lookupSuggestions", () => {
       const mixedIndex = buildWordIndex(["GitHub GitHub GitHub github github"]);
       const results = lookupSuggestions(mixedIndex, "git", 10);
       expect(results).toEqual(["GitHub"]);
+    });
+
+    it("最頻ケースが canonical として採用される (build 順序非依存)", () => {
+      // 入力順序を反転しても結果が変わらないことで「最頻」基準を確認
+      const a = buildWordIndex(["github GitHub GitHub GitHub GitHub github"]);
+      const b = buildWordIndex(["GitHub github github GitHub GitHub GitHub"]);
+      // どちらも GitHub 4 回 / github 2 回 → canonical=GitHub, 合算 6
+      expect(a.wordCounts.get("GitHub")).toBe(6);
+      expect(a.wordCounts.has("github")).toBe(false);
+      expect(b.wordCounts.get("GitHub")).toBe(6);
+      expect(b.wordCounts.has("github")).toBe(false);
     });
 
     it("クエリと大文字小文字違いの完全一致バリアントも自身として除外", () => {

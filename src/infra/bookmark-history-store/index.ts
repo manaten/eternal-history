@@ -25,15 +25,28 @@ export const ROOT_FOLDER_NAME = "Eternal History";
 
 // eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
+// 並走する複数の initialize 呼出を 1 つの promise に集約するためのメモ化。
+// eslint-disable-next-line functional/no-let
+let initializePromise: Promise<void> | null = null;
 
 // Test helper function to reset storage state
 export function resetStorageForTesting() {
   rootFolderId = null;
+  initializePromise = null;
   resetBookmarkCacheForTesting();
 }
 
-async function initialize(): Promise<void> {
-  rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
+/**
+ * 冪等な初期化。複数箇所から並列で呼ばれても `chrome.bookmarks` への問い合わせは
+ * 1 回しか走らない (in-flight promise を共有する)。
+ */
+function initialize(): Promise<void> {
+  if (!initializePromise) {
+    initializePromise = (async () => {
+      rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
+    })();
+  }
+  return initializePromise;
 }
 
 async function convertBookmarkToHistoryItem(

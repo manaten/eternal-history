@@ -17,38 +17,65 @@ export function createEmptyWordIndex(): WordIndex {
 }
 
 /**
- * 1 つのテキストを分かち書きしてインデックスに加算する。
- * ノイズ単語はスキップ。`index` を破壊的に更新する (差分更新のホットパスのため、
- * 毎回 Map を作り直すコストを避ける)。
+ * テキスト群から WordIndex を構築する。2 パス構成:
+ *
+ *   1. exact-case ごとに出現回数を集計 (フィルタ済み)
+ *   2. 同じ lower 形のバリアントを 1 グループに畳んで、各グループから
+ *      **最頻ケース** を canonical として選び、合算カウントを wordCounts に格納
+ *
+ * 効果:
+ *   - 表示形が決定的 (= 最頻ケース)。SW wake をまたいでも canonical が揺れない。
+ *   - prefixIndex には canonical 1 件しか入らないので、case 順列によるバケット膨張なし。
+ *   - canonical 決定が単一の post-processing パスで完結し、挿入ホットパスの
+ *     O(bucket) スキャンが不要。build は O(totalTokens + uniqueCases)。
  */
-export function addText(index: WordIndex, text: string): void {
-  for (const seg of JA_SEGMENTER.segment(text)) {
-    if (!seg.isWordLike) continue;
-    const word = seg.segment;
-    if (isNoiseWord(word)) continue;
-    addWord(index, word);
+export function buildWordIndex(texts: readonly string[]): WordIndex {
+  // Phase 1: exact-case 出現回数
+  const exactCounts = new Map<string, number>();
+  for (const text of texts) {
+    for (const seg of JA_SEGMENTER.segment(text)) {
+      if (!seg.isWordLike) continue;
+      const word = seg.segment;
+      if (isNoiseWord(word)) continue;
+      // eslint-disable-next-line functional/immutable-data
+      exactCounts.set(word, (exactCounts.get(word) ?? 0) + 1);
+    }
   }
-}
 
-/**
- * 同じ単語の大文字小文字違いバリアント (例: "GitHub" / "github") は 1 つの canonical
- * (先に登録された形) にまとめる。これにより:
- *   - prefixIndex のバケットが case 順列の数だけ膨らむのを防ぐ
- *   - 出現回数が正しく合算される
- *   - lookupSuggestions 側でグループ化処理が不要になる
- * 日本語は toLowerCase() で変化しないので影響なし。
- */
-function addWord(index: WordIndex, word: string): void {
-  const lower = word.toLowerCase();
-  const prefix = lower.slice(0, PREFIX_KEY_LEN);
-  const list = index.prefixIndex.get(prefix);
-  const canonical = list?.find((w) => w.toLowerCase() === lower) ?? word;
+  // Phase 2: lower キーでグルーピング、各グループの最頻ケースを canonical に。
+  // 同点 (count tie) の場合は先に encounter した方を維持する。
+  const groups = new Map<
+    string,
+    { canonical: string; canonicalCount: number; totalCount: number }
+  >();
+  for (const [word, count] of exactCounts) {
+    const lower = word.toLowerCase();
+    const existing = groups.get(lower);
+    if (!existing) {
+      // eslint-disable-next-line functional/immutable-data
+      groups.set(lower, {
+        canonical: word,
+        canonicalCount: count,
+        totalCount: count,
+      });
+    } else {
+      // eslint-disable-next-line functional/immutable-data
+      existing.totalCount += count;
+      if (count > existing.canonicalCount) {
+        // eslint-disable-next-line functional/immutable-data
+        existing.canonical = word;
+        // eslint-disable-next-line functional/immutable-data
+        existing.canonicalCount = count;
+      }
+    }
+  }
 
-  const prev = index.wordCounts.get(canonical);
-  // eslint-disable-next-line functional/immutable-data
-  index.wordCounts.set(canonical, (prev ?? 0) + 1);
-
-  if (prev === undefined) {
+  const index = createEmptyWordIndex();
+  for (const { canonical, totalCount } of groups.values()) {
+    // eslint-disable-next-line functional/immutable-data
+    index.wordCounts.set(canonical, totalCount);
+    const prefix = canonical.toLowerCase().slice(0, PREFIX_KEY_LEN);
+    const list = index.prefixIndex.get(prefix);
     if (list) {
       // eslint-disable-next-line functional/immutable-data
       list.push(canonical);
@@ -56,17 +83,6 @@ function addWord(index: WordIndex, word: string): void {
       // eslint-disable-next-line functional/immutable-data
       index.prefixIndex.set(prefix, [canonical]);
     }
-  }
-}
-
-/**
- * テキスト群からゼロから WordIndex を構築する。
- * MV3 SW の起動 (or wake) 時 / ユーザー手動再構築で使う。
- */
-export function buildWordIndex(texts: readonly string[]): WordIndex {
-  const index = createEmptyWordIndex();
-  for (const text of texts) {
-    addText(index, text);
   }
   return index;
 }
@@ -78,8 +94,8 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
  * - 2 文字クエリは prefix index の該当バケットをそのまま返す
  * - 3 文字以上は該当バケットを startsWith で再フィルタ
  *
- * 大文字小文字: クエリも単語も `toLowerCase()` してから比較する。
- * 大文字小文字違いのバリアントは {@link addWord} で canonical 化済みなので、
+ * 大文字小文字: クエリも単語も `toLowerCase()` 化して比較する。
+ * バリアントは {@link buildWordIndex} の 2-phase で canonical 化済みなので、
  * lookup 側で重複・グループ化処理は不要。
  *
  * 出現回数が極端に少ない単語は自然に下位へ落ちて表示されないので、明示的な閾値は持たない。

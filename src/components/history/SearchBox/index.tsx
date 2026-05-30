@@ -6,6 +6,12 @@ import { SearchSuggestions } from "../SearchSuggestions";
 
 const SUGGEST_LIMIT = 10;
 const MIN_QUERY_LEN = 2;
+/**
+ * キーストロークごとに sendMessage を発火すると SW wake コストやメッセージング往復が
+ * 連発するので、入力の "落ち着き" を待ってからフェッチする。短すぎると意味がなく、
+ * 長すぎると体感応答性が落ちる。80ms 程度がだいたい体感ゼロ。
+ */
+const SUGGEST_DEBOUNCE_MS = 80;
 
 interface SearchBoxProps {
   onSearch: (query: string) => void;
@@ -77,20 +83,23 @@ export const SearchBox: FC<SearchBoxProps> = ({
     if (composing) return;
     if (lastToken.length < MIN_QUERY_LEN) return;
     const cancelled = { current: false };
-    requestSuggestions(lastToken, SUGGEST_LIMIT)
-      .then((results) => {
-        if (cancelled.current) return;
-        setData({ token: lastToken, suggestions: results });
-        setSelectedIndex(-1);
-      })
-      .catch((e) => {
-        // 一時障害時は state を更新せず、前回の有効結果を保持する。
-        // 次の lastToken 変化 or refocus でリトライが走る。
-        console.warn("suggest fetch failed:", e);
-      });
+    const timer = setTimeout(() => {
+      requestSuggestions(lastToken, SUGGEST_LIMIT)
+        .then((results) => {
+          if (cancelled.current) return;
+          setData({ token: lastToken, suggestions: results });
+          setSelectedIndex(-1);
+        })
+        .catch((e) => {
+          // 一時障害時は state を更新せず、前回の有効結果を保持する。
+          // 次の lastToken 変化 or refocus でリトライが走る。
+          console.warn("suggest fetch failed:", e);
+        });
+    }, SUGGEST_DEBOUNCE_MS);
     return () => {
       // eslint-disable-next-line functional/immutable-data
       cancelled.current = true;
+      clearTimeout(timer);
     };
   }, [lastToken, focused, composing]);
 
@@ -103,6 +112,9 @@ export const SearchBox: FC<SearchBoxProps> = ({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // IME composition 中はキーイベントを処理しない。確定 Enter / 候補選択の矢印キーが
+    // サジェスト側に流れ込んで preedit を破壊するのを防ぐ。
+    if (composing) return;
     if (suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
