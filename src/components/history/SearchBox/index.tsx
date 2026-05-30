@@ -34,7 +34,7 @@ function getLastToken(query: string): string {
 
 /**
  * クエリの末尾トークンを `replacement` に置換し、後ろに空白を 1 つ付けた文字列を返す。
- * "github tok" + "tokyucorp" → "github tokyucorp "
+ * "github man" + "manaten" → "github manaten "
  */
 function replaceLastToken(query: string, replacement: string): string {
   const tokens = query.split(/\s+/);

@@ -18,7 +18,6 @@ describe("isNoiseWord", () => {
   });
 
   it("漢字を含む 2 文字はノイズではない", () => {
-    expect(isNoiseWord("東急")).toBe(false);
     expect(isNoiseWord("検索")).toBe(false);
     expect(isNoiseWord("aあ")).toBe(false); // 漢字以外でも非単一スクリプトなら残す
   });
