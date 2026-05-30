@@ -1,16 +1,15 @@
 import { FC, useState } from "react";
 
+import { buildWordIndex, lookupSuggestions } from "../../../domain/word-index";
 import { bookmarkHistoryStore } from "../../../infra/bookmark-history-store";
 import { requestRebuildIndex } from "../../../util/suggest";
 import {
   analyzeTexts,
   approximateMapSizeBytes,
-  approximatePrefixIndexSizeBytes,
+  approximateWordIndexSizeBytes,
   bucketByCount,
   bucketByLength,
-  buildPrefixIndex,
   filterNoise,
-  lookupSuggestions,
   topWords,
 } from "../../../util/wordAnalysis";
 import { Button } from "../../common/Button";
@@ -20,18 +19,7 @@ const TOP_N = 30;
 const MIN_COUNT = 2;
 const SUGGEST_LIMIT = 10;
 const LOOKUP_ITERATIONS = 1000;
-const SAMPLE_QUERIES = [
-  "to",
-  "プラ",
-  "東急",
-  "Co",
-  "検索",
-  "Gi",
-  "あ",
-  "tok",
-  "GitH",
-  "プラス",
-];
+const SAMPLE_QUERIES = ["to", "検索", "Gi", "あ", "GitH"];
 
 type Status =
   | { kind: "idle" }
@@ -131,20 +119,15 @@ export const DebugTools: FC = () => {
         topWords(filtered, TOP_N).map(([word, count]) => ({ word, count })),
       );
 
-      const prefixIndex = buildPrefixIndex(filtered);
-      const prefixSize = approximatePrefixIndexSizeBytes(prefixIndex);
-      const listLens = [...prefixIndex.values()].map((l) => l.length);
-      const maxListLen = listLens.length > 0 ? Math.max(...listLens) : 0;
-      const avgListLen =
-        listLens.length > 0
-          ? listLens.reduce((a, b) => a + b, 0) / listLens.length
-          : 0;
+      // 本実装 (domain/word-index) と同じ方法で WordIndex を構築
+      const t3 = performance.now();
+      const wordIndex = buildWordIndex(titles);
+      const t4 = performance.now();
       console.log(
-        `[8] prefix index:\n` +
-          `    prefixes    : ${prefixIndex.size.toLocaleString()}\n` +
-          `    avg list len: ${avgListLen.toFixed(1)}\n` +
-          `    max list len: ${maxListLen}\n` +
-          `    index size  : ~${(prefixSize / 1024).toFixed(1)} KB`,
+        `[8] buildWordIndex (本実装): ${(t4 - t3).toFixed(1)} ms\n` +
+          `    uniqueWords : ${wordIndex.wordCounts.size.toLocaleString()}\n` +
+          `    prefixes    : ${wordIndex.prefixIndex.size.toLocaleString()}\n` +
+          `    total size  : ~${(approximateWordIndexSizeBytes(wordIndex) / 1024).toFixed(1)} KB`,
       );
 
       console.log(
@@ -154,14 +137,14 @@ export const DebugTools: FC = () => {
         const start = performance.now();
         const final =
           Array.from({ length: LOOKUP_ITERATIONS }, () =>
-            lookupSuggestions(prefixIndex, filtered, query, SUGGEST_LIMIT),
+            lookupSuggestions(wordIndex, query, SUGGEST_LIMIT),
           ).at(-1) ?? [];
         const elapsed = performance.now() - start;
         return {
           query,
           "avg μs/lookup": ((elapsed * 1000) / LOOKUP_ITERATIONS).toFixed(2),
           "result count": final.length,
-          "top match": final[0] ? `${final[0][0]} (${final[0][1]})` : "—",
+          "top match": final[0] ?? "—",
         };
       });
       console.table(lookupResults);

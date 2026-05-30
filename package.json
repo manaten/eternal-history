@@ -10,7 +10,6 @@
     "build-storybook": "storybook build",
     "build:dev": "npm run build && node scripts/update-manifest-name-for-dev.ts",
     "build": "tsc -b && vite build",
-    "dev": "vite build --watch",
     "fix:js": "run-s \"lint:js -- --fix\"",
     "fix:prettier": "prettier --write --ignore-unknown .",
     "fix": "run-s fix:*",

@@ -1,12 +1,14 @@
 /**
- * Intl.Segmenter を用いた語彙分析ユーティリティ。
- * インクリメンタルサジェストの実現可能性を測るためのデバッグ用途。
+ * デバッグ用の語彙分析ユーティリティ。
  *
  * 本実装は `domain/word-index/` を参照。こちらは「フィルタなしの素のセグメンテーション結果」や
- * 「閾値別の分布」など、本実装からは見えない中間状態を観測するためのユーティリティ。
+ * 「閾値別の分布」など、本実装からは見えない中間状態を観測するための補助関数群。
+ *
+ * 注: サジェスト本体のロジック (buildWordIndex, lookupSuggestions) は domain/word-index を使うこと。
  */
 
 import { isNoiseWord } from "../domain/word-index/noise";
+import type { WordIndex } from "../domain/word-index/types";
 
 export interface WordAnalysisResult {
   /** 単語 → 出現回数 */
@@ -129,56 +131,10 @@ export function filterNoise(
 }
 
 /**
- * 単語の先頭 2 文字 → 単語リストの索引を作る。
- * "tok" のような入力時、`index.get("to")` を取って startsWith フィルタするだけで
- * 候補を絞り込める。1 文字目だけだと候補が爆発するので 2 文字をキーにする。
+ * WordIndex のサイズを JSON 換算で概算する。
  */
-export function buildPrefixIndex(
-  wordCounts: Map<string, number>,
-): Map<string, string[]> {
-  const index = new Map<string, string[]>();
-  for (const word of wordCounts.keys()) {
-    if (word.length < 2) continue;
-    const prefix = word.slice(0, 2);
-    const list = index.get(prefix);
-    if (list) {
-      // eslint-disable-next-line functional/immutable-data
-      list.push(word);
-    } else {
-      // eslint-disable-next-line functional/immutable-data
-      index.set(prefix, [word]);
-    }
-  }
-  return index;
-}
-
-/**
- * 先頭 2 文字索引のサイズを JSON 換算で概算する。
- */
-export function approximatePrefixIndexSizeBytes(
-  index: Map<string, string[]>,
-): number {
-  return JSON.stringify([...index]).length * 2;
-}
-
-/**
- * prefix index を引いてサジェスト候補を返す。クエリは 2 文字以上を前提。
- * 結果は出現回数の降順で `limit` 件まで。
- */
-export function lookupSuggestions(
-  index: Map<string, string[]>,
-  wordCounts: Map<string, number>,
-  query: string,
-  limit: number,
-): readonly [string, number][] {
-  if (query.length < 2) return [];
-  const candidates = index.get(query.slice(0, 2)) ?? [];
-  const matched =
-    query.length === 2
-      ? candidates
-      : candidates.filter((w) => w.startsWith(query));
-  return matched
-    .map((w) => [w, wordCounts.get(w) ?? 0] as [string, number])
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit);
+export function approximateWordIndexSizeBytes(index: WordIndex): number {
+  const wordCountsSize = JSON.stringify([...index.wordCounts]).length * 2;
+  const prefixIndexSize = JSON.stringify([...index.prefixIndex]).length * 2;
+  return wordCountsSize + prefixIndexSize;
 }
