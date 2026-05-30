@@ -7,9 +7,9 @@ import {
   bucketByLength,
   topWords,
 } from "./analysis";
+import { HistoryItem } from "../../../domain/history/types";
 import { buildWordIndex, lookupSuggestions } from "../../../domain/word-index";
-import { bookmarkHistoryStore } from "../../../infra/bookmark-history-store";
-import { requestRebuildIndex } from "../../../infra/word-index-client";
+import { RebuildIndexResponse } from "../../../types/messages";
 import { Button } from "../../common/Button";
 
 const COUNT_THRESHOLDS = [1, 2, 5, 10, 30, 100];
@@ -19,7 +19,6 @@ const LOOKUP_ITERATIONS = 1000;
 const SAMPLE_QUERIES = [
   "to",
   "プラ",
-  "東急",
   "Co",
   "検索",
   "Gi",
@@ -45,13 +44,26 @@ type Status =
  *   分布・top 語・lookup ベンチを console に出力する。本実装 (`domain/word-index`) を
  *   そのまま呼ぶので、production と挙動が乖離しない。
  */
-export const DebugTools: FC = () => {
+interface DebugToolsProps {
+  /** WordIndex のフル再構築を依頼する副作用 (background SW へのメッセージ送信)。 */
+  onRebuildIndex: () => Promise<RebuildIndexResponse>;
+  /**
+   * Analyze ボタン用に全履歴を取得する副作用。
+   * 実装は重い処理 (10 万件想定) なので、Analyze 実行時にのみ呼ばれる。
+   */
+  onGetAllHistoryItems: () => Promise<HistoryItem[]>;
+}
+
+export const DebugTools: FC<DebugToolsProps> = ({
+  onRebuildIndex,
+  onGetAllHistoryItems,
+}) => {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const handleRebuild = async () => {
     setStatus({ kind: "rebuilding" });
     try {
-      const result = await requestRebuildIndex();
+      const result = await onRebuildIndex();
       if (result.ok) {
         setStatus({
           kind: "done",
@@ -72,10 +84,9 @@ export const DebugTools: FC = () => {
     setStatus({ kind: "analyzing" });
     try {
       console.group("[DebugTools] vocabulary analysis");
-      await bookmarkHistoryStore.initialize();
 
       const t0 = performance.now();
-      const items = await bookmarkHistoryStore.getAll();
+      const items = await onGetAllHistoryItems();
       const t1 = performance.now();
       console.log(
         `[1] fetch + deserialize all bookmarks: ${(t1 - t0).toFixed(1)} ms  (N=${items.length})`,

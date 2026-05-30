@@ -1,13 +1,11 @@
+import { createWordIndexService } from "./domain/word-index/service";
 import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
 import {
   getAllBrowserHistory,
   getLatestHistoryByUrl,
   onHistoryVisited,
 } from "./infra/chrome/chrome-history";
-import {
-  createWordIndexService,
-  makeWordIndexMessageListener,
-} from "./infra/word-index-service";
+import { makeWordIndexMessageListener } from "./infra/word-index-messaging";
 
 /**
  * WordIndex サービスはモジュール読み込み時 (= SW wake 時) に組み立てる。

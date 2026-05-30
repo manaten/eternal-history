@@ -1,18 +1,18 @@
 /**
  * SearchBox の局所状態機械。
  *
- * 状態の不変条件:
+ * 状態の最小化方針:
+ *   - 「ドロップダウンを出さない理由」(blur / Escape / submit / 初期) は一つの
+ *     `dismissed` フラグに集約。フォーカスを得る・文字を打つ・composition が
+ *     終わる等で dismiss を解除する。
+ *   - 旧 `focused` state は dropdown 表示と useEffect 再フェッチに使っていたが、
+ *     どちらも「dismissed でない」と等価に扱えるので状態を 1 つ減らした。
+ *
+ * 不変条件:
  *   - サジェスト結果は「最後に受信したトークン」とセットで保持する。表示時に
  *     現在の lastToken と一致するかチェックし、不一致なら空配列として扱う。
- *   - dismissed (Escape / 検索実行で立つ) は次の typed / focused でクリアする。
- *     IME composition 中の typed (preedit イベント) では維持する。
- *   - composing 中の上下/Enter/Tab/Escape は IME 側に任せるため、ハンドラ側で
- *     早期 return する (この reducer 自体はそのチェックを持たない)。
- *
- * 何を本ファイル外でやるか:
- *   - lastToken の計算 (searchQuery 依存) は親コンポーネント側で derive する
- *   - dropdown 表示可否の最終判断 (`focused && suggestions.length > 0 && !dismissed`)
- *     は親で derive する
+ *   - IME composition 中の typed (preedit イベント) では dismissed を維持する
+ *     (Escape の意図を保つため)。
  */
 
 export interface SearchBoxState {
@@ -20,8 +20,14 @@ export interface SearchBoxState {
   data: { token: string; suggestions: readonly string[] };
   /** ドロップダウンで選択中のインデックス。未選択は -1。 */
   selectedIndex: number;
-  focused: boolean;
-  /** Escape / 検索実行で立てた「今は出さないで」フラグ。 */
+  /**
+   * ドロップダウンを出さない状態。
+   * - 初期、blur、Escape、submit でセット
+   * - typed (非 composing)、focused、compositionEnded、suggestionApplied でクリア
+   *
+   * ドロップダウン表示の最終判断は呼び出し側で
+   * `!dismissed && suggestions.length > 0` として derive する。
+   */
   dismissed: boolean;
   /** IME composition (未確定入力) 中フラグ。 */
   composing: boolean;
@@ -47,8 +53,9 @@ export type SearchBoxAction =
 export const initialSearchBoxState: SearchBoxState = {
   data: { token: "", suggestions: [] },
   selectedIndex: -1,
-  focused: false,
-  dismissed: false,
+  // 初期はドロップダウンを出さない。マウント直後 (ユーザーが何もしてない状態) で
+  // 出るのを防ぐため。typed / focused で解除される。
+  dismissed: true,
   composing: false,
 };
 
@@ -61,9 +68,9 @@ export function searchBoxReducer(
       // composition 中の preedit 入力では Escape 状態を解除しない。
       return state.composing ? state : { ...state, dismissed: false };
     case "focused":
-      return { ...state, focused: true, dismissed: false };
+      return { ...state, dismissed: false };
     case "blurred":
-      return { ...state, focused: false };
+      return { ...state, dismissed: true };
     case "escaped":
       return { ...state, dismissed: true, selectedIndex: -1 };
     case "submitted":

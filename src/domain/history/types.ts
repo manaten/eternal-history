@@ -61,6 +61,13 @@ export interface HistoryStore {
   getRecent(days: number): Promise<HistoryItem[]>;
 
   /**
+   * 全履歴を返す。WordIndex の (再) 構築に使う。
+   * 件数オーダー 10 万を想定しており、決して軽い処理ではない。
+   * @throws 初期化前に呼ぶと `"Storage not initialized"`
+   */
+  getAll(): Promise<HistoryItem[]>;
+
+  /**
    * 一次検索: 実装側の高速インデックス (例: chrome.bookmarks.search) を
    * 利用して、与えられたタームを含む可能性のある候補を返す。
    * 厳密なフィルタリング・グルーピング・並び替えは呼び出し側 (`searchHistories`) の責務。

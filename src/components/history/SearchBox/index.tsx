@@ -2,7 +2,6 @@ import { FC, KeyboardEvent, useEffect, useReducer, useRef } from "react";
 
 import { initialSearchBoxState, searchBoxReducer } from "./state";
 import { t } from "../../../i18n";
-import { requestSuggestions } from "../../../infra/word-index-client";
 import { SearchSuggestions } from "../SearchSuggestions";
 
 const SUGGEST_LIMIT = 10;
@@ -20,6 +19,14 @@ interface SearchBoxProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   isLoading: boolean;
+  /**
+   * サジェスト候補を取得する副作用。本番では background SW へのメッセージング、
+   * Storybook ではモック実装が渡される。SearchBox 自体は副作用ソースを知らない。
+   */
+  onRequestSuggestions: (
+    query: string,
+    limit: number,
+  ) => Promise<readonly string[]>;
 }
 
 /**
@@ -47,16 +54,17 @@ export const SearchBox: FC<SearchBoxProps> = ({
   searchQuery,
   onSearchQueryChange,
   isLoading,
+  onRequestSuggestions,
 }) => {
   const [state, dispatch] = useReducer(searchBoxReducer, initialSearchBoxState);
-  const { data, selectedIndex, focused, dismissed, composing } = state;
+  const { data, selectedIndex, dismissed, composing } = state;
   const inputRef = useRef<HTMLInputElement>(null);
 
   const lastToken = getLastToken(searchQuery);
   // data はビルド済みの「最後に受信したトークン+結果」。lastToken と一致しないときは
   // まだ最新の応答が来ていないので空配列として扱う (古い結果を表示しない)。
   const suggestions = data.token === lastToken ? data.suggestions : [];
-  const dropdownVisible = focused && suggestions.length > 0 && !dismissed;
+  const dropdownVisible = !dismissed && suggestions.length > 0;
 
   // isLoading が外れたタイミングで一度だけフォーカス。マウント時は input が disabled で
   // focus() が no-op になるので、disabled が解除された瞬間に拾う。
@@ -64,17 +72,18 @@ export const SearchBox: FC<SearchBoxProps> = ({
     if (!isLoading) inputRef.current?.focus();
   }, [isLoading]);
 
-  // サジェスト取得トリガは「lastToken の変化」と「フォーカス取得」の 2 つ。
-  // 後者は background 一時障害で焼き付いた状態を blur→refocus で復旧させるため。
+  // サジェスト取得トリガは lastToken / dismissed / composing の変化。
+  // dismissed が外れた瞬間 (focus or 入力再開) にも再フェッチが走るので、
+  // background 一時障害で焼き付いた結果を blur→refocus で復旧できる。
   // composing 中はトリガしない (preedit で半端なフェッチが走るとドロップダウンが点滅する)。
   // 連続キー入力を吸収するため SUGGEST_DEBOUNCE_MS の遅延を入れる。
   useEffect(() => {
-    if (!focused) return;
+    if (dismissed) return;
     if (composing) return;
     if (lastToken.length < MIN_QUERY_LEN) return;
     const cancelled = { current: false };
     const timer = setTimeout(() => {
-      requestSuggestions(lastToken, SUGGEST_LIMIT)
+      onRequestSuggestions(lastToken, SUGGEST_LIMIT)
         .then((results) => {
           if (cancelled.current) return;
           dispatch({
@@ -93,7 +102,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
       cancelled.current = true;
       clearTimeout(timer);
     };
-  }, [lastToken, focused, composing]);
+  }, [lastToken, dismissed, composing, onRequestSuggestions]);
 
   const applySuggestion = (suggestion: string) => {
     onSearchQueryChange(replaceLastToken(searchQuery, suggestion));

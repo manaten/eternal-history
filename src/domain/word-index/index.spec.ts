@@ -89,8 +89,8 @@ describe("lookupSuggestions", () => {
     expect(lookupSuggestions(index, "Gi", 2)).toEqual(["GitHub", "GitLab"]);
   });
 
-  it("クエリと完全一致する単語は自身として候補から除外", () => {
-    expect(lookupSuggestions(index, "GitHub", 10)).toEqual([]);
+  it("クエリと完全一致する単語も候補として返す (除外しない)", () => {
+    expect(lookupSuggestions(index, "GitHub", 10)).toEqual(["GitHub"]);
   });
 
   it("該当 prefix がない場合は空配列", () => {
@@ -128,10 +128,10 @@ describe("lookupSuggestions", () => {
       expect(b.wordCounts.has("github")).toBe(false);
     });
 
-    it("クエリと大文字小文字違いの完全一致バリアントも自身として除外", () => {
+    it("クエリと大文字小文字違いの完全一致バリアントも候補として返す", () => {
       const mixedIndex = buildWordIndex(["GitHub GitHub"]);
-      expect(lookupSuggestions(mixedIndex, "github", 10)).toEqual([]);
-      expect(lookupSuggestions(mixedIndex, "GITHUB", 10)).toEqual([]);
+      expect(lookupSuggestions(mixedIndex, "github", 10)).toEqual(["GitHub"]);
+      expect(lookupSuggestions(mixedIndex, "GITHUB", 10)).toEqual(["GitHub"]);
     });
   });
 });

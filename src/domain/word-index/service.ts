@@ -1,20 +1,12 @@
-import {
-  buildWordIndex,
-  lookupSuggestions,
-  WordIndex,
-} from "../../domain/word-index";
-import {
-  RebuildIndexResponse,
-  RuntimeRequest,
-  SuggestResponse,
-} from "../../types/messages";
+import { buildWordIndex, lookupSuggestions } from "./index";
+import { WordIndex } from "./types";
 
 /**
- * background SW における WordIndex のライフサイクル管理。
+ * WordIndex のライフサイクルを管理するドメインサービス。
  *
  * 設計方針: **差分更新を持たず、都度フル再構築する**。
  *
- * - 構築は always-fresh: ブックマーク全件から都度 build する。差分更新 API は持たない。
+ * - 構築は always-fresh: 入力テキスト全件から都度 build する。差分更新 API は持たない。
  *   これにより onVisited × rebuild の race やタイトル更新の二重カウントが構造的に
  *   発生しない (一度の build がスナップショットを取って終わるだけ)。
  *
@@ -23,20 +15,24 @@ import {
  *   pending が立っていたらもう一度ビルドする。最大で「currentBuild + nextBuild」の
  *   2 連発に集約される。
  *
- * - onVisited からのトリガーは debounce する: ブラウジング中の頻発する onVisited で
- *   毎回ビルドが走らないよう、最後のトリガーから N 秒経ってから実体ビルドを開始する。
+ * - {@link scheduleRebuild} は debounce する: ブラウジング中の頻発する onVisited で
+ *   毎回ビルドが走らないよう、最後のトリガーから REBUILD_DEBOUNCE_MS 経ってから
+ *   実体ビルドを開始する。ブラウザ拡張は常駐するため、CPU を無闇に消費しない設定にする。
  *
- * - getIndex (suggest 経路): キャッシュされた `latestIndex` があれば即返す。
+ * - {@link getIndex}: キャッシュされた `latestIndex` があれば即返す。
  *   無ければビルドを起動して待つ。ビルド失敗時はキャッシュをクリアして次回再試行。
+ *
+ * 入出力は `getSourceTexts` 経由で抽象化されており、本サービス自体は chrome API に
+ * 依存しない (domain 層に置ける)。chrome.runtime.onMessage への bind は
+ * `infra/word-index-messaging` が担う。
  */
-
-const DEFAULT_SUGGEST_LIMIT = 10;
 
 /**
- * onVisited からの scheduleRebuild を集約する debounce 窓。
+ * onVisited 等からの scheduleRebuild を集約する debounce 窓。
  * 訪問してから「サジェスト候補に出てくる」までの最大遅延 ≒ DEBOUNCE_MS + ビルド時間。
+ * 拡張機能はバックグラウンドで常駐するため、CPU をいたずらに消費しないよう長めに取る。
  */
-const REBUILD_DEBOUNCE_MS = 5000;
+const REBUILD_DEBOUNCE_MS = 30 * 60 * 1000; // 30 分
 
 export interface WordIndexServiceDeps {
   /** Index 構築のソース。タイトル文字列の列を返す。 */
@@ -46,6 +42,10 @@ export interface WordIndexServiceDeps {
 export interface WordIndexService {
   /** キャッシュ済 index を返す。無ければビルドして待つ。 */
   getIndex: () => Promise<WordIndex>;
+  /**
+   * クエリに対するサジェスト候補を返す。getIndex してから lookup するだけのヘルパ。
+   */
+  suggest: (query: string, limit: number) => Promise<readonly string[]>;
   /**
    * 即時再構築。debounce を skip する。
    * 既にビルド実行中なら pending を立て、完了後に追加ビルドが走ったあとの最終 index を待つ。
@@ -57,11 +57,6 @@ export interface WordIndexService {
   scheduleRebuild: () => void;
 }
 
-/**
- * 純粋な stateful サービスを生成する。chrome.runtime へのバインドはしないので、
- * テストや別 consumer から再利用しやすい。メッセージリスナーは
- * {@link makeWordIndexMessageListener} 経由で別途登録する。
- */
 export function createWordIndexService(
   deps: WordIndexServiceDeps,
 ): WordIndexService {
@@ -122,69 +117,13 @@ export function createWordIndexService(
     return rebuild();
   }
 
-  return { getIndex, rebuild, scheduleRebuild };
-}
+  async function suggest(
+    query: string,
+    limit: number,
+  ): Promise<readonly string[]> {
+    const index = await getIndex();
+    return lookupSuggestions(index, query, limit);
+  }
 
-/**
- * chrome.runtime.onMessage の listener を組み立てる。background.ts で
- * `chrome.runtime.onMessage.addListener(makeWordIndexMessageListener(service))` のように
- * 明示的に登録する。
- *
- * service 構築と listener 登録を分離したことで、テストや別実装 (Omnibox provider 等) からも
- * service だけを差し替えて使える。
- */
-export function makeWordIndexMessageListener(
-  service: WordIndexService,
-): (
-  message: unknown,
-  sender: chrome.runtime.MessageSender,
-  sendResponse: (response: unknown) => void,
-) => boolean {
-  return (message, _sender, sendResponse) => {
-    const msg = message as RuntimeRequest | null | undefined;
-    if (msg?.type === "suggest") {
-      void (async () => {
-        try {
-          const index = await service.getIndex();
-          const suggestions = lookupSuggestions(
-            index,
-            msg.query,
-            msg.limit ?? DEFAULT_SUGGEST_LIMIT,
-          );
-          sendResponse({ suggestions } satisfies SuggestResponse);
-        } catch (e) {
-          console.error("suggest failed:", e);
-          // service-level エラーは error フィールドで透過し、client に throw させる。
-          // UI 側で「state を更新しない」復旧パスに乗せるため、空配列を成功扱いで
-          // 返してはいけない。
-          sendResponse({
-            suggestions: [],
-            error: String(e),
-          } satisfies SuggestResponse);
-        }
-      })();
-      return true;
-    }
-    if (msg?.type === "rebuild-index") {
-      void (async () => {
-        try {
-          const t0 = performance.now();
-          const built = await service.rebuild();
-          sendResponse({
-            ok: true,
-            wordCount: built.wordCounts.size,
-            elapsedMs: performance.now() - t0,
-          } satisfies RebuildIndexResponse);
-        } catch (e) {
-          console.error("Failed to rebuild WordIndex:", e);
-          sendResponse({
-            ok: false,
-            error: String(e),
-          } satisfies RebuildIndexResponse);
-        }
-      })();
-      return true;
-    }
-    return false;
-  };
+  return { getIndex, suggest, rebuild, scheduleRebuild };
 }

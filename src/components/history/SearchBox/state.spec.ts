@@ -9,6 +9,10 @@ import {
 const baseState = initialSearchBoxState;
 
 describe("searchBoxReducer", () => {
+  it("初期状態は dismissed=true (ユーザーが何かするまでドロップダウンを出さない)", () => {
+    expect(initialSearchBoxState.dismissed).toBe(true);
+  });
+
   describe("typed", () => {
     it("dismissed を解除する (非 composition 時)", () => {
       const state: SearchBoxState = { ...baseState, dismissed: true };
@@ -27,28 +31,32 @@ describe("searchBoxReducer", () => {
     });
   });
 
-  it("focused は focused=true & dismissed=false にする", () => {
+  it("focused は dismissed=false にする (refocus でドロップダウン復帰)", () => {
     const state: SearchBoxState = { ...baseState, dismissed: true };
     const next = searchBoxReducer(state, { type: "focused" });
-    expect(next.focused).toBe(true);
     expect(next.dismissed).toBe(false);
   });
 
-  it("blurred は focused=false にする", () => {
-    const state: SearchBoxState = { ...baseState, focused: true };
+  it("blurred は dismissed=true にする", () => {
+    const state: SearchBoxState = { ...baseState, dismissed: false };
     const next = searchBoxReducer(state, { type: "blurred" });
-    expect(next.focused).toBe(false);
+    expect(next.dismissed).toBe(true);
   });
 
   it("escaped は dismissed=true & selectedIndex=-1 にする", () => {
-    const state: SearchBoxState = { ...baseState, selectedIndex: 3 };
+    const state: SearchBoxState = {
+      ...baseState,
+      dismissed: false,
+      selectedIndex: 3,
+    };
     const next = searchBoxReducer(state, { type: "escaped" });
     expect(next.dismissed).toBe(true);
     expect(next.selectedIndex).toBe(-1);
   });
 
   it("submitted は dismissed=true にする", () => {
-    const next = searchBoxReducer(baseState, { type: "submitted" });
+    const state: SearchBoxState = { ...baseState, dismissed: false };
+    const next = searchBoxReducer(state, { type: "submitted" });
     expect(next.dismissed).toBe(true);
   });
 

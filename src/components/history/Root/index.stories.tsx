@@ -21,6 +21,8 @@ type Story = StoryObj<typeof meta>;
 // 2024年1月15日 12:00:00 (JST)
 const FIXED_DATE = new Date(2024, 0, 15, 12, 0, 0).getTime();
 
+const mockRequestSuggestions = async (): Promise<readonly string[]> => [];
+
 const mockHistoryItems: HistoryItem[] = [
   {
     id: "1",
@@ -54,6 +56,7 @@ export const Default: Story = {
     searchQuery: "",
     isLoading: false,
     savedQueries: [],
+    onRequestSuggestions: mockRequestSuggestions,
   },
 };
 
@@ -63,6 +66,7 @@ export const Loading: Story = {
     searchQuery: "",
     isLoading: true,
     savedQueries: [],
+    onRequestSuggestions: mockRequestSuggestions,
   },
 };
 
@@ -72,6 +76,7 @@ export const Empty: Story = {
     searchQuery: "",
     isLoading: false,
     savedQueries: [],
+    onRequestSuggestions: mockRequestSuggestions,
   },
 };
 
@@ -84,5 +89,6 @@ export const WithSavedQueries: Story = {
       { id: "1", query: "react", createdAt: 0 },
       { id: "2", query: "storybook", createdAt: 0 },
     ],
+    onRequestSuggestions: mockRequestSuggestions,
   },
 };

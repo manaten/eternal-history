@@ -1,7 +1,9 @@
 import { ComponentProps, FC } from "react";
 
+import { HistoryItem } from "../../../domain/history/types";
 import { t } from "../../../i18n";
 import { Settings } from "../../../types/Settings";
+import { RebuildIndexResponse } from "../../../types/messages";
 import { Spinner } from "../../common/Spinner";
 import { DebugTools } from "../DebugTools";
 import { OptionsForm } from "../OptionsForm";
@@ -11,11 +13,16 @@ interface OptionsPageProps extends Omit<
   "initialSettings"
 > {
   initialSettings: Settings | undefined;
+  /** DebugTools (dev のみ表示) に転送する副作用群。 */
+  onRebuildIndex: () => Promise<RebuildIndexResponse>;
+  onGetAllHistoryItems: () => Promise<HistoryItem[]>;
 }
 
 export const OptionsPage: FC<OptionsPageProps> = ({
   initialSettings,
-  ...props
+  onRebuildIndex,
+  onGetAllHistoryItems,
+  ...formProps
 }) => {
   if (!initialSettings) {
     return (
@@ -41,9 +48,14 @@ export const OptionsPage: FC<OptionsPageProps> = ({
         {t("options.title")}
       </h1>
 
-      <OptionsForm initialSettings={initialSettings} {...props} />
+      <OptionsForm initialSettings={initialSettings} {...formProps} />
 
-      {__DEV_BUILD__ && <DebugTools />}
+      {__DEV_BUILD__ && (
+        <DebugTools
+          onRebuildIndex={onRebuildIndex}
+          onGetAllHistoryItems={onGetAllHistoryItems}
+        />
+      )}
 
       <footer className='mt-auto pt-8 text-center text-sm text-gray-400'>
         Eternal History by{" "}

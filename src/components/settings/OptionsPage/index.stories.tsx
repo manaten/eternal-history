@@ -20,6 +20,12 @@ export const Default: Story = {
     onSave: fn(),
     onReset: fn().mockResolvedValue(DEFAULT_SETTINGS),
     onThemeChange: fn(),
+    onRebuildIndex: fn().mockResolvedValue({
+      ok: true,
+      wordCount: 0,
+      elapsedMs: 0,
+    }),
+    onGetAllHistoryItems: fn().mockResolvedValue([]),
   },
 };
 

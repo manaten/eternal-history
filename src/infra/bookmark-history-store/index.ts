@@ -231,11 +231,11 @@ async function getAll(): Promise<HistoryItem[]> {
  *
  * 検索の一次フィルタは chrome.bookmarks.search に委譲しています。
  */
-export const bookmarkHistoryStore = {
+export const bookmarkHistoryStore: HistoryStore = {
   initialize,
   insert,
   delete: deleteHistory,
   getRecent,
   getAll,
   searchCandidates,
-} satisfies HistoryStore & { getAll: () => Promise<HistoryItem[]> };
+};

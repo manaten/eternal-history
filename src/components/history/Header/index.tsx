@@ -12,6 +12,10 @@ interface HeaderProps {
   isLoading: boolean;
   currentQuery?: string;
   initialQuery?: string;
+  onRequestSuggestions: (
+    query: string,
+    limit: number,
+  ) => Promise<readonly string[]>;
 }
 
 export const Header: FC<HeaderProps> = memo(function Header({
@@ -22,6 +26,7 @@ export const Header: FC<HeaderProps> = memo(function Header({
   isLoading,
   currentQuery,
   initialQuery = "",
+  onRequestSuggestions,
 }) {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
 
@@ -38,6 +43,7 @@ export const Header: FC<HeaderProps> = memo(function Header({
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
         isLoading={isLoading}
+        onRequestSuggestions={onRequestSuggestions}
       />
       <SavedQueries
         queries={savedQueries}

@@ -60,7 +60,7 @@ export const SingleSuggestion: Story = {
 
 export const Japanese: Story = {
   args: {
-    suggestions: ["東急", "東京", "東京タワー", "東京駅"],
+    suggestions: ["東京", "東京タワー", "東京駅"],
     selectedIndex: 0,
   },
 };

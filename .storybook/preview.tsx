@@ -6,20 +6,6 @@ import { ThemeColor } from "../src/types/Settings";
 
 import "../src/index.css";
 
-// Storybook では chrome 拡張 API が undefined なので、コンポーネントが触る最小限の窓口を
-// stub する。サジェスト要求は空の成功レスポンスを返してドロップダウンを出さないだけ。
-if (typeof globalThis.chrome === "undefined") {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, functional/immutable-data
-  (globalThis as any).chrome = {
-    runtime: {
-      sendMessage: async () => ({ suggestions: [] }),
-      openOptionsPage: () => {},
-      getManifest: () => ({ name: "Storybook" }),
-      onMessage: { addListener: () => {} },
-    },
-  };
-}
-
 const preview: Preview = {
   globalTypes: {
     theme: {
