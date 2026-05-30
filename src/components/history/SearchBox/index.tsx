@@ -1,5 +1,6 @@
-import { FC, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { FC, KeyboardEvent, useEffect, useReducer, useRef } from "react";
 
+import { initialSearchBoxState, searchBoxReducer } from "./state";
 import { t } from "../../../i18n";
 import { requestSuggestions } from "../../../infra/word-index-client";
 import { SearchSuggestions } from "../SearchSuggestions";
@@ -47,37 +48,26 @@ export const SearchBox: FC<SearchBoxProps> = ({
   onSearchQueryChange,
   isLoading,
 }) => {
-  // 「現在のトークンに紐づくサジェスト結果」を一塊で持つ。lastToken が変わると派生的に
-  // suggestions が [] になり、新しい async 結果が届いたタイミングで更新される。
-  // こうすると useEffect 内で setState を同期実行する必要がなく、不要なレンダーも防げる。
-  const [data, setData] = useState<{
-    token: string;
-    suggestions: readonly string[];
-  }>({ token: "", suggestions: [] });
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [focused, setFocused] = useState(false);
-  // 検索実行や Escape で「今は出さないで」と意思表示された状態。
-  // 次にユーザーが文字を打つ or フォーカスし直すと解除される。
-  const [dismissed, setDismissed] = useState(false);
-  // IME composition (未確定入力) 中フラグ。日本語入力で preedit イベントが
-  // 走るたびにサジェストや dismiss 状態が暴れるのを防ぐ。
-  const [composing, setComposing] = useState(false);
+  const [state, dispatch] = useReducer(searchBoxReducer, initialSearchBoxState);
+  const { data, selectedIndex, focused, dismissed, composing } = state;
   const inputRef = useRef<HTMLInputElement>(null);
 
   const lastToken = getLastToken(searchQuery);
+  // data はビルド済みの「最後に受信したトークン+結果」。lastToken と一致しないときは
+  // まだ最新の応答が来ていないので空配列として扱う (古い結果を表示しない)。
+  const suggestions = data.token === lastToken ? data.suggestions : [];
+  const dropdownVisible = focused && suggestions.length > 0 && !dismissed;
 
-  // 初期 (isLoading が false に転じた瞬間) で 1 度だけフォーカスを当てる。
-  // マウント時は input が disabled なので focus() は no-op、isLoading が外れて
-  // から focus できるよう isLoading を依存に含む。
+  // isLoading が外れたタイミングで一度だけフォーカス。マウント時は input が disabled で
+  // focus() が no-op になるので、disabled が解除された瞬間に拾う。
   useEffect(() => {
     if (!isLoading) inputRef.current?.focus();
   }, [isLoading]);
 
   // サジェスト取得トリガは「lastToken の変化」と「フォーカス取得」の 2 つ。
-  // 後者を含めるのは、background 一時障害で空配列を掴んだまま固まるケースを
-  // blur→refocus で復旧できるようにするため。
-  // composing 中 (IME 未確定) はトリガしない: 半端な preedit で fetch されると
-  // ドロップダウンが点滅したり Escape の dismiss を意図せず解除してしまうため。
+  // 後者は background 一時障害で焼き付いた状態を blur→refocus で復旧させるため。
+  // composing 中はトリガしない (preedit で半端なフェッチが走るとドロップダウンが点滅する)。
+  // 連続キー入力を吸収するため SUGGEST_DEBOUNCE_MS の遅延を入れる。
   useEffect(() => {
     if (!focused) return;
     if (composing) return;
@@ -87,12 +77,14 @@ export const SearchBox: FC<SearchBoxProps> = ({
       requestSuggestions(lastToken, SUGGEST_LIMIT)
         .then((results) => {
           if (cancelled.current) return;
-          setData({ token: lastToken, suggestions: results });
-          setSelectedIndex(-1);
+          dispatch({
+            type: "suggestionsReceived",
+            token: lastToken,
+            suggestions: results,
+          });
         })
         .catch((e) => {
-          // 一時障害時は state を更新せず、前回の有効結果を保持する。
-          // 次の lastToken 変化 or refocus でリトライが走る。
+          // 一時障害時は state を更新しない。前回の有効結果を保持する。
           console.warn("suggest fetch failed:", e);
         });
     }, SUGGEST_DEBOUNCE_MS);
@@ -103,38 +95,35 @@ export const SearchBox: FC<SearchBoxProps> = ({
     };
   }, [lastToken, focused, composing]);
 
-  const suggestions = data.token === lastToken ? data.suggestions : [];
-
   const applySuggestion = (suggestion: string) => {
     onSearchQueryChange(replaceLastToken(searchQuery, suggestion));
-    setData({ token: "", suggestions: [] });
-    setSelectedIndex(-1);
+    dispatch({ type: "suggestionApplied" });
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    // IME composition 中はキーイベントを処理しない。確定 Enter / 候補選択の矢印キーが
-    // サジェスト側に流れ込んで preedit を破壊するのを防ぐ。
+    // IME composition 中のキーは IME 側に任せる。
     if (composing) return;
     if (suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex((i) => (i + 1) % suggestions.length);
+      dispatch({
+        type: "navigated",
+        direction: "down",
+        total: suggestions.length,
+      });
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex(
-        (i) => (i - 1 + suggestions.length) % suggestions.length,
-      );
-    } else if (e.key === "Enter" && selectedIndex >= 0) {
-      e.preventDefault();
-      const suggestion = suggestions[selectedIndex];
-      if (suggestion) applySuggestion(suggestion);
-    } else if (e.key === "Tab" && selectedIndex >= 0) {
+      dispatch({
+        type: "navigated",
+        direction: "up",
+        total: suggestions.length,
+      });
+    } else if ((e.key === "Enter" || e.key === "Tab") && selectedIndex >= 0) {
       e.preventDefault();
       const suggestion = suggestions[selectedIndex];
       if (suggestion) applySuggestion(suggestion);
     } else if (e.key === "Escape") {
-      setDismissed(true);
-      setSelectedIndex(-1);
+      dispatch({ type: "escaped" });
     }
   };
 
@@ -144,14 +133,12 @@ export const SearchBox: FC<SearchBoxProps> = ({
     }
   };
 
-  const dropdownVisible = focused && suggestions.length > 0 && !dismissed;
-
   return (
     <div className='relative'>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          setDismissed(true);
+          dispatch({ type: "submitted" });
           onSearch(searchQuery);
         }}
       >
@@ -161,20 +148,14 @@ export const SearchBox: FC<SearchBoxProps> = ({
           placeholder={t("searchBox.placeholder")}
           value={searchQuery}
           onChange={(e) => {
-            // composition 中は dismiss 解除しない (Escape の意図を保つ)
-            if (!composing) {
-              setDismissed(false);
-            }
+            dispatch({ type: "typed" });
             onSearchQueryChange(e.target.value);
           }}
           onKeyDown={handleKeyDown}
-          onCompositionStart={() => setComposing(true)}
-          onCompositionEnd={() => setComposing(false)}
-          onFocus={() => {
-            setFocused(true);
-            setDismissed(false);
-          }}
-          onBlur={() => setFocused(false)}
+          onCompositionStart={() => dispatch({ type: "compositionStarted" })}
+          onCompositionEnd={() => dispatch({ type: "compositionEnded" })}
+          onFocus={() => dispatch({ type: "focused" })}
+          onBlur={() => dispatch({ type: "blurred" })}
           autoComplete='off'
           className={`
             w-full rounded-xl border-2 border-transparent bg-white p-4 pr-14
@@ -212,7 +193,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
           suggestions={suggestions}
           selectedIndex={selectedIndex}
           onSelect={applySuggestion}
-          onHover={setSelectedIndex}
+          onHover={(i) => dispatch({ type: "hovered", index: i })}
         />
       )}
     </div>
