@@ -9,6 +9,10 @@ import { initWordIndexService } from "./infra/word-index-service";
 /**
  * WordIndex サービスはモジュール読み込み時 (= SW wake 時) に登録される。
  * メッセージリスナーの同期登録が必要なため、await の前に呼ぶ。
+ *
+ * onVisited からは `scheduleRebuild()` で「いつかブックマーク全件から再構築して」と
+ * 依頼するだけ。差分更新は持たず、サービス内部の debounce + queue が実体ビルドを
+ * 集約する (race / 二重カウントが構造的に発生しない)。
  */
 const wordIndexService = initWordIndexService({
   getSourceTexts: async () => {
@@ -31,7 +35,7 @@ async function initialize() {
     console.log("add new history:", item);
 
     await bookmarkHistoryStore.insert([item]);
-    wordIndexService.addVisit(item.title);
+    wordIndexService.scheduleRebuild();
 
     // JS でタイトルが設定される可能性があるため、10 秒待って再取得・更新
     setTimeout(async () => {
@@ -42,7 +46,7 @@ async function initialize() {
             `Updating title for: ${updated.url} from: ${item.title} to: ${updated.title}`,
           );
           await bookmarkHistoryStore.insert([updated]);
-          wordIndexService.addVisit(updated.title);
+          wordIndexService.scheduleRebuild();
         }
       } catch (error) {
         console.warn("Failed to update history title:", error);

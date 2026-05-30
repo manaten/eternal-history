@@ -13,7 +13,8 @@ const RE_KATAKANA_ONLY = /^[゠-ヿｦ-ﾟ]+$/;
  * - 漢字を 1 文字でも含む 2 文字単語は残す (例: "東急", "検索")
  * - 3 文字以上はそのまま残す
  *
- * このルールを変更したら {@link WORD_INDEX_SCHEMA_VERSION} をインクリメントすること。
+ * WordIndex は永続化していないので、このルールを変えても次回 SW wake 時に
+ * 新ルールで自然に再構築される。
  */
 export function isNoiseWord(word: string): boolean {
   if (word.length <= 1) return true;

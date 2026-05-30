@@ -11,6 +11,12 @@ export interface SuggestRequest {
 
 export interface SuggestResponse {
   suggestions: readonly string[];
+  /**
+   * background 側で service-level エラーが起きたときの説明。
+   * client は present なら throw して呼び出し側に異常を伝える。
+   * 「候補ゼロ」は error なしの空配列で表現する。
+   */
+  error?: string;
 }
 
 export interface RebuildIndexRequest {

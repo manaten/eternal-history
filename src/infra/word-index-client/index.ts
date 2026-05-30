@@ -28,6 +28,9 @@ export async function requestSuggestions(
   if (!response) {
     throw new Error("No response from background for suggest request");
   }
+  if (response.error) {
+    throw new Error(response.error);
+  }
   return response.suggestions;
 }
 

@@ -1,5 +1,4 @@
 import {
-  addText,
   buildWordIndex,
   lookupSuggestions,
   WordIndex,
@@ -13,16 +12,32 @@ import {
 /**
  * background SW における WordIndex のライフサイクル管理。
  *
- * - SW のメモリにのみ index を保持する (永続化しない)。SW kill で消えるが、
- *   次の wake で初回 suggest 要求が来たタイミングで遅延構築する。
- * - 構築中に複数の suggest が来ても 1 つの promise を共有して再構築は起きない。
- * - 構築が reject した場合はキャッシュをクリアし、次回呼び出しで再試行する
- *   (永久に壊れた状態が続くのを防ぐ)。
- * - SW ライフタイム中の新規訪問は {@link addVisit} で in-memory にだけ反映する。
- *   SW kill 後はブックマーク本体を sourceOfTruth として再構築されるので整合する。
+ * 設計方針: **差分更新を持たず、都度フル再構築する**。
+ *
+ * - 構築は always-fresh: ブックマーク全件から都度 build する。差分更新 (addText) は
+ *   持たない。これにより onVisited × rebuild の race やタイトル更新の二重カウントが
+ *   構造的に発生しなくなる (一度の build がスナップショットを取って終わるだけ)。
+ *
+ * - 連続発火の coalescing: ビルド実行中に新たな {@link scheduleRebuild} 要求が来た
+ *   場合は `pending` フラグを立てるだけで何もしない。実行中のビルドが終わったあと
+ *   pending が立っていたらもう一度ビルドする。これで「同時に何度頼まれても、最大で
+ *   currentBuild + nextBuild の 2 連発」に抑える。
+ *
+ * - onVisited からのトリガーは debounce する: ブラウジング中の頻発する onVisited で
+ *   毎回ビルドが走らないよう、debounce window 内に最後のトリガーから N 秒経って
+ *   から実体のビルドを開始する。
+ *
+ * - getIndex (suggest 経路): キャッシュされた `latestIndex` があれば即返す。
+ *   無ければビルドを起動して待つ。ビルド失敗時はキャッシュをクリアして次回再試行。
  */
 
 const DEFAULT_SUGGEST_LIMIT = 10;
+
+/**
+ * onVisited からの scheduleRebuild を集約する debounce 窓。
+ * 訪問してから「サジェスト候補に出てくる」までの最大遅延 ≒ DEBOUNCE_MS + ビルド時間。
+ */
+const REBUILD_DEBOUNCE_MS = 5000;
 
 export interface WordIndexServiceDeps {
   /** Index 構築のソース。タイトル文字列の列を返す。 */
@@ -30,60 +45,80 @@ export interface WordIndexServiceDeps {
 }
 
 export interface WordIndexService {
-  /** SW ライフタイム中の新規訪問タイトルを in-memory index に反映する。 */
-  addVisit: (text: string) => void;
-  /** 明示的なキャッシュ無効化。次回 suggest で再構築が走る。 */
-  invalidate: () => void;
+  /**
+   * 再構築を依頼する。debounce + 単スロット queue で実体ビルドを抑制する。
+   * 連続呼出しても最大で「実行中の 1 件 + 次に予約された 1 件」に集約される。
+   */
+  scheduleRebuild: () => void;
 }
 
 export function initWordIndexService(
   deps: WordIndexServiceDeps,
 ): WordIndexService {
   // eslint-disable-next-line functional/no-let
-  let indexPromise: Promise<WordIndex> | null = null;
+  let latestIndex: WordIndex | null = null;
+  // eslint-disable-next-line functional/no-let
+  let inFlightBuild: Promise<WordIndex> | null = null;
+  // eslint-disable-next-line functional/no-let
+  let pending = false;
+  // eslint-disable-next-line functional/no-let
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  function build(): Promise<WordIndex> {
-    const t0 = performance.now();
-    return deps.getSourceTexts().then((texts) => {
+  async function runBuildLoop(): Promise<WordIndex> {
+    // pending が立っている限り、ビルドを連続実行する (最大 1 段)。
+    // pending を loop の先頭でクリアするので、ビルド中に来たトリガーは次のラウンドで拾われる。
+    do {
+      pending = false;
+      const t0 = performance.now();
+      const texts = await deps.getSourceTexts();
       const built = buildWordIndex(texts);
+      latestIndex = built;
       console.log(
         `WordIndex built: ${built.wordCounts.size} words from ${texts.length} texts in ${(performance.now() - t0).toFixed(0)}ms`,
       );
-      return built;
+    } while (pending);
+    inFlightBuild = null;
+    return latestIndex!;
+  }
+
+  function triggerRebuild(): Promise<WordIndex> {
+    // debounce が走っていたら即時実行に切り替えるためタイマーを解除
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+    if (inFlightBuild) {
+      pending = true;
+      return inFlightBuild;
+    }
+    inFlightBuild = runBuildLoop().catch((e) => {
+      // 失敗時はキャッシュをクリア。次回 getIndex / triggerRebuild で再試行できる。
+      inFlightBuild = null;
+      latestIndex = null;
+      throw e;
     });
+    return inFlightBuild;
+  }
+
+  function scheduleRebuild(): void {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      triggerRebuild().catch((e) =>
+        console.error("Scheduled rebuild failed:", e),
+      );
+    }, REBUILD_DEBOUNCE_MS);
   }
 
   function getIndex(): Promise<WordIndex> {
-    if (!indexPromise) {
-      // 失敗時はキャッシュをクリアして次回再試行できるようにする
-      indexPromise = build().catch((e) => {
-        indexPromise = null;
-        throw e;
-      });
-    }
-    return indexPromise;
-  }
-
-  function addVisit(text: string): void {
-    // 構築済み (or 進行中) の場合のみ反映。未構築なら次回 getIndex で
-    // ソースからまとめて拾われるので何もしない。
-    if (!indexPromise) return;
-    indexPromise
-      .then((index) => addText(index, text))
-      .catch(() => {
-        /* getIndex の catch でハンドル済み */
-      });
-  }
-
-  function invalidate(): void {
-    indexPromise = null;
+    if (latestIndex) return Promise.resolve(latestIndex);
+    return triggerRebuild();
   }
 
   async function rebuildForRequest(): Promise<RebuildIndexResponse> {
     try {
       const t0 = performance.now();
-      invalidate();
-      const built = await getIndex();
+      const built = await triggerRebuild();
       return {
         ok: true,
         wordCount: built.wordCounts.size,
@@ -109,7 +144,13 @@ export function initWordIndexService(
             sendResponse({ suggestions } satisfies SuggestResponse);
           } catch (e) {
             console.error("suggest failed:", e);
-            sendResponse({ suggestions: [] } satisfies SuggestResponse);
+            // service-level エラーは error フィールドに詰めて client に throw させる。
+            // UI 側で「state を更新しない」復旧パスに乗せるため、空配列を成功として
+            // 返してはいけない。
+            sendResponse({
+              suggestions: [],
+              error: String(e),
+            } satisfies SuggestResponse);
           }
         })();
         return true;
@@ -122,5 +163,5 @@ export function initWordIndexService(
     },
   );
 
-  return { addVisit, invalidate };
+  return { scheduleRebuild };
 }
