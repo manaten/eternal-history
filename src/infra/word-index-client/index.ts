@@ -3,14 +3,19 @@ import {
   RebuildIndexResponse,
   SuggestRequest,
   SuggestResponse,
-} from "../types/messages";
+} from "../../types/messages";
 
 /**
- * background の WordIndex に対してサジェスト候補を問い合わせる。
+ * UI (NewTab / Options) 側から background SW の WordIndex サービスに
+ * 問い合わせるクライアント。`chrome.runtime.sendMessage` の薄いラッパ。
+ */
+
+/**
+ * サジェスト候補を問い合わせる。
  *
  * 失敗 (background 未起動・通信切断など) は throw する。呼び出し側は
  * catch して「state を更新しない」ことで、一時障害が空配列として焼き付くのを防ぐ。
- * 正常系で候補ゼロのときは `[]` を resolve する (これは焼き付いても問題ない)。
+ * 正常系で候補ゼロのときは `[]` を resolve する。
  */
 export async function requestSuggestions(
   query: string,
@@ -27,9 +32,16 @@ export async function requestSuggestions(
 }
 
 /**
- * WordIndex を background でフル再構築する。設定ページの DebugTools から呼ばれる。
+ * WordIndex のキャッシュを無効化し、ブックマークから再構築させる。
+ * DebugTools の「Rebuild word index」ボタンから呼ばれる。
  */
 export async function requestRebuildIndex(): Promise<RebuildIndexResponse> {
   const request: RebuildIndexRequest = { type: "rebuild-index" };
-  return (await chrome.runtime.sendMessage(request)) as RebuildIndexResponse;
+  const response = (await chrome.runtime.sendMessage(request)) as
+    | RebuildIndexResponse
+    | undefined;
+  if (!response) {
+    return { ok: false, error: "No response from background" };
+  }
+  return response;
 }

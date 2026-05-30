@@ -1,7 +1,7 @@
 import { FC, KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { t } from "../../../i18n";
-import { requestSuggestions } from "../../../util/suggest";
+import { requestSuggestions } from "../../../infra/word-index-client";
 import { SearchSuggestions } from "../SearchSuggestions";
 
 const SUGGEST_LIMIT = 10;
@@ -53,21 +53,28 @@ export const SearchBox: FC<SearchBoxProps> = ({
   // 検索実行や Escape で「今は出さないで」と意思表示された状態。
   // 次にユーザーが文字を打つ or フォーカスし直すと解除される。
   const [dismissed, setDismissed] = useState(false);
+  // IME composition (未確定入力) 中フラグ。日本語入力で preedit イベントが
+  // 走るたびにサジェストや dismiss 状態が暴れるのを防ぐ。
+  const [composing, setComposing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const lastToken = getLastToken(searchQuery);
 
-  // 初期マウント時のみフォーカス。`ref={(e) => e?.focus()}` のように毎レンダーで
-  // focus() を呼ぶと、想定外のタイミングで focus が動いて挙動が読みにくくなるため。
+  // 初期 (isLoading が false に転じた瞬間) で 1 度だけフォーカスを当てる。
+  // マウント時は input が disabled なので focus() は no-op、isLoading が外れて
+  // から focus できるよう isLoading を依存に含む。
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (!isLoading) inputRef.current?.focus();
+  }, [isLoading]);
 
   // サジェスト取得トリガは「lastToken の変化」と「フォーカス取得」の 2 つ。
   // 後者を含めるのは、background 一時障害で空配列を掴んだまま固まるケースを
   // blur→refocus で復旧できるようにするため。
+  // composing 中 (IME 未確定) はトリガしない: 半端な preedit で fetch されると
+  // ドロップダウンが点滅したり Escape の dismiss を意図せず解除してしまうため。
   useEffect(() => {
     if (!focused) return;
+    if (composing) return;
     if (lastToken.length < MIN_QUERY_LEN) return;
     const cancelled = { current: false };
     requestSuggestions(lastToken, SUGGEST_LIMIT)
@@ -85,7 +92,7 @@ export const SearchBox: FC<SearchBoxProps> = ({
       // eslint-disable-next-line functional/immutable-data
       cancelled.current = true;
     };
-  }, [lastToken, focused]);
+  }, [lastToken, focused, composing]);
 
   const suggestions = data.token === lastToken ? data.suggestions : [];
 
@@ -142,10 +149,15 @@ export const SearchBox: FC<SearchBoxProps> = ({
           placeholder={t("searchBox.placeholder")}
           value={searchQuery}
           onChange={(e) => {
-            setDismissed(false);
+            // composition 中は dismiss 解除しない (Escape の意図を保つ)
+            if (!composing) {
+              setDismissed(false);
+            }
             onSearchQueryChange(e.target.value);
           }}
           onKeyDown={handleKeyDown}
+          onCompositionStart={() => setComposing(true)}
+          onCompositionEnd={() => setComposing(false)}
           onFocus={() => {
             setFocused(true);
             setDismissed(false);
