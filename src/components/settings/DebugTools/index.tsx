@@ -1,45 +1,55 @@
 import { FC, useState } from "react";
 
-import { buildWordIndex, lookupSuggestions } from "../../../domain/word-index";
-import { bookmarkHistoryStore } from "../../../infra/bookmark-history-store";
-import { requestRebuildIndex } from "../../../util/suggest";
 import {
-  analyzeTexts,
+  analyzeRawTokens,
   approximateMapSizeBytes,
-  approximateWordIndexSizeBytes,
   bucketByCount,
   bucketByLength,
-  filterNoise,
   topWords,
-} from "../../../util/wordAnalysis";
+} from "./analysis";
+import { buildWordIndex, lookupSuggestions } from "../../../domain/word-index";
+import { bookmarkHistoryStore } from "../../../infra/bookmark-history-store";
+import { requestRebuildIndex } from "../../../infra/word-index-client";
 import { Button } from "../../common/Button";
 
 const COUNT_THRESHOLDS = [1, 2, 5, 10, 30, 100];
 const TOP_N = 30;
-const MIN_COUNT = 2;
 const SUGGEST_LIMIT = 10;
 const LOOKUP_ITERATIONS = 1000;
-const SAMPLE_QUERIES = ["to", "検索", "Gi", "あ", "GitH"];
+const SAMPLE_QUERIES = [
+  "to",
+  "プラ",
+  "東急",
+  "Co",
+  "検索",
+  "Gi",
+  "あ",
+  "tok",
+  "GitH",
+  "プラス",
+];
 
 type Status =
   | { kind: "idle" }
-  | { kind: "running"; label: string }
+  | { kind: "rebuilding" }
+  | { kind: "analyzing" }
   | { kind: "done"; message: string }
   | { kind: "error"; message: string };
 
 /**
- * インクリメンタルサジェスト関連のデバッグツール。
+ * インクリメンタルサジェスト関連のデバッグツール (dev ビルドのみ表示)。
  *
- * - "Rebuild word index" — background の WordIndex をフル再構築する。
- *   ユーザーがブックマークを手動編集して index が古くなった等のリカバリ用。
- * - "Analyze vocabulary" — ブックマーク全件を解析し各段の所要時間・分布を console に出す。
- *   サジェスト品質や性能の調査用。
+ * - "Rebuild word index" — background SW の WordIndex キャッシュを破棄し、
+ *   ブックマークから再構築させる。手動編集等で在庫が古くなった時用。
+ * - "Analyze vocabulary" — ブックマーク全件を解析し、各段の所要時間・サイズ・
+ *   分布・top 語・lookup ベンチを console に出力する。本実装 (`domain/word-index`) を
+ *   そのまま呼ぶので、production と挙動が乖離しない。
  */
 export const DebugTools: FC = () => {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
 
   const handleRebuild = async () => {
-    setStatus({ kind: "running", label: "Rebuilding index..." });
+    setStatus({ kind: "rebuilding" });
     try {
       const result = await requestRebuildIndex();
       if (result.ok) {
@@ -59,7 +69,7 @@ export const DebugTools: FC = () => {
   };
 
   const handleAnalyze = async () => {
-    setStatus({ kind: "running", label: "Analyzing..." });
+    setStatus({ kind: "analyzing" });
     try {
       console.group("[DebugTools] vocabulary analysis");
       await bookmarkHistoryStore.initialize();
@@ -72,23 +82,21 @@ export const DebugTools: FC = () => {
       );
 
       const titles = items.map((it) => it.title);
-      const result = analyzeTexts(titles);
+      const raw = analyzeRawTokens(titles);
       const t2 = performance.now();
-      console.log(`[2] segment + count: ${(t2 - t1).toFixed(1)} ms`);
-
-      const sizeBytes = approximateMapSizeBytes(result.wordCounts);
+      console.log(`[2] raw segment + count: ${(t2 - t1).toFixed(1)} ms`);
       console.log(
         `[3] raw result:\n` +
-          `    totalChars  : ${result.totalChars.toLocaleString()}\n` +
-          `    totalTokens : ${result.totalTokens.toLocaleString()}\n` +
-          `    uniqueWords : ${result.wordCounts.size.toLocaleString()}\n` +
-          `    map size    : ~${(sizeBytes / 1024).toFixed(1)} KB`,
+          `    totalChars  : ${raw.totalChars.toLocaleString()}\n` +
+          `    totalTokens : ${raw.totalTokens.toLocaleString()}\n` +
+          `    uniqueWords : ${raw.wordCounts.size.toLocaleString()}\n` +
+          `    map size    : ~${(approximateMapSizeBytes(raw.wordCounts) / 1024).toFixed(1)} KB`,
       );
 
       console.log(
         "[4] count distribution (>=N の語数):",
         Object.fromEntries(
-          bucketByCount(result.wordCounts, COUNT_THRESHOLDS).map((b) => [
+          bucketByCount(raw.wordCounts, COUNT_THRESHOLDS).map((b) => [
             `>=${b.threshold}`,
             b.uniqueWords,
           ]),
@@ -98,46 +106,56 @@ export const DebugTools: FC = () => {
       console.log(
         "[5] length distribution:",
         Object.fromEntries(
-          bucketByLength(result.wordCounts).map((b) => [
+          bucketByLength(raw.wordCounts).map((b) => [
             `${b.length}文字`,
             `${b.uniqueWords} (${(b.ratio * 100).toFixed(1)}%)`,
           ]),
         ),
       );
 
-      const filtered = filterNoise(result.wordCounts, MIN_COUNT);
-      const filteredSize = approximateMapSizeBytes(filtered);
+      // production logic 経由でフィルタ済み index を構築
+      const tBuildStart = performance.now();
+      const index = buildWordIndex(titles);
+      const tBuildEnd = performance.now();
+      const indexSize =
+        approximateMapSizeBytes(index.wordCounts) +
+        approximateMapSizeBytes(index.prefixIndex);
       console.log(
-        `[6] filtered (1文字/2文字英かなのみ/count<${MIN_COUNT}):\n` +
-          `    uniqueWords : ${filtered.size.toLocaleString()} ` +
-          `(removed ${(result.wordCounts.size - filtered.size).toLocaleString()})\n` +
-          `    map size    : ~${(filteredSize / 1024).toFixed(1)} KB`,
+        `[6] production buildWordIndex: ${(tBuildEnd - tBuildStart).toFixed(1)} ms\n` +
+          `    uniqueWords : ${index.wordCounts.size.toLocaleString()} ` +
+          `(filtered ${(raw.wordCounts.size - index.wordCounts.size).toLocaleString()})\n` +
+          `    total size  : ~${(indexSize / 1024).toFixed(1)} KB`,
       );
 
       console.log(`[7] top ${TOP_N} words (filtered):`);
       console.table(
-        topWords(filtered, TOP_N).map(([word, count]) => ({ word, count })),
+        topWords(index.wordCounts, TOP_N).map(([word, count]) => ({
+          word,
+          count,
+        })),
       );
 
-      // 本実装 (domain/word-index) と同じ方法で WordIndex を構築
-      const t3 = performance.now();
-      const wordIndex = buildWordIndex(titles);
-      const t4 = performance.now();
+      const listLens = [...index.prefixIndex.values()].map((l) => l.length);
+      const maxListLen = listLens.length > 0 ? Math.max(...listLens) : 0;
+      const avgListLen =
+        listLens.length > 0
+          ? listLens.reduce((a, b) => a + b, 0) / listLens.length
+          : 0;
       console.log(
-        `[8] buildWordIndex (本実装): ${(t4 - t3).toFixed(1)} ms\n` +
-          `    uniqueWords : ${wordIndex.wordCounts.size.toLocaleString()}\n` +
-          `    prefixes    : ${wordIndex.prefixIndex.size.toLocaleString()}\n` +
-          `    total size  : ~${(approximateWordIndexSizeBytes(wordIndex) / 1024).toFixed(1)} KB`,
+        `[8] prefix index buckets:\n` +
+          `    prefixes    : ${index.prefixIndex.size.toLocaleString()}\n` +
+          `    avg list len: ${avgListLen.toFixed(1)}\n` +
+          `    max list len: ${maxListLen}`,
       );
 
       console.log(
-        `[9] lookup benchmark (${LOOKUP_ITERATIONS} iterations per query):`,
+        `[9] lookup benchmark (${LOOKUP_ITERATIONS} iterations per query, production lookupSuggestions):`,
       );
       const lookupResults = SAMPLE_QUERIES.map((query) => {
         const start = performance.now();
         const final =
           Array.from({ length: LOOKUP_ITERATIONS }, () =>
-            lookupSuggestions(wordIndex, query, SUGGEST_LIMIT),
+            lookupSuggestions(index, query, SUGGEST_LIMIT),
           ).at(-1) ?? [];
         const elapsed = performance.now() - start;
         return {
@@ -152,7 +170,7 @@ export const DebugTools: FC = () => {
       console.groupEnd();
       setStatus({
         kind: "done",
-        message: `Analysis complete (see console). uniqueWords=${filtered.size.toLocaleString()}`,
+        message: `Analysis complete (see console). filtered words=${index.wordCounts.size.toLocaleString()}`,
       });
     } catch (e) {
       console.error("[DebugTools] analysis failed:", e);
@@ -160,7 +178,7 @@ export const DebugTools: FC = () => {
     }
   };
 
-  const isRunning = status.kind === "running";
+  const isRunning = status.kind === "rebuilding" || status.kind === "analyzing";
 
   return (
     <section
@@ -183,7 +201,7 @@ export const DebugTools: FC = () => {
           onClick={handleRebuild}
           disabled={isRunning}
         >
-          {status.kind === "running" && status.label === "Rebuilding index..."
+          {status.kind === "rebuilding"
             ? "Rebuilding..."
             : "Rebuild word index"}
         </Button>
@@ -193,9 +211,7 @@ export const DebugTools: FC = () => {
           onClick={handleAnalyze}
           disabled={isRunning}
         >
-          {status.kind === "running" && status.label === "Analyzing..."
-            ? "Analyzing..."
-            : "Analyze vocabulary"}
+          {status.kind === "analyzing" ? "Analyzing..." : "Analyze vocabulary"}
         </Button>
       </div>
       {status.kind === "done" && (
