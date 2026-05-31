@@ -15,9 +15,12 @@ import { WordIndex } from "./types";
  *   pending が立っていたらもう一度ビルドする。最大で「currentBuild + nextBuild」の
  *   2 連発に集約される。
  *
- * - {@link scheduleRebuild} は debounce する: ブラウジング中の頻発する onVisited で
- *   毎回ビルドが走らないよう、最後のトリガーから REBUILD_DEBOUNCE_MS 経ってから
- *   実体ビルドを開始する。ブラウザ拡張は常駐するため、CPU を無闇に消費しない設定にする。
+ * - {@link scheduleRebuild} は throttle する: ブラウジング中の頻発する onVisited で
+ *   毎回ビルドが走らないよう、最初のリクエストでタイマーをセットして
+ *   REBUILD_THROTTLE_MS 後に発火する。タイマー中の追加リクエストは無視。
+ *   毎回タイマーをリセットする debounce 方式だと、頻繁な onVisited で永久に
+ *   発火しなくなるので throttle にしている。ブラウザ拡張は常駐するため、CPU を
+ *   無闇に消費しない設定にする。
  *
  * - {@link getIndex}: キャッシュされた `latestIndex` があれば即返す。
  *   無ければビルドを起動して待つ。ビルド失敗時はキャッシュをクリアして次回再試行。
@@ -28,11 +31,16 @@ import { WordIndex } from "./types";
  */
 
 /**
- * onVisited 等からの scheduleRebuild を集約する debounce 窓。
- * 訪問してから「サジェスト候補に出てくる」までの最大遅延 ≒ DEBOUNCE_MS + ビルド時間。
+ * onVisited 等からの scheduleRebuild が「次のビルドまでに最低限あける時間」。
+ * throttle として働く: 最初の scheduleRebuild でタイマーがセットされたあとは、
+ * REBUILD_THROTTLE_MS 経過してタイマーが発火するまでの間に来た追加リクエストは
+ * 無視される。これにより頻繁な onVisited でタイマーが永久にリセットされ続けて
+ * 一生 rebuild されない、という事態を防ぐ。
+ *
+ * 訪問から「サジェスト候補に出てくる」までの最大遅延 ≒ REBUILD_THROTTLE_MS + ビルド時間。
  * 拡張機能はバックグラウンドで常駐するため、CPU をいたずらに消費しないよう長めに取る。
  */
-const REBUILD_DEBOUNCE_MS = 30 * 60 * 1000; // 30 分
+const REBUILD_THROTTLE_MS = 30 * 60 * 1000; // 30 分
 
 export interface WordIndexServiceDeps {
   /** Index 構築のソース。タイトル文字列の列を返す。 */
@@ -47,12 +55,13 @@ export interface WordIndexService {
    */
   suggest: (query: string, limit: number) => Promise<readonly string[]>;
   /**
-   * 即時再構築。debounce を skip する。
+   * 即時再構築。throttle タイマーを skip する。
    * 既にビルド実行中なら pending を立て、完了後に追加ビルドが走ったあとの最終 index を待つ。
    */
   rebuild: () => Promise<WordIndex>;
   /**
-   * 再構築を debounce してから依頼する。連続呼出は最大で「実行中 1 件 + 次に予約 1 件」に集約。
+   * 再構築を throttle してから依頼する。最初の呼出でタイマーをセット、以後タイマーが
+   * 発火するまでの呼出は no-op。実行中の追加リクエストは pending で最大 1 件集約。
    */
   scheduleRebuild: () => void;
 }
@@ -67,7 +76,7 @@ export function createWordIndexService(
   // eslint-disable-next-line functional/no-let
   let pending = false;
   // eslint-disable-next-line functional/no-let
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let throttleTimer: ReturnType<typeof setTimeout> | null = null;
 
   async function runBuildLoop(): Promise<WordIndex> {
     // pending が立っている間はビルドを連続実行する (1 段だけ「次」を許す)。
@@ -87,9 +96,9 @@ export function createWordIndexService(
   }
 
   function rebuild(): Promise<WordIndex> {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-      debounceTimer = null;
+    if (throttleTimer) {
+      clearTimeout(throttleTimer);
+      throttleTimer = null;
     }
     if (inFlightBuild) {
       pending = true;
@@ -105,11 +114,14 @@ export function createWordIndexService(
   }
 
   function scheduleRebuild(): void {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      debounceTimer = null;
+    // 既にタイマーが走っている場合は何もしない (throttle)。
+    // ここで clearTimeout してリセットすると、頻繁な onVisited で永久にタイマーが
+    // 進まず一生 rebuild されない状態になってしまう。
+    if (throttleTimer) return;
+    throttleTimer = setTimeout(() => {
+      throttleTimer = null;
       rebuild().catch((e) => console.error("Scheduled rebuild failed:", e));
-    }, REBUILD_DEBOUNCE_MS);
+    }, REBUILD_THROTTLE_MS);
   }
 
   function getIndex(): Promise<WordIndex> {

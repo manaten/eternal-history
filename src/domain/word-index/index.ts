@@ -48,19 +48,18 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
   const index = createEmptyWordIndex();
   for (const variants of groups.values()) {
     // 最頻ケースを canonical に。同点は先に encounter したものを維持する。
-    // eslint-disable-next-line functional/no-let
-    let canonical = "";
-    // eslint-disable-next-line functional/no-let
-    let canonicalCount = -1;
-    // eslint-disable-next-line functional/no-let
-    let totalCount = 0;
-    for (const [variant, count] of variants) {
-      totalCount += count;
-      if (count > canonicalCount) {
-        canonical = variant;
-        canonicalCount = count;
-      }
-    }
+    const { canonical, totalCount } = [...variants].reduce<{
+      canonical: string;
+      canonicalCount: number;
+      totalCount: number;
+    }>(
+      (acc, [variant, count]) => ({
+        canonical: count > acc.canonicalCount ? variant : acc.canonical,
+        canonicalCount: Math.max(count, acc.canonicalCount),
+        totalCount: acc.totalCount + count,
+      }),
+      { canonical: "", canonicalCount: -1, totalCount: 0 },
+    );
     // eslint-disable-next-line functional/immutable-data
     index.wordCounts.set(canonical, totalCount);
     const prefix = canonical.toLowerCase().slice(0, PREFIX_KEY_LEN);
