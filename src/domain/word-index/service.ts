@@ -105,15 +105,23 @@ export function createWordIndexService(
       return inFlightBuild;
     }
     inFlightBuild = runBuildLoop().catch((e) => {
-      // 失敗時はキャッシュをクリアして次回再試行できるようにする
+      // 失敗時は inFlightBuild だけクリアして次回再試行可能にする。
+      // latestIndex は前回成功したものを温存し、suggest が空待ちにならないよう
+      // graceful degradation する (transient 失敗で良いキャッシュを失わない)。
       inFlightBuild = null;
-      latestIndex = null;
       throw e;
     });
     return inFlightBuild;
   }
 
   function scheduleRebuild(): void {
+    // ビルド中ならその loop に pending として集約する。throttle タイマーを
+    // 新規セットすると、build 進行中に来た visit が現 build に間に合わず、
+    // かつ次の build を最大 2 * REBUILD_THROTTLE_MS 先まで待つことになる。
+    if (inFlightBuild) {
+      pending = true;
+      return;
+    }
     // 既にタイマーが走っている場合は何もしない (throttle)。
     // ここで clearTimeout してリセットすると、頻繁な onVisited で永久にタイマーが
     // 進まず一生 rebuild されない状態になってしまう。

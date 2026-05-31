@@ -78,7 +78,9 @@ export function searchBoxReducer(
     case "compositionStarted":
       return { ...state, composing: true };
     case "compositionEnded":
-      return { ...state, composing: false };
+      // 確定した語に対してサジェストを出したいので dismissed も解除する。
+      // docstring (dismissed フィールド) の不変条件と一致させる。
+      return { ...state, composing: false, dismissed: false };
     case "navigated": {
       if (action.total === 0) return state;
       // 未選択 (-1) の場合: down で先頭、up で末尾。それ以外は通常の循環。

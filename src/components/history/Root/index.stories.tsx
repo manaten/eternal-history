@@ -22,6 +22,9 @@ type Story = StoryObj<typeof meta>;
 const FIXED_DATE = new Date(2024, 0, 15, 12, 0, 0).getTime();
 
 const mockRequestSuggestions = async (): Promise<readonly string[]> => [];
+const mockOpenOptionsPage = () => {
+  console.log("[Storybook mock] openOptionsPage clicked");
+};
 
 const mockHistoryItems: HistoryItem[] = [
   {
@@ -57,6 +60,7 @@ export const Default: Story = {
     isLoading: false,
     savedQueries: [],
     onRequestSuggestions: mockRequestSuggestions,
+    onOpenOptionsPage: mockOpenOptionsPage,
   },
 };
 
@@ -67,6 +71,7 @@ export const Loading: Story = {
     isLoading: true,
     savedQueries: [],
     onRequestSuggestions: mockRequestSuggestions,
+    onOpenOptionsPage: mockOpenOptionsPage,
   },
 };
 
@@ -77,6 +82,7 @@ export const Empty: Story = {
     isLoading: false,
     savedQueries: [],
     onRequestSuggestions: mockRequestSuggestions,
+    onOpenOptionsPage: mockOpenOptionsPage,
   },
 };
 
@@ -90,5 +96,6 @@ export const WithSavedQueries: Story = {
       { id: "2", query: "storybook", createdAt: 0 },
     ],
     onRequestSuggestions: mockRequestSuggestions,
+    onOpenOptionsPage: mockOpenOptionsPage,
   },
 };

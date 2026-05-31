@@ -139,10 +139,16 @@ describe("searchBoxReducer", () => {
       expect(next.composing).toBe(true);
     });
 
-    it("compositionEnded で composing=false", () => {
-      const state: SearchBoxState = { ...baseState, composing: true };
+    it("compositionEnded で composing=false かつ dismissed=false", () => {
+      // 変換確定で「ユーザーが意味のある語を打ち終わった」とみなし、サジェストを再開する
+      const state: SearchBoxState = {
+        ...baseState,
+        composing: true,
+        dismissed: true,
+      };
       const next = searchBoxReducer(state, { type: "compositionEnded" });
       expect(next.composing).toBe(false);
+      expect(next.dismissed).toBe(false);
     });
   });
 });

@@ -147,6 +147,7 @@ function App() {
       onDeleteHistoryItem={handleDeleteHistoryItem}
       initialSearchQuery={initialSearchQuery}
       onRequestSuggestions={requestSuggestions}
+      onOpenOptionsPage={() => chrome.runtime.openOptionsPage()}
     />
   );
 }
