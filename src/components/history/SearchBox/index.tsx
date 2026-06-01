@@ -5,7 +5,7 @@ import { t } from "../../../i18n";
 import { SearchSuggestions } from "../SearchSuggestions";
 
 const SUGGEST_LIMIT = 10;
-const MIN_QUERY_LEN = 2;
+const MIN_QUERY_LEN = 1;
 /**
  * キーストロークごとに sendMessage を発火すると SW wake コストやメッセージング往復が
  * 連発するので、入力の "落ち着き" を待ってからフェッチする。短すぎると意味がなく、

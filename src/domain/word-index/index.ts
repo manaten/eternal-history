@@ -6,8 +6,13 @@ export type { WordIndex } from "./types";
 
 const JA_SEGMENTER = new Intl.Segmenter("ja", { granularity: "word" });
 
-/** prefix index のキーに使う先頭文字数。1 だと候補が爆発するので 2 を採用。 */
-const PREFIX_KEY_LEN = 2;
+/**
+ * prefix index のキーに使う先頭文字数。
+ * 1 にするとバケットが大きくなるが (英字 1 文字あたり数百語規模)、lookup は
+ * バケット内の filter + sort で μs オーダーに収まるので問題ない。
+ * 1 文字段階からのサジェストを成立させるためにこの値を採用している。
+ */
+const PREFIX_KEY_LEN = 1;
 
 export function createEmptyWordIndex(): WordIndex {
   return {
@@ -78,9 +83,8 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
 /**
  * クエリの prefix で候補を絞り込み、出現回数の降順で `limit` 件まで返す。
  *
- * - 1 文字クエリは候補が広がりすぎるので空配列を返す
- * - 2 文字クエリは prefix index の該当バケットをそのまま返す
- * - 3 文字以上は該当バケットを startsWith で再フィルタ
+ * - 1 文字クエリは prefix index の該当バケットをそのまま返す (= 全候補)
+ * - 2 文字以上は該当バケットを startsWith で再フィルタ
  *
  * 大文字小文字: クエリも単語も `toLowerCase()` 化して比較する。
  * バリアントは {@link buildWordIndex} で canonical 化済みなので、lookup 側で

@@ -44,7 +44,7 @@ describe("buildWordIndex", () => {
     ]);
     expect(index.wordCounts.get("GitHub")).toBe(2);
     expect(index.wordCounts.get("GitLab")).toBe(1);
-    expect(index.prefixIndex.get("gi")).toEqual(
+    expect(index.prefixIndex.get("g")).toEqual(
       expect.arrayContaining(["GitHub", "GitLab"]),
     );
   });
@@ -69,11 +69,19 @@ describe("lookupSuggestions", () => {
     "Confluence Confluence", // Confluence: 2
   ]);
 
-  it("1 文字クエリは空配列", () => {
-    expect(lookupSuggestions(index, "G", 10)).toEqual([]);
+  it("空文字クエリは空配列", () => {
+    expect(lookupSuggestions(index, "", 10)).toEqual([]);
   });
 
-  it("2 文字 prefix は出現回数降順で返す", () => {
+  it("1 文字 prefix は出現回数降順で全候補を返す", () => {
+    expect(lookupSuggestions(index, "G", 10)).toEqual([
+      "GitHub",
+      "GitLab",
+      "Gist",
+    ]);
+  });
+
+  it("2 文字 prefix は出現回数降順で startsWith フィルタする", () => {
     expect(lookupSuggestions(index, "Gi", 10)).toEqual([
       "GitHub",
       "GitLab",
