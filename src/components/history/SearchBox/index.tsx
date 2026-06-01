@@ -61,9 +61,18 @@ export const SearchBox: FC<SearchBoxProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const lastToken = getLastToken(searchQuery);
-  // data はビルド済みの「最後に受信したトークン+結果」。lastToken と一致しないときは
-  // まだ最新の応答が来ていないので空配列として扱う (古い結果を表示しない)。
-  const suggestions = data.token === lastToken ? data.suggestions : [];
+  // 表示は「前回 fetch の結果を、現在のトークンで startsWith 再フィルタしたもの」。
+  // こうすると次のキーストロークで narrowing しながら、新しい fetch が返ってくるまで
+  // 前回結果を破棄せずに表示し続けられる (キー押下のたびにドロップダウンが点滅しない)。
+  // 前回と全く違う prefix に変わった場合は filter 結果が空になり自然にドロップダウンが消え、
+  // fetch 完了時に新しい候補で再表示される。
+  const lowerLastToken = lastToken.toLowerCase();
+  const suggestions =
+    lastToken.length < MIN_QUERY_LEN
+      ? []
+      : data.suggestions.filter((w) =>
+          w.toLowerCase().startsWith(lowerLastToken),
+        );
   const dropdownVisible = !dismissed && suggestions.length > 0;
 
   // isLoading が外れたタイミングで一度だけフォーカス。マウント時は input が disabled で
