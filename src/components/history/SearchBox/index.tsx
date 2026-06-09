@@ -6,12 +6,6 @@ import { SearchSuggestions } from "../SearchSuggestions";
 
 const SUGGEST_LIMIT = 10;
 const MIN_QUERY_LEN = 1;
-/**
- * キーストロークごとに sendMessage を発火すると SW wake コストやメッセージング往復が
- * 連発するので、入力の "落ち着き" を待ってからフェッチする。短すぎると意味がなく、
- * 長すぎると体感応答性が落ちる。80ms 程度がだいたい体感ゼロ。
- */
-const SUGGEST_DEBOUNCE_MS = 80;
 
 interface SearchBoxProps {
   onSearch: (query: string) => void;
@@ -61,22 +55,11 @@ export const SearchBox: FC<SearchBoxProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const lastToken = getLastToken(searchQuery);
-  // 表示は「前回 fetch の結果を、現在のトークンで startsWith 再フィルタしたもの」。
-  // こうすると次のキーストロークで narrowing しながら、新しい fetch が返ってくるまで
-  // 前回結果を破棄せずに表示し続けられる (キー押下のたびにドロップダウンが点滅しない)。
-  //
-  // stale fetch の race は useEffect の cleanup で cancelled フラグを立てて
-  // 弾いているため、data.token は常に「最後に非キャンセルで dispatch されたトークン」
-  // = 最後にユーザーが入力したトークンに収束する。バックスペース時も「狭い候補集合 →
-  // それを広い prefix で再フィルタ」=「サブセットがそのまま残る」となり、fetch 完了で
-  // 拡張される (= ちらつかない)。
-  const lowerLastToken = lastToken.toLowerCase();
-  const suggestions =
-    lastToken.length < MIN_QUERY_LEN
-      ? []
-      : data.suggestions.filter((w) =>
-          w.toLowerCase().startsWith(lowerLastToken),
-        );
+  // data はビルド済みの「最後に受信したトークン+結果」。lastToken と一致しないときは
+  // まだ最新の応答が来ていないので空配列として扱う (古い結果を表示しない)。
+  // fetch を debounce せず即発火する設計なので、データ到着までのブランクは
+  // sendMessage round-trip 分 (~10ms) で済み、知覚上ちらつかない。
+  const suggestions = data.token === lastToken ? data.suggestions : [];
   const dropdownVisible = !dismissed && suggestions.length > 0;
 
   // isLoading が外れたタイミングで一度だけフォーカス。マウント時は input が disabled で
@@ -89,31 +72,30 @@ export const SearchBox: FC<SearchBoxProps> = ({
   // dismissed が外れた瞬間 (focus or 入力再開) にも再フェッチが走るので、
   // background 一時障害で焼き付いた結果を blur→refocus で復旧できる。
   // composing 中はトリガしない (preedit で半端なフェッチが走るとドロップダウンが点滅する)。
-  // 連続キー入力を吸収するため SUGGEST_DEBOUNCE_MS の遅延を入れる。
+  // debounce はしない: 各キーストローク毎にメッセージを送るが、SW 内 lookup は μs、
+  // round-trip も 5-10ms オーダーで体感ゼロ。連発する stale fetch は cancelled
+  // フラグで弾く。
   useEffect(() => {
     if (dismissed) return;
     if (composing) return;
     if (lastToken.length < MIN_QUERY_LEN) return;
     const cancelled = { current: false };
-    const timer = setTimeout(() => {
-      onRequestSuggestions(lastToken, SUGGEST_LIMIT)
-        .then((results) => {
-          if (cancelled.current) return;
-          dispatch({
-            type: "suggestionsReceived",
-            token: lastToken,
-            suggestions: results,
-          });
-        })
-        .catch((e) => {
-          // 一時障害時は state を更新しない。前回の有効結果を保持する。
-          console.warn("suggest fetch failed:", e);
+    onRequestSuggestions(lastToken, SUGGEST_LIMIT)
+      .then((results) => {
+        if (cancelled.current) return;
+        dispatch({
+          type: "suggestionsReceived",
+          token: lastToken,
+          suggestions: results,
         });
-    }, SUGGEST_DEBOUNCE_MS);
+      })
+      .catch((e) => {
+        // 一時障害時は state を更新しない。前回の有効結果を保持する。
+        console.warn("suggest fetch failed:", e);
+      });
     return () => {
       // eslint-disable-next-line functional/immutable-data
       cancelled.current = true;
-      clearTimeout(timer);
     };
   }, [lastToken, dismissed, composing, onRequestSuggestions]);
 
