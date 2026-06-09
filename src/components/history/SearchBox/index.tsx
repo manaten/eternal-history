@@ -65,19 +65,18 @@ export const SearchBox: FC<SearchBoxProps> = ({
   // こうすると次のキーストロークで narrowing しながら、新しい fetch が返ってくるまで
   // 前回結果を破棄せずに表示し続けられる (キー押下のたびにドロップダウンが点滅しない)。
   //
-  // ただし「前回 fetch のトークンが現在のトークンの prefix である」場合に限る:
-  //   - lastToken='git', data.token='gi' → 'git' は 'gi' で始まる → narrowing OK
-  //   - lastToken='g',  data.token='gi' → 'g' は 'gi' で始まらない (バックスペース等) → 古い結果は無効
-  //   - lastToken='re', data.token='gi' → 全く別 prefix → 古い結果は無効
-  // 無効な場合は空にして、次の fetch を待つ (race で stale prefix の結果が混入するのを防ぐ)。
+  // stale fetch の race は useEffect の cleanup で cancelled フラグを立てて
+  // 弾いているため、data.token は常に「最後に非キャンセルで dispatch されたトークン」
+  // = 最後にユーザーが入力したトークンに収束する。バックスペース時も「狭い候補集合 →
+  // それを広い prefix で再フィルタ」=「サブセットがそのまま残る」となり、fetch 完了で
+  // 拡張される (= ちらつかない)。
   const lowerLastToken = lastToken.toLowerCase();
-  const lowerDataToken = data.token.toLowerCase();
-  const dataIsCurrent =
-    lastToken.length >= MIN_QUERY_LEN &&
-    lowerLastToken.startsWith(lowerDataToken);
-  const suggestions = dataIsCurrent
-    ? data.suggestions.filter((w) => w.toLowerCase().startsWith(lowerLastToken))
-    : [];
+  const suggestions =
+    lastToken.length < MIN_QUERY_LEN
+      ? []
+      : data.suggestions.filter((w) =>
+          w.toLowerCase().startsWith(lowerLastToken),
+        );
   const dropdownVisible = !dismissed && suggestions.length > 0;
 
   // isLoading が外れたタイミングで一度だけフォーカス。マウント時は input が disabled で
