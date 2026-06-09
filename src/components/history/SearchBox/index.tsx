@@ -55,11 +55,11 @@ export const SearchBox: FC<SearchBoxProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const lastToken = getLastToken(searchQuery);
-  // data はビルド済みの「最後に受信したトークン+結果」。lastToken と一致しないときは
-  // まだ最新の応答が来ていないので空配列として扱う (古い結果を表示しない)。
-  // fetch を debounce せず即発火する設計なので、データ到着までのブランクは
-  // sendMessage round-trip 分 (~10ms) で済み、知覚上ちらつかない。
-  const suggestions = data.token === lastToken ? data.suggestions : [];
+  // 「最後に取得した結果を、クエリが 1 文字以上ある間は表示し続ける」だけ。
+  // - 新しい fetch が返ってきたら data が dispatch で置き換わり、表示が更新される (last-write-wins)
+  // - 完全一致でなくても古い結果を一旦見せ続けるので、キーストロークごとに点滅しない
+  // - 入力が空になったら抑制、また dismissed 中も非表示
+  const suggestions = lastToken.length >= MIN_QUERY_LEN ? data.suggestions : [];
   const dropdownVisible = !dismissed && suggestions.length > 0;
 
   // isLoading が外れたタイミングで一度だけフォーカス。マウント時は input が disabled で
