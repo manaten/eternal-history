@@ -64,15 +64,20 @@ export const SearchBox: FC<SearchBoxProps> = ({
   // 表示は「前回 fetch の結果を、現在のトークンで startsWith 再フィルタしたもの」。
   // こうすると次のキーストロークで narrowing しながら、新しい fetch が返ってくるまで
   // 前回結果を破棄せずに表示し続けられる (キー押下のたびにドロップダウンが点滅しない)。
-  // 前回と全く違う prefix に変わった場合は filter 結果が空になり自然にドロップダウンが消え、
-  // fetch 完了時に新しい候補で再表示される。
+  //
+  // ただし「前回 fetch のトークンが現在のトークンの prefix である」場合に限る:
+  //   - lastToken='git', data.token='gi' → 'git' は 'gi' で始まる → narrowing OK
+  //   - lastToken='g',  data.token='gi' → 'g' は 'gi' で始まらない (バックスペース等) → 古い結果は無効
+  //   - lastToken='re', data.token='gi' → 全く別 prefix → 古い結果は無効
+  // 無効な場合は空にして、次の fetch を待つ (race で stale prefix の結果が混入するのを防ぐ)。
   const lowerLastToken = lastToken.toLowerCase();
-  const suggestions =
-    lastToken.length < MIN_QUERY_LEN
-      ? []
-      : data.suggestions.filter((w) =>
-          w.toLowerCase().startsWith(lowerLastToken),
-        );
+  const lowerDataToken = data.token.toLowerCase();
+  const dataIsCurrent =
+    lastToken.length >= MIN_QUERY_LEN &&
+    lowerLastToken.startsWith(lowerDataToken);
+  const suggestions = dataIsCurrent
+    ? data.suggestions.filter((w) => w.toLowerCase().startsWith(lowerLastToken))
+    : [];
   const dropdownVisible = !dismissed && suggestions.length > 0;
 
   // isLoading が外れたタイミングで一度だけフォーカス。マウント時は input が disabled で

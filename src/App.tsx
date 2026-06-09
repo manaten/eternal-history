@@ -123,6 +123,10 @@ function App() {
     }
   };
 
+  const handleOpenOptionsPage = useCallback(() => {
+    chrome.runtime.openOptionsPage();
+  }, []);
+
   useEffect(() => {
     const initialSearchQuery = getInitialQuery();
     setInitialSearchQuery(initialSearchQuery);
@@ -147,7 +151,7 @@ function App() {
       onDeleteHistoryItem={handleDeleteHistoryItem}
       initialSearchQuery={initialSearchQuery}
       onRequestSuggestions={requestSuggestions}
-      onOpenOptionsPage={() => chrome.runtime.openOptionsPage()}
+      onOpenOptionsPage={handleOpenOptionsPage}
     />
   );
 }
