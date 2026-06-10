@@ -5,6 +5,10 @@ import {
   getLatestHistoryByUrl,
   onHistoryVisited,
 } from "./infra/chrome/chrome-history";
+import {
+  loadWordIndexCache,
+  saveWordIndexCache,
+} from "./infra/word-index-cache";
 import { makeWordIndexMessageListener } from "./infra/word-index-messaging";
 
 /**
@@ -13,12 +17,19 @@ import { makeWordIndexMessageListener } from "./infra/word-index-messaging";
  *
  * onVisited からは `scheduleRebuild()` で「いつか再構築して」と依頼するだけ。
  * 差分更新は持たず、サービス内部の debounce + queue が実体ビルドを集約する。
+ *
+ * cache: ビルド成功ごとに chrome.storage.local へ丸ごと置き換え保存し、
+ * SW wake 後の初回サジェストはロードだけで返す (フル再構築を待たせない)。
  */
 const wordIndexService = createWordIndexService({
   getSourceTexts: async () => {
     await bookmarkHistoryStore.initialize();
     const items = await bookmarkHistoryStore.getAll();
     return items.map((it) => it.title);
+  },
+  cache: {
+    load: loadWordIndexCache,
+    save: saveWordIndexCache,
   },
 });
 chrome.runtime.onMessage.addListener(

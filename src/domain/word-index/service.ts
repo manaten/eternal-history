@@ -22,8 +22,14 @@ import { WordIndex } from "./types";
  *   発火しなくなるので throttle にしている。ブラウザ拡張は常駐するため、CPU を
  *   無闇に消費しない設定にする。
  *
- * - {@link getIndex}: キャッシュされた `latestIndex` があれば即返す。
- *   無ければビルドを起動して待つ。ビルド失敗時はキャッシュをクリアして次回再試行。
+ * - {@link getIndex}: メモリ上の `latestIndex` があれば即返す。無ければ永続
+ *   キャッシュ (deps.cache) をロードして返し、それも無ければビルドを起動して待つ。
+ *   ビルド失敗時は inFlightBuild だけクリアして次回再試行。
+ *
+ * - 永続キャッシュはビルド成功のたびに丸ごと置き換え保存する。ビルドは都度フル
+ *   再構築 (上述) なので、キャッシュ側も差分管理が要らず常に全置換で整合する。
+ *   SW kill → wake 後の初回サジェストはキャッシュロードだけで返せるため、
+ *   ブックマーク全件走査 + 再ビルドの待ち時間が消える。
  *
  * 入出力は `getSourceTexts` 経由で抽象化されており、本サービス自体は chrome API に
  * 依存しない (domain 層に置ける)。chrome.runtime.onMessage への bind は
@@ -45,6 +51,14 @@ const REBUILD_THROTTLE_MS = 30 * 60 * 1000; // 30 分
 export interface WordIndexServiceDeps {
   /** Index 構築のソース。タイトル文字列の列を返す。 */
   getSourceTexts: () => Promise<readonly string[]>;
+  /**
+   * 永続キャッシュ (任意)。load は「キャッシュ無し / 読めない」を null で返す。
+   * save はビルド成功ごとに丸ごと置き換えで呼ばれる。
+   */
+  cache?: {
+    load: () => Promise<WordIndex | null>;
+    save: (index: WordIndex) => Promise<void>;
+  };
 }
 
 export interface WordIndexService {
@@ -77,6 +91,8 @@ export function createWordIndexService(
   let pending = false;
   // eslint-disable-next-line functional/no-let
   let throttleTimer: ReturnType<typeof setTimeout> | null = null;
+  // eslint-disable-next-line functional/no-let
+  let inFlightCacheLoad: Promise<WordIndex | null> | null = null;
 
   async function runBuildLoop(): Promise<WordIndex> {
     // pending が立っている間はビルドを連続実行する (1 段だけ「次」を許す)。
@@ -90,6 +106,11 @@ export function createWordIndexService(
       console.log(
         `WordIndex built: ${built.wordCounts.size} words from ${texts.length} texts in ${(performance.now() - t0).toFixed(0)}ms`,
       );
+      // 永続キャッシュを丸ごと置き換える。保存失敗は次回ビルドで上書きされる
+      // だけなので、ビルド完了 (= suggest 可能になる) を保存に待たせない。
+      deps.cache
+        ?.save(built)
+        .catch((e) => console.warn("Failed to persist WordIndex cache:", e));
     } while (pending);
     inFlightBuild = null;
     return latestIndex!;
@@ -132,8 +153,27 @@ export function createWordIndexService(
     }, REBUILD_THROTTLE_MS);
   }
 
-  function getIndex(): Promise<WordIndex> {
-    if (latestIndex) return Promise.resolve(latestIndex);
+  async function getIndex(): Promise<WordIndex> {
+    if (latestIndex) return latestIndex;
+    if (inFlightBuild) return inFlightBuild;
+    if (deps.cache) {
+      // 並行する getIndex で load が多重発行されないよう in-flight を共有する。
+      // load 失敗は「キャッシュ無し」と同じ扱いでフル再構築に落とす。
+      inFlightCacheLoad ??= deps.cache.load().catch((e) => {
+        console.warn("Failed to load WordIndex cache:", e);
+        return null;
+      });
+      const cached = await inFlightCacheLoad;
+      inFlightCacheLoad = null;
+      // load 待ちの間に rebuild() (DebugTools 等) が走った場合はキャッシュより
+      // 新しいので、そちらを優先する。
+      if (latestIndex) return latestIndex;
+      if (inFlightBuild) return inFlightBuild;
+      if (cached) {
+        latestIndex = cached;
+        return cached;
+      }
+    }
     return rebuild();
   }
 

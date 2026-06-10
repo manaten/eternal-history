@@ -8,8 +8,10 @@
  * 2 つの Map は常に整合している必要がある。差分更新 API は持たず、毎回
  * {@link buildWordIndex} でゼロから再構築する設計。
  *
- * このインデックスは MV3 service worker のメモリ上にのみ存在し、永続化しない。
- * SW kill 後の次の wake では `bookmarkHistoryStore.getAll()` から再構築する。
+ * MV3 service worker のメモリ上に保持しつつ、ビルド成功ごとに
+ * chrome.storage.local へ丸ごと置き換えで永続化する (`infra/word-index-cache`)。
+ * SW kill 後の次の wake ではまずキャッシュをロードし、キャッシュが無い・読めない
+ * 場合のみ `bookmarkHistoryStore.getAll()` からフル再構築する。
  */
 export interface WordIndex {
   wordCounts: Map<string, number>;

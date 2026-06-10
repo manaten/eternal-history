@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 
-import { buildWordIndex, lookupSuggestions } from "./index";
+import {
+  buildWordIndex,
+  deserializeWordIndex,
+  lookupSuggestions,
+  serializeWordIndex,
+  WORD_INDEX_CACHE_VERSION,
+} from "./index";
 import { isNoiseWord } from "./noise";
 
 describe("isNoiseWord", () => {
@@ -103,6 +109,50 @@ describe("lookupSuggestions", () => {
 
   it("該当 prefix がない場合は空配列", () => {
     expect(lookupSuggestions(index, "Xy", 10)).toEqual([]);
+  });
+
+  describe("serialize / deserialize", () => {
+    it("roundtrip で wordCounts と prefixIndex が復元され lookup 結果が一致する", () => {
+      const restored = deserializeWordIndex(serializeWordIndex(index));
+      expect(restored).not.toBeNull();
+      expect(restored!.wordCounts).toEqual(index.wordCounts);
+      expect(restored!.prefixIndex).toEqual(index.prefixIndex);
+      expect(lookupSuggestions(restored!, "Git", 10)).toEqual(
+        lookupSuggestions(index, "Git", 10),
+      );
+    });
+
+    it("空 index も roundtrip できる", () => {
+      const restored = deserializeWordIndex(
+        serializeWordIndex(buildWordIndex([])),
+      );
+      expect(restored).not.toBeNull();
+      expect(restored!.wordCounts.size).toBe(0);
+    });
+
+    it("バージョン不一致は null を返す", () => {
+      const serialized = serializeWordIndex(index);
+      expect(
+        deserializeWordIndex({
+          ...serialized,
+          v: WORD_INDEX_CACHE_VERSION + 1,
+        }),
+      ).toBeNull();
+    });
+
+    it("形式不正 (null / words 非配列 / 要素型不正) は null を返す", () => {
+      expect(deserializeWordIndex(null)).toBeNull();
+      expect(deserializeWordIndex(undefined)).toBeNull();
+      expect(
+        deserializeWordIndex({ v: WORD_INDEX_CACHE_VERSION, words: "broken" }),
+      ).toBeNull();
+      expect(
+        deserializeWordIndex({
+          v: WORD_INDEX_CACHE_VERSION,
+          words: [["GitHub", "3"]],
+        }),
+      ).toBeNull();
+    });
   });
 
   describe("大文字小文字無視", () => {

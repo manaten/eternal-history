@@ -22,6 +22,69 @@ export function createEmptyWordIndex(): WordIndex {
 }
 
 /**
+ * 永続キャッシュのフォーマットバージョン。
+ *
+ * インデックスの構築ルールが変わって古いキャッシュが意味をなさなくなったら
+ * インクリメントする (例: {@link isNoiseWord} の判定変更、canonical 化の変更)。
+ * バージョン不一致のキャッシュは {@link deserializeWordIndex} が null を返し、
+ * フル再構築にフォールバックする。
+ */
+export const WORD_INDEX_CACHE_VERSION = 1;
+
+/**
+ * WordIndex の永続化用表現。JSON 化可能な plain object。
+ *
+ * `prefixIndex` は wordCounts から機械的に導出できる派生データなので保存しない
+ * (デシリアライズ時に再構築する)。キャッシュサイズと整合性管理の両方が楽になる。
+ */
+export interface SerializedWordIndex {
+  v: number;
+  /** [canonical word, total count] のペア列 */
+  words: [string, number][];
+}
+
+export function serializeWordIndex(index: WordIndex): SerializedWordIndex {
+  return {
+    v: WORD_INDEX_CACHE_VERSION,
+    words: [...index.wordCounts.entries()],
+  };
+}
+
+/**
+ * {@link serializeWordIndex} の逆変換。prefixIndex はここで再導出する。
+ * バージョン不一致や形式不正の場合は null を返す (呼び出し側がフル再構築する)。
+ */
+export function deserializeWordIndex(data: unknown): WordIndex | null {
+  const serialized = data as SerializedWordIndex | null | undefined;
+  if (
+    serialized?.v !== WORD_INDEX_CACHE_VERSION ||
+    !Array.isArray(serialized.words)
+  ) {
+    return null;
+  }
+  const index = createEmptyWordIndex();
+  for (const [word, count] of serialized.words) {
+    if (typeof word !== "string" || typeof count !== "number") return null;
+    // eslint-disable-next-line functional/immutable-data
+    index.wordCounts.set(word, count);
+    addToPrefixIndex(index, word);
+  }
+  return index;
+}
+
+function addToPrefixIndex(index: WordIndex, canonical: string): void {
+  const prefix = canonical.toLowerCase().slice(0, PREFIX_KEY_LEN);
+  const list = index.prefixIndex.get(prefix);
+  if (list) {
+    // eslint-disable-next-line functional/immutable-data
+    list.push(canonical);
+  } else {
+    // eslint-disable-next-line functional/immutable-data
+    index.prefixIndex.set(prefix, [canonical]);
+  }
+}
+
+/**
  * テキスト群から WordIndex を構築する。
  *
  * 1 パスで `Map<lowerKey, Map<exactCase, count>>` に集約し、グループごとに最頻
@@ -67,15 +130,7 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
     );
     // eslint-disable-next-line functional/immutable-data
     index.wordCounts.set(canonical, totalCount);
-    const prefix = canonical.toLowerCase().slice(0, PREFIX_KEY_LEN);
-    const list = index.prefixIndex.get(prefix);
-    if (list) {
-      // eslint-disable-next-line functional/immutable-data
-      list.push(canonical);
-    } else {
-      // eslint-disable-next-line functional/immutable-data
-      index.prefixIndex.set(prefix, [canonical]);
-    }
+    addToPrefixIndex(index, canonical);
   }
   return index;
 }
