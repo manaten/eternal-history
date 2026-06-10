@@ -1,9 +1,29 @@
+import { createWordIndexService } from "./domain/word-index/service";
 import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
 import {
   getAllBrowserHistory,
   getLatestHistoryByUrl,
   onHistoryVisited,
 } from "./infra/chrome/chrome-history";
+import { makeWordIndexMessageListener } from "./infra/word-index-messaging";
+
+/**
+ * WordIndex サービスはモジュール読み込み時 (= SW wake 時) に組み立てる。
+ * `chrome.runtime.onMessage.addListener` は同期登録が要件なので、await の前に呼ぶ。
+ *
+ * onVisited からは `scheduleRebuild()` で「いつか再構築して」と依頼するだけ。
+ * 差分更新は持たず、サービス内部の debounce + queue が実体ビルドを集約する。
+ */
+const wordIndexService = createWordIndexService({
+  getSourceTexts: async () => {
+    await bookmarkHistoryStore.initialize();
+    const items = await bookmarkHistoryStore.getAll();
+    return items.map((it) => it.title);
+  },
+});
+chrome.runtime.onMessage.addListener(
+  makeWordIndexMessageListener(wordIndexService),
+);
 
 async function initialize() {
   await bookmarkHistoryStore.initialize();
@@ -17,8 +37,8 @@ async function initialize() {
   onHistoryVisited(async (item) => {
     console.log("add new history:", item);
 
-    // 即座に保存
     await bookmarkHistoryStore.insert([item]);
+    wordIndexService.scheduleRebuild();
 
     // JS でタイトルが設定される可能性があるため、10 秒待って再取得・更新
     setTimeout(async () => {
@@ -29,6 +49,7 @@ async function initialize() {
             `Updating title for: ${updated.url} from: ${item.title} to: ${updated.title}`,
           );
           await bookmarkHistoryStore.insert([updated]);
+          wordIndexService.scheduleRebuild();
         }
       } catch (error) {
         console.warn("Failed to update history title:", error);

@@ -19,6 +19,12 @@ interface RootProps {
   truncatedAt?: number;
   onDeleteHistoryItem?: (item: HistoryItem) => void;
   initialSearchQuery?: string;
+  onRequestSuggestions: (
+    query: string,
+    limit: number,
+  ) => Promise<readonly string[]>;
+  /** Options ボタン押下時の副作用。App.tsx が `chrome.runtime.openOptionsPage` を渡す。 */
+  onOpenOptionsPage: () => void;
 }
 
 export const Root: FC<RootProps> = ({
@@ -32,6 +38,8 @@ export const Root: FC<RootProps> = ({
   truncatedAt,
   onDeleteHistoryItem,
   initialSearchQuery,
+  onRequestSuggestions,
+  onOpenOptionsPage,
 }: RootProps) => {
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
@@ -41,10 +49,6 @@ export const Root: FC<RootProps> = ({
 
   const handleCloseHelp = () => {
     setIsHelpModalOpen(false);
-  };
-
-  const handleOpenOptions = () => {
-    chrome.runtime.openOptionsPage();
   };
 
   return (
@@ -63,6 +67,7 @@ export const Root: FC<RootProps> = ({
         isLoading={isLoading}
         currentQuery={searchQuery}
         initialQuery={initialSearchQuery}
+        onRequestSuggestions={onRequestSuggestions}
       />
       <Histories
         history={history}
@@ -73,7 +78,7 @@ export const Root: FC<RootProps> = ({
       />
       <ActionButton
         icon='options'
-        onClick={handleOpenOptions}
+        onClick={onOpenOptionsPage}
         aria-label={t("optionsButton.openOptions")}
         title={t("optionsButton.options")}
         className={`

@@ -25,15 +25,28 @@ export const ROOT_FOLDER_NAME = "Eternal History";
 
 // eslint-disable-next-line functional/no-let
 let rootFolderId: string | null = null;
+// 並走する複数の initialize 呼出を 1 つの promise に集約するためのメモ化。
+// eslint-disable-next-line functional/no-let
+let initializePromise: Promise<void> | null = null;
 
 // Test helper function to reset storage state
 export function resetStorageForTesting() {
   rootFolderId = null;
+  initializePromise = null;
   resetBookmarkCacheForTesting();
 }
 
-async function initialize(): Promise<void> {
-  rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
+/**
+ * 冪等な初期化。複数箇所から並列で呼ばれても `chrome.bookmarks` への問い合わせは
+ * 1 回しか走らない (in-flight promise を共有する)。
+ */
+function initialize(): Promise<void> {
+  if (!initializePromise) {
+    initializePromise = (async () => {
+      rootFolderId = await getOrCreateFolder(undefined, ROOT_FOLDER_NAME);
+    })();
+  }
+  return initializePromise;
 }
 
 async function convertBookmarkToHistoryItem(
@@ -198,6 +211,19 @@ async function getRecent(days: number): Promise<HistoryItem[]> {
 }
 
 /**
+ * Eternal History ルート配下の全履歴を返す。
+ * インデックス再構築 (`background.ts` の word-index 初期化) や、デバッグ用の
+ * 全件走査で使う。件数オーダー 10 万を想定しており、決して軽い処理ではない。
+ */
+async function getAll(): Promise<HistoryItem[]> {
+  if (!rootFolderId) {
+    throw new Error("Storage not initialized");
+  }
+  const bookmarks = await getAllBookmarksInFolder(rootFolderId);
+  return await pMap(bookmarks, convertBookmarkToHistoryItem);
+}
+
+/**
  * HistoryStore の Chrome bookmarks ベース実装。
  *
  * 履歴は "Eternal History" ルート配下の YYYY/MM/DD/HH 階層にブックマークとして
@@ -210,5 +236,6 @@ export const bookmarkHistoryStore: HistoryStore = {
   insert,
   delete: deleteHistory,
   getRecent,
+  getAll,
   searchCandidates,
 };

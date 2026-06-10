@@ -12,6 +12,7 @@ import {
 import { getSettings } from "./domain/settings";
 import { t } from "./i18n";
 import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
+import { requestSuggestions } from "./infra/word-index-client";
 
 const SESSION_STORAGE_KEY = "eternal-history-search-query";
 
@@ -122,6 +123,10 @@ function App() {
     }
   };
 
+  const handleOpenOptionsPage = useCallback(() => {
+    chrome.runtime.openOptionsPage();
+  }, []);
+
   useEffect(() => {
     const initialSearchQuery = getInitialQuery();
     setInitialSearchQuery(initialSearchQuery);
@@ -145,6 +150,8 @@ function App() {
       truncatedAt={truncatedAt}
       onDeleteHistoryItem={handleDeleteHistoryItem}
       initialSearchQuery={initialSearchQuery}
+      onRequestSuggestions={requestSuggestions}
+      onOpenOptionsPage={handleOpenOptionsPage}
     />
   );
 }

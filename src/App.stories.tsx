@@ -56,6 +56,11 @@ const mockChromeHistory = {
 
 const mockChromeRuntime = {
   getURL: (path: string) => `chrome-extension://test-extension-id/${path}`,
+  // SearchBox → requestSuggestions が叩く。サジェスト無効として空配列を返す。
+  sendMessage: async () => ({ suggestions: [] }),
+  // Root の Options ボタンが叩く。VRT では実呼び出ししないが念のため stub。
+  openOptionsPage: () => {},
+  onMessage: { addListener: () => {} },
 };
 
 // グローバルにChrome APIをモック

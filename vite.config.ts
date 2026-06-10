@@ -11,6 +11,9 @@ export default defineConfig({
 
   define: {
     "import.meta.vitest": "undefined",
+    // build:dev (npm run build:dev) で DEV_BUILD=true が設定される。
+    // 本番ビルドでは false に評価される。
+    __DEV_BUILD__: JSON.stringify(process.env.DEV_BUILD === "true"),
   },
 
   build: {

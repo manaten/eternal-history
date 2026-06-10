@@ -54,6 +54,7 @@ if (import.meta.vitest) {
     insert: async () => {},
     delete: async () => {},
     getRecent: async () => [],
+    getAll: async () => items,
     searchCandidates: async (term) =>
       items.filter((item) =>
         `${item.title} ${item.url}`.toLowerCase().includes(term),
