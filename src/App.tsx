@@ -12,7 +12,10 @@ import {
 import { getSettings } from "./domain/settings";
 import { t } from "./i18n";
 import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
-import { requestSuggestions } from "./infra/word-index-client";
+import {
+  requestRebuildIndex,
+  requestSuggestions,
+} from "./infra/word-index-client";
 
 const SESSION_STORAGE_KEY = "eternal-history-search-query";
 
@@ -84,6 +87,12 @@ function App() {
       if (confirm(message)) {
         await bookmarkHistoryStore.delete(item);
         setHistory((prev) => prev.filter((h) => h.url !== item.url));
+        // 削除したタイトル由来の単語がサジェスト (永続キャッシュ含む) に
+        // 残り続けないよう、インデックスを再構築する。失敗しても削除自体は
+        // 成功しているので待たない・落とさない。
+        requestRebuildIndex().catch((e) =>
+          console.warn("Failed to rebuild word index after delete:", e),
+        );
       }
     } catch (error) {
       console.error("Failed to delete history item:", error);

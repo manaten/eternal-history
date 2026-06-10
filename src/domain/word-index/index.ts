@@ -39,13 +39,25 @@ export const WORD_INDEX_CACHE_VERSION = 1;
  */
 export interface SerializedWordIndex {
   v: number;
+  /** ビルド時刻 (epoch ms)。stale-while-revalidate の鮮度判定に使う。 */
+  builtAt: number;
   /** [canonical word, total count] のペア列 */
   words: [string, number][];
 }
 
-export function serializeWordIndex(index: WordIndex): SerializedWordIndex {
+/** デシリアライズ結果。index 本体とビルド時刻のペア。 */
+export interface PersistedWordIndex {
+  index: WordIndex;
+  builtAt: number;
+}
+
+export function serializeWordIndex(
+  index: WordIndex,
+  builtAt: number,
+): SerializedWordIndex {
   return {
     v: WORD_INDEX_CACHE_VERSION,
+    builtAt,
     words: [...index.wordCounts.entries()],
   };
 }
@@ -53,23 +65,37 @@ export function serializeWordIndex(index: WordIndex): SerializedWordIndex {
 /**
  * {@link serializeWordIndex} の逆変換。prefixIndex はここで再導出する。
  * バージョン不一致や形式不正の場合は null を返す (呼び出し側がフル再構築する)。
+ *
+ * 検証は「正常な serialize 出力の形」に限定する: 要素が [string, number] の
+ * ペアでない、同じ lowercase の単語が複数ある (canonical 化済みならあり得ない)
+ * といった破損データは null に落とし、wordCounts / prefixIndex の整合が
+ * 破れた index を作らない。
  */
-export function deserializeWordIndex(data: unknown): WordIndex | null {
+export function deserializeWordIndex(data: unknown): PersistedWordIndex | null {
   const serialized = data as SerializedWordIndex | null | undefined;
   if (
     serialized?.v !== WORD_INDEX_CACHE_VERSION ||
+    typeof serialized.builtAt !== "number" ||
+    !Number.isFinite(serialized.builtAt) ||
     !Array.isArray(serialized.words)
   ) {
     return null;
   }
   const index = createEmptyWordIndex();
-  for (const [word, count] of serialized.words) {
+  const seenLowers = new Set<string>();
+  for (const entry of serialized.words) {
+    if (!Array.isArray(entry)) return null;
+    const [word, count] = entry;
     if (typeof word !== "string" || typeof count !== "number") return null;
+    const lower = word.toLowerCase();
+    if (seenLowers.has(lower)) return null;
+    // eslint-disable-next-line functional/immutable-data
+    seenLowers.add(lower);
     // eslint-disable-next-line functional/immutable-data
     index.wordCounts.set(word, count);
     addToPrefixIndex(index, word);
   }
-  return index;
+  return { index, builtAt: serialized.builtAt };
 }
 
 function addToPrefixIndex(index: WordIndex, canonical: string): void {

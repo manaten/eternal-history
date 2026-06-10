@@ -1,4 +1,4 @@
-import { buildWordIndex, lookupSuggestions } from "./index";
+import { buildWordIndex, lookupSuggestions, PersistedWordIndex } from "./index";
 import { WordIndex } from "./types";
 
 /**
@@ -31,6 +31,13 @@ import { WordIndex } from "./types";
  *   SW kill → wake 後の初回サジェストはキャッシュロードだけで返せるため、
  *   ブックマーク全件走査 + 再ビルドの待ち時間が消える。
  *
+ * - キャッシュは stale-while-revalidate で更新する: ヒット時はまず即返し、
+ *   builtAt が REBUILD_THROTTLE_MS より古ければバックグラウンドでフル再構築を
+ *   起動する。scheduleRebuild の setTimeout は MV3 SW の kill (idle 約 30 秒)
+ *   で消滅してほぼ発火しないため、これが SW wake をまたいだ実質唯一の自動
+ *   リフレッシュ経路になる。これによりキャッシュの鮮度は
+ *   「REBUILD_THROTTLE_MS + 次に suggest が使われるまで」で上限が保証される。
+ *
  * 入出力は `getSourceTexts` 経由で抽象化されており、本サービス自体は chrome API に
  * 依存しない (domain 層に置ける)。chrome.runtime.onMessage への bind は
  * `infra/word-index-messaging` が担う。
@@ -45,6 +52,9 @@ import { WordIndex } from "./types";
  *
  * 訪問から「サジェスト候補に出てくる」までの最大遅延 ≒ REBUILD_THROTTLE_MS + ビルド時間。
  * 拡張機能はバックグラウンドで常駐するため、CPU をいたずらに消費しないよう長めに取る。
+ *
+ * 永続キャッシュの stale-while-revalidate の鮮度閾値としても同じ値を使う:
+ * builtAt がこれより古いキャッシュは「返すが裏で再構築」になる。
  */
 const REBUILD_THROTTLE_MS = 30 * 60 * 1000; // 30 分
 
@@ -53,11 +63,12 @@ export interface WordIndexServiceDeps {
   getSourceTexts: () => Promise<readonly string[]>;
   /**
    * 永続キャッシュ (任意)。load は「キャッシュ無し / 読めない」を null で返す。
-   * save はビルド成功ごとに丸ごと置き換えで呼ばれる。
+   * save はビルド成功ごとに丸ごと置き換えで呼ばれる。builtAt は鮮度判定
+   * (stale-while-revalidate) に使うビルド時刻 (epoch ms)。
    */
   cache?: {
-    load: () => Promise<WordIndex | null>;
-    save: (index: WordIndex) => Promise<void>;
+    load: () => Promise<PersistedWordIndex | null>;
+    save: (index: WordIndex, builtAt: number) => Promise<void>;
   };
 }
 
@@ -92,7 +103,7 @@ export function createWordIndexService(
   // eslint-disable-next-line functional/no-let
   let throttleTimer: ReturnType<typeof setTimeout> | null = null;
   // eslint-disable-next-line functional/no-let
-  let inFlightCacheLoad: Promise<WordIndex | null> | null = null;
+  let inFlightCacheLoad: Promise<PersistedWordIndex | null> | null = null;
 
   async function runBuildLoop(): Promise<WordIndex> {
     // pending が立っている間はビルドを連続実行する (1 段だけ「次」を許す)。
@@ -109,7 +120,7 @@ export function createWordIndexService(
       // 永続キャッシュを丸ごと置き換える。保存失敗は次回ビルドで上書きされる
       // だけなので、ビルド完了 (= suggest 可能になる) を保存に待たせない。
       deps.cache
-        ?.save(built)
+        ?.save(built, Date.now())
         .catch((e) => console.warn("Failed to persist WordIndex cache:", e));
     } while (pending);
     inFlightBuild = null;
@@ -170,8 +181,15 @@ export function createWordIndexService(
       if (latestIndex) return latestIndex;
       if (inFlightBuild) return inFlightBuild;
       if (cached) {
-        latestIndex = cached;
-        return cached;
+        latestIndex = cached.index;
+        // stale-while-revalidate: キャッシュが古ければ裏でフル再構築を起動する
+        // (待たない)。完了すれば latestIndex とキャッシュが置き換わる。
+        if (Date.now() - cached.builtAt >= REBUILD_THROTTLE_MS) {
+          rebuild().catch((e) =>
+            console.error("Stale cache revalidation failed:", e),
+          );
+        }
+        return cached.index;
       }
     }
     return rebuild();

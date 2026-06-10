@@ -112,26 +112,27 @@ describe("lookupSuggestions", () => {
   });
 
   describe("serialize / deserialize", () => {
-    it("roundtrip で wordCounts と prefixIndex が復元され lookup 結果が一致する", () => {
-      const restored = deserializeWordIndex(serializeWordIndex(index));
+    it("roundtrip で wordCounts / prefixIndex / builtAt が復元され lookup 結果が一致する", () => {
+      const restored = deserializeWordIndex(serializeWordIndex(index, 12345));
       expect(restored).not.toBeNull();
-      expect(restored!.wordCounts).toEqual(index.wordCounts);
-      expect(restored!.prefixIndex).toEqual(index.prefixIndex);
-      expect(lookupSuggestions(restored!, "Git", 10)).toEqual(
+      expect(restored!.builtAt).toBe(12345);
+      expect(restored!.index.wordCounts).toEqual(index.wordCounts);
+      expect(restored!.index.prefixIndex).toEqual(index.prefixIndex);
+      expect(lookupSuggestions(restored!.index, "Git", 10)).toEqual(
         lookupSuggestions(index, "Git", 10),
       );
     });
 
     it("空 index も roundtrip できる", () => {
       const restored = deserializeWordIndex(
-        serializeWordIndex(buildWordIndex([])),
+        serializeWordIndex(buildWordIndex([]), 0),
       );
       expect(restored).not.toBeNull();
-      expect(restored!.wordCounts.size).toBe(0);
+      expect(restored!.index.wordCounts.size).toBe(0);
     });
 
     it("バージョン不一致は null を返す", () => {
-      const serialized = serializeWordIndex(index);
+      const serialized = serializeWordIndex(index, 12345);
       expect(
         deserializeWordIndex({
           ...serialized,
@@ -140,16 +141,43 @@ describe("lookupSuggestions", () => {
       ).toBeNull();
     });
 
-    it("形式不正 (null / words 非配列 / 要素型不正) は null を返す", () => {
-      expect(deserializeWordIndex(null)).toBeNull();
-      expect(deserializeWordIndex(undefined)).toBeNull();
+    it("builtAt が無い / 数値でない場合は null を返す", () => {
+      const { builtAt: _omitted, ...withoutBuiltAt } = serializeWordIndex(
+        index,
+        12345,
+      );
+      expect(deserializeWordIndex(withoutBuiltAt)).toBeNull();
       expect(
-        deserializeWordIndex({ v: WORD_INDEX_CACHE_VERSION, words: "broken" }),
+        deserializeWordIndex({ ...withoutBuiltAt, builtAt: "12345" }),
       ).toBeNull();
       expect(
+        deserializeWordIndex({ ...withoutBuiltAt, builtAt: NaN }),
+      ).toBeNull();
+    });
+
+    it("形式不正 (null / words 非配列 / 要素型不正) は null を返す (throw しない)", () => {
+      const valid = serializeWordIndex(index, 12345);
+      expect(deserializeWordIndex(null)).toBeNull();
+      expect(deserializeWordIndex(undefined)).toBeNull();
+      expect(deserializeWordIndex({ ...valid, words: "broken" })).toBeNull();
+      expect(
+        deserializeWordIndex({ ...valid, words: [["GitHub", "3"]] }),
+      ).toBeNull();
+      // 要素が non-iterable / 文字列でも throw せず null
+      expect(deserializeWordIndex({ ...valid, words: [null] })).toBeNull();
+      expect(deserializeWordIndex({ ...valid, words: [42] })).toBeNull();
+      expect(deserializeWordIndex({ ...valid, words: ["GitHub"] })).toBeNull();
+    });
+
+    it("同じ lowercase の単語が重複する破損データは null を返す", () => {
+      const valid = serializeWordIndex(index, 12345);
+      expect(
         deserializeWordIndex({
-          v: WORD_INDEX_CACHE_VERSION,
-          words: [["GitHub", "3"]],
+          ...valid,
+          words: [
+            ["GitHub", 1],
+            ["GITHUB", 2],
+          ],
         }),
       ).toBeNull();
     });

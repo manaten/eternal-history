@@ -19,15 +19,16 @@ describe("word-index-cache", () => {
     expect(await loadWordIndexCache()).toBeNull();
   });
 
-  it("save → load で index が復元される", async () => {
+  it("save → load で index と builtAt が復元される", async () => {
     const index = buildWordIndex(["GitHub GitHub", "GitLab"]);
-    await saveWordIndexCache(index);
+    await saveWordIndexCache(index, 12345);
 
     const loaded = await loadWordIndexCache();
 
     expect(loaded).not.toBeNull();
-    expect(loaded!.wordCounts).toEqual(index.wordCounts);
-    expect(lookupSuggestions(loaded!, "git", 10)).toEqual(
+    expect(loaded!.builtAt).toBe(12345);
+    expect(loaded!.index.wordCounts).toEqual(index.wordCounts);
+    expect(lookupSuggestions(loaded!.index, "git", 10)).toEqual(
       lookupSuggestions(index, "git", 10),
     );
   });
@@ -38,11 +39,12 @@ describe("word-index-cache", () => {
   });
 
   it("save は丸ごと置き換える", async () => {
-    await saveWordIndexCache(buildWordIndex(["OldWord OldWord"]));
-    await saveWordIndexCache(buildWordIndex(["NewWord"]));
+    await saveWordIndexCache(buildWordIndex(["OldWord OldWord"]), 1);
+    await saveWordIndexCache(buildWordIndex(["NewWord"]), 2);
 
     const loaded = await loadWordIndexCache();
-    expect(loaded!.wordCounts.has("OldWord")).toBe(false);
-    expect(loaded!.wordCounts.get("NewWord")).toBe(1);
+    expect(loaded!.index.wordCounts.has("OldWord")).toBe(false);
+    expect(loaded!.index.wordCounts.get("NewWord")).toBe(1);
+    expect(loaded!.builtAt).toBe(2);
   });
 });
