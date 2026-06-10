@@ -183,4 +183,109 @@ describe("createWordIndexService (cache 連携)", () => {
 
     expect(index.wordCounts.get("GitHub")).toBe(1);
   });
+
+  describe("builtAt ベースの鮮度管理 (タイマーレス)", () => {
+    it("メモリ上の index が古くなったら getIndex が即返ししつつ裏で再構築する", async () => {
+      vi.useFakeTimers();
+      try {
+        const deps = makeDeps();
+        const service = createWordIndexService(deps);
+        await service.getIndex(); // 初回フルビルド (キャッシュ無し)
+        expect(deps.getSourceTexts).toHaveBeenCalledOnce();
+
+        // 30 分経過前は何もしない
+        vi.advanceTimersByTime(29 * 60 * 1000);
+        await service.getIndex();
+        expect(deps.getSourceTexts).toHaveBeenCalledOnce();
+
+        // 30 分経過後は裏で再構築が走る
+        vi.advanceTimersByTime(2 * 60 * 1000);
+        await service.getIndex();
+        expect(deps.getSourceTexts).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("rebuildIfStale: index が新しければ何もしない (builtAt がスロットルになる)", async () => {
+      const deps = makeDeps();
+      const service = createWordIndexService(deps);
+      await service.getIndex(); // 初回ビルドで builtAt が新しい
+
+      service.rebuildIfStale();
+      service.rebuildIfStale();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(deps.getSourceTexts).toHaveBeenCalledOnce();
+    });
+
+    it("rebuildIfStale: builtAt が古ければ再構築する", async () => {
+      vi.useFakeTimers();
+      try {
+        const deps = makeDeps();
+        const service = createWordIndexService(deps);
+        await service.getIndex();
+        vi.advanceTimersByTime(31 * 60 * 1000);
+
+        service.rebuildIfStale();
+
+        expect(deps.getSourceTexts).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("rebuildIfStale: index 未構築・キャッシュ無しなら初回ビルドが走る", async () => {
+      const deps = makeDeps();
+      const service = createWordIndexService(deps);
+
+      service.rebuildIfStale();
+
+      await vi.waitFor(() =>
+        expect(deps.getSourceTexts).toHaveBeenCalledOnce(),
+      );
+      expect((await service.getIndex()).wordCounts.get("GitHub")).toBe(2);
+    });
+
+    it("rebuildIfStale: ビルド進行中は pending に集約し完了後にもう一度ビルドする", async () => {
+      const deps = makeDeps();
+      const resolvers: ((texts: readonly string[]) => void)[] = [];
+      deps.getSourceTexts.mockImplementation(
+        () =>
+          new Promise<readonly string[]>((resolve) => {
+            // eslint-disable-next-line functional/immutable-data
+            resolvers.push(resolve);
+          }),
+      );
+      const service = createWordIndexService(deps);
+
+      const buildPromise = service.rebuild(); // 1 回目のビルド開始 (texts 待ち)
+      service.rebuildIfStale(); // ビルド中の更新 → pending に集約
+      resolvers[0]!(["First Title"]);
+      await vi.waitFor(() => expect(resolvers.length).toBe(2)); // 完了後に 2 回目
+      resolvers[1]!(["Second Title"]);
+
+      const index = await buildPromise;
+      expect(index.wordCounts.has("Second")).toBe(true);
+    });
+
+    it("古いキャッシュへの並行 getIndex でも再構築は 1 回に集約される", async () => {
+      const cached = {
+        index: buildWordIndex(["Cached Title"]),
+        builtAt: Date.now() - 31 * 60 * 1000,
+      };
+      const deps = makeDeps({ cached });
+      const service = createWordIndexService(deps);
+
+      const results = await Promise.all([
+        service.getIndex(),
+        service.getIndex(),
+        service.getIndex(),
+      ]);
+
+      expect(results.every((r) => r === cached.index)).toBe(true);
+      await vi.waitFor(() => expect(deps.cache.save).toHaveBeenCalledOnce());
+      expect(deps.getSourceTexts).toHaveBeenCalledOnce();
+    });
+  });
 });

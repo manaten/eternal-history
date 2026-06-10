@@ -15,8 +15,8 @@ import { makeWordIndexMessageListener } from "./infra/word-index-messaging";
  * WordIndex サービスはモジュール読み込み時 (= SW wake 時) に組み立てる。
  * `chrome.runtime.onMessage.addListener` は同期登録が要件なので、await の前に呼ぶ。
  *
- * onVisited からは `scheduleRebuild()` で「いつか再構築して」と依頼するだけ。
- * 差分更新は持たず、サービス内部の debounce + queue が実体ビルドを集約する。
+ * onVisited からは `rebuildIfStale()` で「古ければ再構築して」と依頼するだけ。
+ * 差分更新は持たず、builtAt ベースの鮮度判定 (30 分) が実体ビルドを集約する。
  *
  * cache: ビルド成功ごとに chrome.storage.local へ丸ごと置き換え保存し、
  * SW wake 後の初回サジェストはロードだけで返す (フル再構築を待たせない)。
@@ -49,7 +49,7 @@ async function initialize() {
     console.log("add new history:", item);
 
     await bookmarkHistoryStore.insert([item]);
-    wordIndexService.scheduleRebuild();
+    wordIndexService.rebuildIfStale();
 
     // JS でタイトルが設定される可能性があるため、10 秒待って再取得・更新
     setTimeout(async () => {
@@ -60,7 +60,7 @@ async function initialize() {
             `Updating title for: ${updated.url} from: ${item.title} to: ${updated.title}`,
           );
           await bookmarkHistoryStore.insert([updated]);
-          wordIndexService.scheduleRebuild();
+          wordIndexService.rebuildIfStale();
         }
       } catch (error) {
         console.warn("Failed to update history title:", error);

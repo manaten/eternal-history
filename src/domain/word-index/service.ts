@@ -4,26 +4,21 @@ import { WordIndex } from "./types";
 /**
  * WordIndex のライフサイクルを管理するドメインサービス。
  *
- * 設計方針: **差分更新を持たず、都度フル再構築する**。
+ * 設計方針: **差分更新を持たず、都度フル再構築 + builtAt ベースの鮮度管理**。
  *
  * - 構築は always-fresh: 入力テキスト全件から都度 build する。差分更新 API は持たない。
  *   これにより onVisited × rebuild の race やタイトル更新の二重カウントが構造的に
  *   発生しない (一度の build がスナップショットを取って終わるだけ)。
  *
- * - 連続発火の coalescing: ビルド実行中に新たな {@link scheduleRebuild} 要求が来た
- *   場合は `pending` フラグを立てるだけで何もしない。実行中ビルドが終わったあと
- *   pending が立っていたらもう一度ビルドする。最大で「currentBuild + nextBuild」の
- *   2 連発に集約される。
+ * - 再構築のスロットリングはタイマーではなく builtAt (最終ビルド時刻) で行う:
+ *   suggest ({@link getIndex}) や履歴更新 ({@link rebuildIfStale}) を契機に
+ *   builtAt を確認し、STALE_AFTER_MS より古ければバックグラウンドで再構築する
+ *   (stale-while-revalidate)。MV3 SW は idle 約 30 秒で kill され setTimeout が
+ *   生き残らないため、タイマー方式は実質機能しない。builtAt は永続キャッシュと
+ *   共に保存されるので、SW の生死をまたいでも「ビルドは最大 30 分に 1 回」が成立する。
  *
- * - {@link scheduleRebuild} は throttle する: ブラウジング中の頻発する onVisited で
- *   毎回ビルドが走らないよう、最初のリクエストでタイマーをセットして
- *   REBUILD_THROTTLE_MS 後に発火する。タイマー中の追加リクエストは無視。
- *   毎回タイマーをリセットする debounce 方式だと、頻繁な onVisited で永久に
- *   発火しなくなるので throttle にしている。ブラウザ拡張は常駐するため、CPU を
- *   無闇に消費しない設定にする。
- *
- * - {@link getIndex}: メモリ上の `latestIndex` があれば即返す。無ければ永続
- *   キャッシュ (deps.cache) をロードして返し、それも無ければビルドを起動して待つ。
+ * - {@link getIndex}: メモリ → 永続キャッシュ → フル再構築の順で index を返す。
+ *   メモリ / キャッシュヒット時は即返しつつ、古ければ裏で再構築を起動する。
  *   ビルド失敗時は inFlightBuild だけクリアして次回再試行。
  *
  * - 永続キャッシュはビルド成功のたびに丸ごと置き換え保存する。ビルドは都度フル
@@ -31,12 +26,14 @@ import { WordIndex } from "./types";
  *   SW kill → wake 後の初回サジェストはキャッシュロードだけで返せるため、
  *   ブックマーク全件走査 + 再ビルドの待ち時間が消える。
  *
- * - キャッシュは stale-while-revalidate で更新する: ヒット時はまず即返し、
- *   builtAt が REBUILD_THROTTLE_MS より古ければバックグラウンドでフル再構築を
- *   起動する。scheduleRebuild の setTimeout は MV3 SW の kill (idle 約 30 秒)
- *   で消滅してほぼ発火しないため、これが SW wake をまたいだ実質唯一の自動
- *   リフレッシュ経路になる。これによりキャッシュの鮮度は
- *   「REBUILD_THROTTLE_MS + 次に suggest が使われるまで」で上限が保証される。
+ * - race の整理:
+ *   - 同時多発の鮮度チェック: inFlightBuild を確認してから rebuild を起動する。
+ *     チェックと起動の間に await が無い (= 同期) ので二重ビルドにならない。
+ *   - キャッシュ load 中のビルド完了/進行: load 解決後に latestIndex /
+ *     inFlightBuild を再確認し、キャッシュより新しいそちらを優先する。
+ *   - ビルド進行中の履歴更新: 進行中ビルドのスナップショットに含まれない
+ *     可能性があるため pending に集約し、完了後にもう 1 回だけビルドする
+ *     (最大「currentBuild + nextBuild」の 2 連発)。
  *
  * 入出力は `getSourceTexts` 経由で抽象化されており、本サービス自体は chrome API に
  * 依存しない (domain 層に置ける)。chrome.runtime.onMessage への bind は
@@ -44,19 +41,13 @@ import { WordIndex } from "./types";
  */
 
 /**
- * onVisited 等からの scheduleRebuild が「次のビルドまでに最低限あける時間」。
- * throttle として働く: 最初の scheduleRebuild でタイマーがセットされたあとは、
- * REBUILD_THROTTLE_MS 経過してタイマーが発火するまでの間に来た追加リクエストは
- * 無視される。これにより頻繁な onVisited でタイマーが永久にリセットされ続けて
- * 一生 rebuild されない、という事態を防ぐ。
- *
- * 訪問から「サジェスト候補に出てくる」までの最大遅延 ≒ REBUILD_THROTTLE_MS + ビルド時間。
+ * index をこの時間より古い (builtAt 基準) とみなして再構築する閾値。
+ * suggest / 履歴更新を契機に確認するため、実質「ビルドは最大 30 分に 1 回」の
+ * スロットルとして働く。訪問から「サジェスト候補に出てくる」までの最大遅延
+ * ≒ この値 + 次の契機 (訪問 or suggest) + ビルド時間。
  * 拡張機能はバックグラウンドで常駐するため、CPU をいたずらに消費しないよう長めに取る。
- *
- * 永続キャッシュの stale-while-revalidate の鮮度閾値としても同じ値を使う:
- * builtAt がこれより古いキャッシュは「返すが裏で再構築」になる。
  */
-const REBUILD_THROTTLE_MS = 30 * 60 * 1000; // 30 分
+const STALE_AFTER_MS = 30 * 60 * 1000; // 30 分
 
 export interface WordIndexServiceDeps {
   /** Index 構築のソース。タイトル文字列の列を返す。 */
@@ -73,22 +64,26 @@ export interface WordIndexServiceDeps {
 }
 
 export interface WordIndexService {
-  /** キャッシュ済 index を返す。無ければビルドして待つ。 */
+  /**
+   * index を返す。メモリ → 永続キャッシュ → フル再構築の順。
+   * メモリ / キャッシュヒットが STALE_AFTER_MS より古ければ、即返しつつ
+   * バックグラウンドで再構築を起動する (stale-while-revalidate)。
+   */
   getIndex: () => Promise<WordIndex>;
   /**
    * クエリに対するサジェスト候補を返す。getIndex してから lookup するだけのヘルパ。
    */
   suggest: (query: string, limit: number) => Promise<readonly string[]>;
   /**
-   * 即時再構築。throttle タイマーを skip する。
+   * 即時再構築。鮮度チェックを skip する。
    * 既にビルド実行中なら pending を立て、完了後に追加ビルドが走ったあとの最終 index を待つ。
    */
   rebuild: () => Promise<WordIndex>;
   /**
-   * 再構築を throttle してから依頼する。最初の呼出でタイマーをセット、以後タイマーが
-   * 発火するまでの呼出は no-op。実行中の追加リクエストは pending で最大 1 件集約。
+   * 履歴更新の通知。builtAt が STALE_AFTER_MS より古ければ再構築する
+   * (新しければ何もしない = スロットル)。ビルド実行中は pending で最大 1 件集約。
    */
-  scheduleRebuild: () => void;
+  rebuildIfStale: () => void;
 }
 
 export function createWordIndexService(
@@ -96,12 +91,13 @@ export function createWordIndexService(
 ): WordIndexService {
   // eslint-disable-next-line functional/no-let
   let latestIndex: WordIndex | null = null;
+  // latestIndex のビルド時刻 (epoch ms)。latestIndex と必ず同時に更新する。
+  // eslint-disable-next-line functional/no-let
+  let latestBuiltAt = 0;
   // eslint-disable-next-line functional/no-let
   let inFlightBuild: Promise<WordIndex> | null = null;
   // eslint-disable-next-line functional/no-let
   let pending = false;
-  // eslint-disable-next-line functional/no-let
-  let throttleTimer: ReturnType<typeof setTimeout> | null = null;
   // eslint-disable-next-line functional/no-let
   let inFlightCacheLoad: Promise<PersistedWordIndex | null> | null = null;
 
@@ -113,14 +109,16 @@ export function createWordIndexService(
       const t0 = performance.now();
       const texts = await deps.getSourceTexts();
       const built = buildWordIndex(texts);
+      const builtAt = Date.now();
       latestIndex = built;
+      latestBuiltAt = builtAt;
       console.log(
         `WordIndex built: ${built.wordCounts.size} words from ${texts.length} texts in ${(performance.now() - t0).toFixed(0)}ms`,
       );
       // 永続キャッシュを丸ごと置き換える。保存失敗は次回ビルドで上書きされる
       // だけなので、ビルド完了 (= suggest 可能になる) を保存に待たせない。
       deps.cache
-        ?.save(built, Date.now())
+        ?.save(built, builtAt)
         .catch((e) => console.warn("Failed to persist WordIndex cache:", e));
     } while (pending);
     inFlightBuild = null;
@@ -128,10 +126,6 @@ export function createWordIndexService(
   }
 
   function rebuild(): Promise<WordIndex> {
-    if (throttleTimer) {
-      clearTimeout(throttleTimer);
-      throttleTimer = null;
-    }
     if (inFlightBuild) {
       pending = true;
       return inFlightBuild;
@@ -146,26 +140,25 @@ export function createWordIndexService(
     return inFlightBuild;
   }
 
-  function scheduleRebuild(): void {
-    // ビルド中ならその loop に pending として集約する。throttle タイマーを
-    // 新規セットすると、build 進行中に来た visit が現 build に間に合わず、
-    // かつ次の build を最大 2 * REBUILD_THROTTLE_MS 先まで待つことになる。
-    if (inFlightBuild) {
-      pending = true;
-      return;
-    }
-    // 既にタイマーが走っている場合は何もしない (throttle)。
-    // ここで clearTimeout してリセットすると、頻繁な onVisited で永久にタイマーが
-    // 進まず一生 rebuild されない状態になってしまう。
-    if (throttleTimer) return;
-    throttleTimer = setTimeout(() => {
-      throttleTimer = null;
-      rebuild().catch((e) => console.error("Scheduled rebuild failed:", e));
-    }, REBUILD_THROTTLE_MS);
+  /**
+   * builtAt が古ければバックグラウンドで再構築を起動する (待たない)。
+   * 進行中ビルドがあれば何もしない: ここで pending を立てると完了直後に
+   * 余計なもう 1 回が走ってしまう (進行中ビルドが完了すれば鮮度は回復する)。
+   * inFlightBuild のチェックと rebuild 起動の間に await が無いので原子的。
+   */
+  function revalidateInBackgroundIfStale(builtAt: number): void {
+    if (Date.now() - builtAt < STALE_AFTER_MS) return;
+    if (inFlightBuild) return;
+    rebuild().catch((e) =>
+      console.error("Stale index revalidation failed:", e),
+    );
   }
 
   async function getIndex(): Promise<WordIndex> {
-    if (latestIndex) return latestIndex;
+    if (latestIndex) {
+      revalidateInBackgroundIfStale(latestBuiltAt);
+      return latestIndex;
+    }
     if (inFlightBuild) return inFlightBuild;
     if (deps.cache) {
       // 並行する getIndex で load が多重発行されないよう in-flight を共有する。
@@ -182,17 +175,25 @@ export function createWordIndexService(
       if (inFlightBuild) return inFlightBuild;
       if (cached) {
         latestIndex = cached.index;
-        // stale-while-revalidate: キャッシュが古ければ裏でフル再構築を起動する
-        // (待たない)。完了すれば latestIndex とキャッシュが置き換わる。
-        if (Date.now() - cached.builtAt >= REBUILD_THROTTLE_MS) {
-          rebuild().catch((e) =>
-            console.error("Stale cache revalidation failed:", e),
-          );
-        }
+        latestBuiltAt = cached.builtAt;
+        revalidateInBackgroundIfStale(cached.builtAt);
         return cached.index;
       }
     }
     return rebuild();
+  }
+
+  function rebuildIfStale(): void {
+    // ビルド中に来た更新は、進行中ビルドのスナップショットに含まれない可能性が
+    // あるため pending に集約し、完了後にもう 1 回だけビルドする。
+    if (inFlightBuild) {
+      pending = true;
+      return;
+    }
+    // それ以外は getIndex に委譲する: メモリ / キャッシュの builtAt を見て
+    // 古ければ裏で再構築、新しければ何もしない (= builtAt がスロットルになる)。
+    // index 未構築でキャッシュも無い初回はここでフルビルドが走る。
+    getIndex().catch((e) => console.error("rebuildIfStale failed:", e));
   }
 
   async function suggest(
@@ -203,5 +204,5 @@ export function createWordIndexService(
     return lookupSuggestions(index, query, limit);
   }
 
-  return { getIndex, suggest, rebuild, scheduleRebuild };
+  return { getIndex, suggest, rebuild, rebuildIfStale };
 }
