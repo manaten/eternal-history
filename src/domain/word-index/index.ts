@@ -22,16 +22,6 @@ export function createEmptyWordIndex(): WordIndex {
 }
 
 /**
- * メモリ上の index にビルド時刻を添えたもの。永続キャッシュの読み書き
- * (`infra/word-index-cache`) と service の鮮度判定 (stale-while-revalidate) の
- * 受け渡しに使う。`builtAt` は epoch ms。
- */
-export interface PersistedWordIndex {
-  index: WordIndex;
-  builtAt: number;
-}
-
-/**
  * 単語 → 出現回数のペア列から WordIndex を構築する。
  *
  * prefixIndex は wordCounts からの派生データなので、wordCounts を確定させてから

@@ -1,9 +1,9 @@
-import { WordIndexService } from "../../domain/word-index/service";
 import {
   RebuildIndexResponse,
   RuntimeRequest,
   SuggestResponse,
 } from "../../types/messages";
+import { WordIndexService } from "../word-index-service";
 
 const DEFAULT_SUGGEST_LIMIT = 10;
 

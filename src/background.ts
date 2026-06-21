@@ -1,4 +1,3 @@
-import { createWordIndexService } from "./domain/word-index/service";
 import { bookmarkHistoryStore } from "./infra/bookmark-history-store";
 import {
   getAllBrowserHistory,
@@ -10,12 +9,13 @@ import {
   saveWordIndexCache,
 } from "./infra/word-index-cache";
 import { makeWordIndexMessageListener } from "./infra/word-index-messaging";
+import { createWordIndexService } from "./infra/word-index-service";
 
 /**
  * WordIndex サービスはモジュール読み込み時 (= SW wake 時) に組み立てる。
  * `chrome.runtime.onMessage.addListener` は同期登録が要件なので、await の前に呼ぶ。
  *
- * onVisited からは `rebuildIfStale()` で「古ければ再構築して」と依頼するだけ。
+ * onVisited からは `notifyStale()` で「古ければ再構築して」と依頼するだけ。
  * 差分更新は持たず、builtAt ベースの鮮度判定 (30 分) が実体ビルドを集約する。
  *
  * cache: ビルド成功ごとに chrome.storage.local へ丸ごと置き換え保存し、
@@ -27,10 +27,8 @@ const wordIndexService = createWordIndexService({
     const items = await bookmarkHistoryStore.getAll();
     return items.map((it) => it.title);
   },
-  cache: {
-    load: loadWordIndexCache,
-    save: saveWordIndexCache,
-  },
+  loadCache: loadWordIndexCache,
+  saveCache: saveWordIndexCache,
 });
 chrome.runtime.onMessage.addListener(
   makeWordIndexMessageListener(wordIndexService),
@@ -49,7 +47,7 @@ async function initialize() {
     console.log("add new history:", item);
 
     await bookmarkHistoryStore.insert([item]);
-    wordIndexService.rebuildIfStale();
+    wordIndexService.notifyStale();
 
     // JS でタイトルが設定される可能性があるため、10 秒待って再取得・更新
     setTimeout(async () => {
@@ -60,7 +58,7 @@ async function initialize() {
             `Updating title for: ${updated.url} from: ${item.title} to: ${updated.title}`,
           );
           await bookmarkHistoryStore.insert([updated]);
-          wordIndexService.rebuildIfStale();
+          wordIndexService.notifyStale();
         }
       } catch (error) {
         console.warn("Failed to update history title:", error);

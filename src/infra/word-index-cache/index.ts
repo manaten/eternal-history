@@ -1,8 +1,13 @@
-import {
-  createWordIndex,
-  PersistedWordIndex,
-  WordIndex,
-} from "../../domain/word-index";
+import { createWordIndex, WordIndex } from "../../domain/word-index";
+
+/**
+ * メモリ上の index にビルド時刻 (epoch ms) を添えたもの。
+ * load の戻り値であり、service の鮮度判定 (stale-while-revalidate) で使う。
+ */
+export interface PersistedWordIndex {
+  index: WordIndex;
+  builtAt: number;
+}
 
 /**
  * WordIndex の永続キャッシュ (chrome.storage.local)。
