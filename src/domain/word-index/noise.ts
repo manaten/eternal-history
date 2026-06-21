@@ -14,7 +14,7 @@ const RE_KATAKANA_ONLY = /^[゠-ヿｦ-ﾟ]+$/;
  * - 3 文字以上はそのまま残す
  *
  * WordIndex は chrome.storage.local に永続キャッシュされるため、このルールを
- * 変えたら `WORD_INDEX_CACHE_VERSION` (index.ts) をインクリメントして旧ルールで
+ * 変えたら `infra/word-index-cache` の CACHE_VERSION をインクリメントして旧ルールで
  * 構築されたキャッシュを無効化すること。
  */
 export function isNoiseWord(word: string): boolean {

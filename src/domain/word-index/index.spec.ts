@@ -1,12 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import {
-  buildWordIndex,
-  deserializeWordIndex,
-  lookupSuggestions,
-  serializeWordIndex,
-  WORD_INDEX_CACHE_VERSION,
-} from "./index";
+import { buildWordIndex, createWordIndex, lookupSuggestions } from "./index";
 import { isNoiseWord } from "./noise";
 
 describe("isNoiseWord", () => {
@@ -111,75 +105,38 @@ describe("lookupSuggestions", () => {
     expect(lookupSuggestions(index, "Xy", 10)).toEqual([]);
   });
 
-  describe("serialize / deserialize", () => {
-    it("roundtrip で wordCounts / prefixIndex / builtAt が復元され lookup 結果が一致する", () => {
-      const restored = deserializeWordIndex(serializeWordIndex(index, 12345));
-      expect(restored).not.toBeNull();
-      expect(restored!.builtAt).toBe(12345);
-      expect(restored!.index.wordCounts).toEqual(index.wordCounts);
-      expect(restored!.index.prefixIndex).toEqual(index.prefixIndex);
-      expect(lookupSuggestions(restored!.index, "Git", 10)).toEqual(
-        lookupSuggestions(index, "Git", 10),
+  describe("createWordIndex", () => {
+    it("counts から wordCounts と prefixIndex を整合して構築する", () => {
+      const built = createWordIndex([
+        ["GitHub", 3],
+        ["GitLab", 2],
+      ]);
+      expect(built.wordCounts.get("GitHub")).toBe(3);
+      expect(built.prefixIndex.get("g")).toEqual(["GitHub", "GitLab"]);
+      expect(lookupSuggestions(built, "Git", 10)).toEqual(["GitHub", "GitLab"]);
+    });
+
+    it("重複キーは Map 上書きで畳まれ prefixIndex に重複が残らない", () => {
+      const built = createWordIndex([
+        ["GitHub", 1],
+        ["GitHub", 2],
+      ]);
+      expect(built.wordCounts.get("GitHub")).toBe(2); // 後勝ち
+      expect(built.prefixIndex.get("g")).toEqual(["GitHub"]); // 重複なし
+    });
+
+    it("wordCounts と prefixIndex の総数が常に一致する (タイブレーク用の整合)", () => {
+      // 同じ lowercase の別ケースが混ざっても、片方にだけ重複は残らない
+      const built = createWordIndex([
+        ["GitHub", 1],
+        ["GITHUB", 2],
+        ["GitLab", 3],
+      ]);
+      const prefixTotal = [...built.prefixIndex.values()].reduce(
+        (n, list) => n + list.length,
+        0,
       );
-    });
-
-    it("空 index も roundtrip できる", () => {
-      const restored = deserializeWordIndex(
-        serializeWordIndex(buildWordIndex([]), 0),
-      );
-      expect(restored).not.toBeNull();
-      expect(restored!.index.wordCounts.size).toBe(0);
-    });
-
-    it("バージョン不一致は null を返す", () => {
-      const serialized = serializeWordIndex(index, 12345);
-      expect(
-        deserializeWordIndex({
-          ...serialized,
-          v: WORD_INDEX_CACHE_VERSION + 1,
-        }),
-      ).toBeNull();
-    });
-
-    it("builtAt が無い / 数値でない場合は null を返す", () => {
-      const { builtAt: _omitted, ...withoutBuiltAt } = serializeWordIndex(
-        index,
-        12345,
-      );
-      expect(deserializeWordIndex(withoutBuiltAt)).toBeNull();
-      expect(
-        deserializeWordIndex({ ...withoutBuiltAt, builtAt: "12345" }),
-      ).toBeNull();
-      expect(
-        deserializeWordIndex({ ...withoutBuiltAt, builtAt: NaN }),
-      ).toBeNull();
-    });
-
-    it("形式不正 (null / words 非配列 / 要素型不正) は null を返す (throw しない)", () => {
-      const valid = serializeWordIndex(index, 12345);
-      expect(deserializeWordIndex(null)).toBeNull();
-      expect(deserializeWordIndex(undefined)).toBeNull();
-      expect(deserializeWordIndex({ ...valid, words: "broken" })).toBeNull();
-      expect(
-        deserializeWordIndex({ ...valid, words: [["GitHub", "3"]] }),
-      ).toBeNull();
-      // 要素が non-iterable / 文字列でも throw せず null
-      expect(deserializeWordIndex({ ...valid, words: [null] })).toBeNull();
-      expect(deserializeWordIndex({ ...valid, words: [42] })).toBeNull();
-      expect(deserializeWordIndex({ ...valid, words: ["GitHub"] })).toBeNull();
-    });
-
-    it("同じ lowercase の単語が重複する破損データは null を返す", () => {
-      const valid = serializeWordIndex(index, 12345);
-      expect(
-        deserializeWordIndex({
-          ...valid,
-          words: [
-            ["GitHub", 1],
-            ["GITHUB", 2],
-          ],
-        }),
-      ).toBeNull();
+      expect(prefixTotal).toBe(built.wordCounts.size);
     });
   });
 

@@ -22,80 +22,39 @@ export function createEmptyWordIndex(): WordIndex {
 }
 
 /**
- * 永続キャッシュのフォーマットバージョン。
- *
- * インデックスの構築ルールが変わって古いキャッシュが意味をなさなくなったら
- * インクリメントする (例: {@link isNoiseWord} の判定変更、canonical 化の変更)。
- * バージョン不一致のキャッシュは {@link deserializeWordIndex} が null を返し、
- * フル再構築にフォールバックする。
+ * メモリ上の index にビルド時刻を添えたもの。永続キャッシュの読み書き
+ * (`infra/word-index-cache`) と service の鮮度判定 (stale-while-revalidate) の
+ * 受け渡しに使う。`builtAt` は epoch ms。
  */
-export const WORD_INDEX_CACHE_VERSION = 1;
-
-/**
- * WordIndex の永続化用表現。JSON 化可能な plain object。
- *
- * `prefixIndex` は wordCounts から機械的に導出できる派生データなので保存しない
- * (デシリアライズ時に再構築する)。キャッシュサイズと整合性管理の両方が楽になる。
- */
-export interface SerializedWordIndex {
-  v: number;
-  /** ビルド時刻 (epoch ms)。stale-while-revalidate の鮮度判定に使う。 */
-  builtAt: number;
-  /** [canonical word, total count] のペア列 */
-  words: [string, number][];
-}
-
-/** デシリアライズ結果。index 本体とビルド時刻のペア。 */
 export interface PersistedWordIndex {
   index: WordIndex;
   builtAt: number;
 }
 
-export function serializeWordIndex(
-  index: WordIndex,
-  builtAt: number,
-): SerializedWordIndex {
-  return {
-    v: WORD_INDEX_CACHE_VERSION,
-    builtAt,
-    words: [...index.wordCounts.entries()],
-  };
-}
-
 /**
- * {@link serializeWordIndex} の逆変換。prefixIndex はここで再導出する。
- * バージョン不一致や形式不正の場合は null を返す (呼び出し側がフル再構築する)。
+ * 単語 → 出現回数のペア列から WordIndex を構築する。
  *
- * 検証は「正常な serialize 出力の形」に限定する: 要素が [string, number] の
- * ペアでない、同じ lowercase の単語が複数ある (canonical 化済みならあり得ない)
- * といった破損データは null に落とし、wordCounts / prefixIndex の整合が
- * 破れた index を作らない。
+ * prefixIndex は wordCounts からの派生データなので、wordCounts を確定させてから
+ * 一括で再導出する。これにより 2 つの Map の整合が常に保たれる: 入力に重複キーが
+ * あっても wordCounts 側の上書きで畳まれた最終キー集合から prefixIndex を作るため、
+ * 「prefixIndex にだけ重複が残る」破綻が構造的に起きない。
+ *
+ * 永続キャッシュの復元 (infra 側の deserialize) はこの関数を通すことで、
+ * prefixIndex の作り方 (PREFIX_KEY_LEN 等) という index の内部構造を infra に
+ * 漏らさずに済む。
  */
-export function deserializeWordIndex(data: unknown): PersistedWordIndex | null {
-  const serialized = data as SerializedWordIndex | null | undefined;
-  if (
-    serialized?.v !== WORD_INDEX_CACHE_VERSION ||
-    typeof serialized.builtAt !== "number" ||
-    !Number.isFinite(serialized.builtAt) ||
-    !Array.isArray(serialized.words)
-  ) {
-    return null;
-  }
+export function createWordIndex(
+  counts: Iterable<readonly [string, number]>,
+): WordIndex {
   const index = createEmptyWordIndex();
-  const seenLowers = new Set<string>();
-  for (const entry of serialized.words) {
-    if (!Array.isArray(entry)) return null;
-    const [word, count] = entry;
-    if (typeof word !== "string" || typeof count !== "number") return null;
-    const lower = word.toLowerCase();
-    if (seenLowers.has(lower)) return null;
-    // eslint-disable-next-line functional/immutable-data
-    seenLowers.add(lower);
+  for (const [word, count] of counts) {
     // eslint-disable-next-line functional/immutable-data
     index.wordCounts.set(word, count);
+  }
+  for (const word of index.wordCounts.keys()) {
     addToPrefixIndex(index, word);
   }
-  return { index, builtAt: serialized.builtAt };
+  return index;
 }
 
 function addToPrefixIndex(index: WordIndex, canonical: string): void {
@@ -139,7 +98,7 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
     }
   }
 
-  const index = createEmptyWordIndex();
+  const counts = new Map<string, number>();
   for (const variants of groups.values()) {
     // 最頻ケースを canonical に。同点は先に encounter したものを維持する。
     const { canonical, totalCount } = [...variants].reduce<{
@@ -155,10 +114,10 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
       { canonical: "", canonicalCount: -1, totalCount: 0 },
     );
     // eslint-disable-next-line functional/immutable-data
-    index.wordCounts.set(canonical, totalCount);
-    addToPrefixIndex(index, canonical);
+    counts.set(canonical, totalCount);
   }
-  return index;
+  // prefixIndex の導出は createWordIndex に委譲する (整合を 1 箇所に集約)。
+  return createWordIndex(counts);
 }
 
 /**
