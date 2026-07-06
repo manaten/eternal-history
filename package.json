@@ -27,10 +27,10 @@
   "dependencies": {
     "@material-design-icons/svg": "^0.14.15",
     "classnames": "^2.5.1",
-    "p-map": "^7.0.3",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-hook-form": "^7.71.2"
+    "p-map": "^7.0.5",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-hook-form": "^7.81.0"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.1",
@@ -43,7 +43,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@types/chrome": "^0.1.35",
     "@types/node": "^25.0.10",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.1.7",
     "@types/sql.js": "^1.4.9",
     "@typescript-eslint/parser": "^8.53.1",
