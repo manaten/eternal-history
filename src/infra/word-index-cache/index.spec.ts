@@ -67,6 +67,14 @@ describe("word-index-cache", () => {
         label: "count が数値でない",
         raw: { v: 1, builtAt: 1, words: [["GitHub", "3"]] },
       },
+      {
+        label: "count が NaN",
+        raw: { v: 1, builtAt: 1, words: [["GitHub", NaN]] },
+      },
+      {
+        label: "count が Infinity",
+        raw: { v: 1, builtAt: 1, words: [["GitHub", Infinity]] },
+      },
       { label: "要素が null", raw: { v: 1, builtAt: 1, words: [null] } },
       { label: "要素が数値", raw: { v: 1, builtAt: 1, words: [42] } },
       { label: "要素が文字列", raw: { v: 1, builtAt: 1, words: ["GitHub"] } },

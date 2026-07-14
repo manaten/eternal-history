@@ -92,6 +92,65 @@ describe("createWordIndexService", () => {
     await vi.waitFor(() => expect(deps.getSourceTexts).toHaveBeenCalledOnce());
   });
 
+  it("ビルド失敗後も次回 suggest で再試行できる (inFlightBuild がクリアされる)", async () => {
+    const deps = makeDeps();
+    deps.getSourceTexts
+      .mockRejectedValueOnce(new Error("transient"))
+      .mockResolvedValue(["GitHub GitHub", "GitLab"]);
+    const service = createWordIndexService(deps);
+
+    await expect(service.suggest("git", 10)).rejects.toThrow("transient");
+    // 進行中ビルドがクリアされ、2 回目は再試行して成功する。
+    expect(await service.suggest("git", 10)).toEqual(["GitHub", "GitLab"]);
+    expect(deps.getSourceTexts).toHaveBeenCalledTimes(2);
+  });
+
+  function staleCache(texts: string[]): PersistedWordIndex {
+    // builtAt を 31 分前にして stale 判定させる (STALE_AFTER_MS = 30 分)。
+    return {
+      index: buildWordIndex(texts),
+      builtAt: Date.now() - 31 * 60 * 1000,
+    };
+  }
+
+  it("stale なキャッシュはロード値を即返ししつつ背後で 1 回再構築する (cold start)", async () => {
+    const deps = makeDeps({ cached: staleCache(["Cached Cached"]) });
+    const service = createWordIndexService(deps);
+
+    // 再構築を待たずキャッシュ由来の値を即返しする。
+    expect(await service.suggest("cach", 10)).toEqual(["Cached"]);
+    // stale なので背後で 1 回だけ再構築が起動する。
+    await vi.waitFor(() => expect(deps.getSourceTexts).toHaveBeenCalledOnce());
+  });
+
+  it("stale 時は待たずに古い値を返し、再構築完了後は新しいソース由来に切り替わる", async () => {
+    const deps = makeDeps({
+      cached: staleCache(["Old Old"]),
+      texts: ["New New", "Next"],
+    });
+    const service = createWordIndexService(deps);
+
+    // 即返しは古い (キャッシュの) index。
+    expect(await service.suggest("o", 10)).toEqual(["Old"]);
+    // 背後の再構築が保存まで完了するのを待つ。
+    await vi.waitFor(() => expect(deps.saveCache).toHaveBeenCalledOnce());
+    // 以後はソース由来の新しい index を返す。
+    expect(await service.suggest("n", 10)).toEqual(["New", "Next"]);
+    expect(deps.getSourceTexts).toHaveBeenCalledOnce();
+  });
+
+  it("stale 再構築が失敗しても古い index で suggest し続ける (graceful degradation)", async () => {
+    const deps = makeDeps({ cached: staleCache(["Cached Cached"]) });
+    deps.getSourceTexts.mockRejectedValue(new Error("rebuild boom"));
+    const service = createWordIndexService(deps);
+
+    // 即返しはキャッシュ。背後の再構築は失敗するが握りつぶす。
+    expect(await service.suggest("cach", 10)).toEqual(["Cached"]);
+    await vi.waitFor(() => expect(deps.getSourceTexts).toHaveBeenCalled());
+    // 失敗後も古い index が残り、suggest は成功し続ける。
+    expect(await service.suggest("cach", 10)).toEqual(["Cached"]);
+  });
+
   describe("stale-while-revalidate (builtAt ベースの鮮度管理)", () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());

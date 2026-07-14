@@ -75,7 +75,8 @@ export async function saveWordIndexCache(
 /**
  * 永続データを PersistedWordIndex に復元する。
  * バージョン不一致・形式不正 (v 不一致 / builtAt が有限数でない / words が
- * [string, number] の配列でない) は null を返し、呼び出し側のフル再構築に任せる。
+ * [string, number] の配列でない / count が有限数でない) は null を返し、呼び出し側の
+ * フル再構築に任せる。
  *
  * 検証は「正常な保存出力の形」かどうかに限定する。同じ単語が複数回現れるような
  * 意味的な破損までは弾かず、{@link createWordIndex} の Map 上書きで graceful に
@@ -95,7 +96,8 @@ function deserialize(data: unknown): PersistedWordIndex | null {
     if (
       !Array.isArray(entry) ||
       typeof entry[0] !== "string" ||
-      typeof entry[1] !== "number"
+      typeof entry[1] !== "number" ||
+      !Number.isFinite(entry[1])
     ) {
       return null;
     }

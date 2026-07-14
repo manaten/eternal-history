@@ -74,7 +74,6 @@ export function createWordIndexService(
 
   function rebuild(): Promise<WordIndex> {
     // 同時呼び出しは進行中の 1 ビルドに相乗りさせる。完了したらクリアして次回再構築可能に。
-
     inFlightBuild ??= build().finally(() => {
       inFlightBuild = null;
     });
@@ -82,7 +81,10 @@ export function createWordIndexService(
   }
 
   function revalidateIfStale(): void {
-    if (Date.now() - builtAt >= STALE_AFTER_MS) {
+    const age = Date.now() - builtAt;
+    // age < 0 は builtAt が未来 = 時計の巻き戻しやキャッシュ破損。放置すると永久に
+    // fresh 扱いで再構築されないため、信頼せず再構築する (成功すれば builtAt が直る)。
+    if (age >= STALE_AFTER_MS || age < 0) {
       rebuild().catch((e) => console.error("Stale revalidation failed:", e));
     }
   }
