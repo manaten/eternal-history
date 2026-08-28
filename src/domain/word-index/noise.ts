@@ -13,8 +13,9 @@ const RE_KATAKANA_ONLY = /^[゠-ヿｦ-ﾟ]+$/;
  * - 漢字を 1 文字でも含む 2 文字単語は残す (例: "検索")
  * - 3 文字以上はそのまま残す
  *
- * WordIndex は永続化していないので、このルールを変えても次回 SW wake 時に
- * 新ルールで自然に再構築される。
+ * WordIndex は chrome.storage.local に永続キャッシュされるため、このルールを
+ * 変えたら `infra/word-index-cache` の CACHE_VERSION をインクリメントして旧ルールで
+ * 構築されたキャッシュを無効化すること。
  */
 export function isNoiseWord(word: string): boolean {
   if (word.length <= 1) return true;

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { buildWordIndex, lookupSuggestions } from "./index";
+import { buildWordIndex, createWordIndex, lookupSuggestions } from "./index";
 import { isNoiseWord } from "./noise";
 
 describe("isNoiseWord", () => {
@@ -103,6 +103,41 @@ describe("lookupSuggestions", () => {
 
   it("該当 prefix がない場合は空配列", () => {
     expect(lookupSuggestions(index, "Xy", 10)).toEqual([]);
+  });
+
+  describe("createWordIndex", () => {
+    it("counts から wordCounts と prefixIndex を整合して構築する", () => {
+      const built = createWordIndex([
+        ["GitHub", 3],
+        ["GitLab", 2],
+      ]);
+      expect(built.wordCounts.get("GitHub")).toBe(3);
+      expect(built.prefixIndex.get("g")).toEqual(["GitHub", "GitLab"]);
+      expect(lookupSuggestions(built, "Git", 10)).toEqual(["GitHub", "GitLab"]);
+    });
+
+    it("重複キーは Map 上書きで畳まれ prefixIndex に重複が残らない", () => {
+      const built = createWordIndex([
+        ["GitHub", 1],
+        ["GitHub", 2],
+      ]);
+      expect(built.wordCounts.get("GitHub")).toBe(2); // 後勝ち
+      expect(built.prefixIndex.get("g")).toEqual(["GitHub"]); // 重複なし
+    });
+
+    it("wordCounts と prefixIndex の総数が常に一致する (タイブレーク用の整合)", () => {
+      // 同じ lowercase の別ケースが混ざっても、片方にだけ重複は残らない
+      const built = createWordIndex([
+        ["GitHub", 1],
+        ["GITHUB", 2],
+        ["GitLab", 3],
+      ]);
+      const prefixTotal = [...built.prefixIndex.values()].reduce(
+        (n, list) => n + list.length,
+        0,
+      );
+      expect(prefixTotal).toBe(built.wordCounts.size);
+    });
   });
 
   describe("大文字小文字無視", () => {

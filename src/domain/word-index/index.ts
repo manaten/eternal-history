@@ -22,6 +22,44 @@ export function createEmptyWordIndex(): WordIndex {
 }
 
 /**
+ * 単語 → 出現回数のペア列から WordIndex を構築する。
+ *
+ * prefixIndex は wordCounts からの派生データなので、wordCounts を確定させてから
+ * 一括で再導出する。これにより 2 つの Map の整合が常に保たれる: 入力に重複キーが
+ * あっても wordCounts 側の上書きで畳まれた最終キー集合から prefixIndex を作るため、
+ * 「prefixIndex にだけ重複が残る」破綻が構造的に起きない。
+ *
+ * 永続キャッシュの復元 (infra 側の deserialize) はこの関数を通すことで、
+ * prefixIndex の作り方 (PREFIX_KEY_LEN 等) という index の内部構造を infra に
+ * 漏らさずに済む。
+ */
+export function createWordIndex(
+  counts: Iterable<readonly [string, number]>,
+): WordIndex {
+  const index = createEmptyWordIndex();
+  for (const [word, count] of counts) {
+    // eslint-disable-next-line functional/immutable-data
+    index.wordCounts.set(word, count);
+  }
+  for (const word of index.wordCounts.keys()) {
+    addToPrefixIndex(index, word);
+  }
+  return index;
+}
+
+function addToPrefixIndex(index: WordIndex, canonical: string): void {
+  const prefix = canonical.toLowerCase().slice(0, PREFIX_KEY_LEN);
+  const list = index.prefixIndex.get(prefix);
+  if (list) {
+    // eslint-disable-next-line functional/immutable-data
+    list.push(canonical);
+  } else {
+    // eslint-disable-next-line functional/immutable-data
+    index.prefixIndex.set(prefix, [canonical]);
+  }
+}
+
+/**
  * テキスト群から WordIndex を構築する。
  *
  * 1 パスで `Map<lowerKey, Map<exactCase, count>>` に集約し、グループごとに最頻
@@ -50,7 +88,7 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
     }
   }
 
-  const index = createEmptyWordIndex();
+  const counts = new Map<string, number>();
   for (const variants of groups.values()) {
     // 最頻ケースを canonical に。同点は先に encounter したものを維持する。
     const { canonical, totalCount } = [...variants].reduce<{
@@ -66,18 +104,10 @@ export function buildWordIndex(texts: readonly string[]): WordIndex {
       { canonical: "", canonicalCount: -1, totalCount: 0 },
     );
     // eslint-disable-next-line functional/immutable-data
-    index.wordCounts.set(canonical, totalCount);
-    const prefix = canonical.toLowerCase().slice(0, PREFIX_KEY_LEN);
-    const list = index.prefixIndex.get(prefix);
-    if (list) {
-      // eslint-disable-next-line functional/immutable-data
-      list.push(canonical);
-    } else {
-      // eslint-disable-next-line functional/immutable-data
-      index.prefixIndex.set(prefix, [canonical]);
-    }
+    counts.set(canonical, totalCount);
   }
-  return index;
+  // prefixIndex の導出は createWordIndex に委譲する (整合を 1 箇所に集約)。
+  return createWordIndex(counts);
 }
 
 /**
