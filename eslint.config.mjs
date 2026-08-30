@@ -121,7 +121,7 @@ export default defineConfig(
       "functional/prefer-immutable-types": 0,
       "functional/type-declaration-immutability": 0,
 
-      // Chrome API への直接アクセスは infra/chrome/* の薄ラッパ経由に限定する。
+      // Chrome API への直接アクセスは common/chrome/* の薄ラッパ経由に限定する。
       // ドメイン層が特定のブラウザ実装に染まらないようにするための層分離。
       "no-restricted-syntax": [
         "error",
@@ -129,13 +129,13 @@ export default defineConfig(
           selector:
             "MemberExpression[object.name='chrome'][property.name='bookmarks']",
           message:
-            "chrome.bookmarks.* を直接使わず src/infra/chrome/bookmark.ts のラッパを使うこと。",
+            "chrome.bookmarks.* を直接使わず src/common/chrome/bookmark.ts のラッパを使うこと。",
         },
         {
           selector:
             "MemberExpression[object.name='chrome'][property.name='history']",
           message:
-            "chrome.history.* を直接使わず src/infra/chrome/chrome-history.ts のラッパを使うこと。",
+            "chrome.history.* を直接使わず src/common/chrome/chrome-history.ts のラッパを使うこと。",
         },
       ],
     },
@@ -144,10 +144,10 @@ export default defineConfig(
   // Chrome API ラッパとそのテスト・モックでは直接アクセスを許可する。
   {
     files: [
-      "src/infra/chrome/bookmark.ts",
-      "src/infra/chrome/bookmark.spec.ts",
-      "src/infra/chrome/chrome-history.ts",
-      "src/infra/chrome/__mocks__/**",
+      "src/common/chrome/bookmark.ts",
+      "src/common/chrome/bookmark.spec.ts",
+      "src/common/chrome/chrome-history.ts",
+      "src/common/chrome/__mocks__/**",
     ],
     rules: {
       "no-restricted-syntax": "off",
