@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `npm test` - Run test suite with Vitest
 - `npm run test -- --watch` - Run tests in watch mode
-- `npm run test -- src/lib/storage.spec.ts` - Run specific test file
+- `npm run test -- src/common/history/store/index.spec.ts` - Run specific test file
 
 ### Code Quality
 
@@ -35,45 +35,54 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Eternal History is a Chrome extension that provides unlimited browser history storage by serializing history data into Chrome bookmarks with hierarchical folder organization. The extension replaces the New Tab page with a searchable history interface.
 
-### Key Components
+### Directory Layout: Execution Context First
 
-**Background Script (`background.ts`)**
+`src/` is split by **execution context** — the path tells you where code runs.
+Import direction is enforced by ESLint (`no-restricted-imports`):
+`worker → common` and `client → common` only. `client ⇄ worker` never import
+each other; runtime interaction goes through the RPC contract in
+`common/messages.ts`. Promote code to `common/` only when a second context
+actually starts importing it.
 
-- Initializes storage system on extension startup
-- Listens for Chrome history events (`chrome.history.onVisited`)
-- Converts Chrome history items to internal HistoryItem format
-- Handles delayed title updates (10-second delay for JS-rendered titles)
+**`worker/`** — background service worker
 
-**Storage System (`lib/storage.ts`)**
+- `index.ts` - Single entry point / composition root: registers listeners,
+  wires dependencies (cross-domain edges live ONLY here)
+- `word-index/{service,cache,handler}.ts` - WordIndex lifecycle
+  (stale-while-revalidate on `builtAt`), chrome.storage persistence,
+  onMessage handler
 
-- Core storage abstraction using Chrome bookmarks API
-- Hierarchical folder structure: `Eternal History/YYYY/MM/DD/HH/`
-- Must call `initializeStorage()` before any other storage operations
-- Provides search, insertion, and recent history retrieval
+**`client/`** — New Tab & Options UI
 
-**Bookmark Serialization (`lib/bookmark-serializer.ts`)**
+- `main.tsx` / `options-main.tsx` / `App.tsx` / `OptionsApp.tsx` -
+  entry points = composition roots (side effects injected into components
+  from here; see pure-components skill)
+- `components/` - React components (Storybook stories colocated)
+- `savedQueries.ts` / `settings.ts` / `theme.ts` / `i18n/` - client-only
+  features
+- `word-index-client.ts` - RPC stub asking the worker for suggestions
 
-- Serializes HistoryItem metadata into bookmark titles using 💾 separator
-- Format: `"Original Title 💾{"v":1,"t":timestamp,"vc":visitCount}"`
-- Handles legacy bookmarks without metadata gracefully
-- Provides precise timestamp preservation beyond folder-based organization
+**`common/`** — code both contexts import
 
-**UI Components (`components/`)**
-
-- React components for the New Tab replacement interface
-- `Root.tsx` - Main layout component
-- `SearchBox.tsx` - Search input with real-time filtering
-- `Histories.tsx` - Results display with highlighting
-- `HistoryItem.tsx` - Individual history item display
+- `history/domain/` - HistoryItem type, search/filter/group (pure)
+- `history/store/` - bookmark persistence: hierarchical folders
+  `Eternal History/YYYY/MM/DD/HH/`, metadata serialized into bookmark
+  titles with 💾 separator (`"Title 💾{"v":1,"t":timestamp,"vc":visitCount}"`)
+- `word-index/` - pure word index build/lookup (worker builds it,
+  client DebugTools uses it for analysis)
+- `chrome/` - thin chrome API wrappers (direct `chrome.bookmarks`/`chrome.history`
+  access outside these is lint-forbidden) and their test mocks
+- `messages.ts` - the worker⇔client RPC message contract
 
 ### Data Flow
 
-1. User visits page → `chrome.history.onVisited` triggers
-2. Background script converts to HistoryItem and calls `insertHistories()`
-3. Storage system creates hierarchical folders based on timestamp
+1. User visits page → `chrome.history.onVisited` triggers in the worker
+2. Worker converts to HistoryItem and inserts via `common/history/store`
+3. Store creates hierarchical folders based on timestamp
 4. HistoryItem serialized with metadata and stored as bookmark
-5. New Tab interface searches via `search()` or `getRecentHistories()`
+5. New Tab interface (client) searches the store directly via chrome.bookmarks
 6. Results deserialized from bookmarks back to HistoryItem format
+7. Suggestions only: client asks the worker over `common/messages.ts` RPC
 
 ### Important Patterns
 
@@ -86,13 +95,13 @@ Eternal History is a Chrome extension that provides unlimited browser history st
 ### Testing Strategy
 
 - Unit tests for core utilities (storage, serialization, date handling)
-- Mock Chrome APIs via `__mocks__/chrome_bookmarks.mock.ts`
+- Mock Chrome APIs via `src/common/chrome/__mocks__/`
 - Vitest for test runner with TypeScript support
 - Component tests via Storybook for visual regression testing
 
 ### Build Configuration
 
-- Vite with dual entry points: `index.html` (main UI) and `background.ts` (service worker)
+- Vite with entry points: `index.html` / `options.html` (client UI) and `worker/index.ts` (service worker, emitted as `background.js`)
 - TypeScript compilation with strict mode
 - Output: `dist/` directory with `background.js` and hashed assets
 - Extension manifest in `public/manifest.json`

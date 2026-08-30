@@ -1,8 +1,8 @@
 import type { Preview } from "@storybook/react-vite";
 import { useEffect } from "react";
 
-import { applyTheme } from "../src/domain/theme";
-import { ThemeColor } from "../src/types/Settings";
+import { applyTheme } from "../src/client/theme";
+import { ThemeColor } from "../src/client/types/Settings";
 
 import "../src/index.css";
 
