@@ -60,7 +60,7 @@ export default defineConfig(
 
     settings: {
       "better-tailwindcss": {
-        entryPoint: "src/index.css",
+        entryPoint: "src/client/index.css",
         callees: ["classNames"],
       },
     },

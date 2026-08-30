@@ -52,15 +52,21 @@ actually starts importing it.
   (stale-while-revalidate on `builtAt`), chrome.storage persistence,
   onMessage handler
 
-**`client/`** — New Tab & Options UI
+**`client/`** — New Tab & Options UI. Domain-colocated: each domain dir
+owns its logic AND its components.
 
+- `index.html` / `options.html` / `index.css` - page shells (vite root is
+  `src/client`)
 - `main.tsx` / `options-main.tsx` / `App.tsx` / `OptionsApp.tsx` -
   entry points = composition roots (side effects injected into components
   from here; see pure-components skill)
-- `components/` - React components (Storybook stories colocated)
-- `savedQueries.ts` / `settings.ts` / `theme.ts` / `i18n/` - client-only
-  features
-- `word-index-client.ts` - RPC stub asking the worker for suggestions
+- `history/` - history UI domain: `components/`, `savedQueries.ts`,
+  `highlight.ts`
+- `settings/` - settings UI domain: `components/`, `index.ts` (load/save),
+  `theme.ts`, `types.ts`
+- `word-index/` - RPC stub asking the worker for suggestions
+- `ui/` - generic presentational components (Button, Dropdown, …)
+- `i18n/` - locale strings (Storybook stories colocated with components)
 
 **`common/`** — code both contexts import
 
@@ -101,7 +107,7 @@ actually starts importing it.
 
 ### Build Configuration
 
-- Vite with entry points: `index.html` / `options.html` (client UI) and `worker/index.ts` (service worker, emitted as `background.js`)
+- Vite with root `src/client`; entry points: `client/index.html` / `client/options.html` (UI) and `worker/index.ts` (service worker, emitted as `background.js`)
 - TypeScript compilation with strict mode
 - Output: `dist/` directory with `background.js` and hashed assets
 - Extension manifest in `public/manifest.json`
