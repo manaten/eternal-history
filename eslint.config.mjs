@@ -153,4 +153,61 @@ export default defineConfig(
       "no-restricted-syntax": "off",
     },
   },
+
+  // 実行コンテキスト境界: パスがランタイムを表す (worker = background SW,
+  // client = NewTab/Options UI, common = 両方から import されるコード)。
+  // 境界を越えるやりとりは common/messages.ts の RPC 契約を介して行う。
+  // 依存方向は worker→common, client→common のみ。common への昇格は
+  // 「2 つ目のコンテキストが実際に使うようになったとき」に限る。
+  {
+    files: ["src/client/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/worker/**"],
+              message:
+                "client から worker のコードは import できません。共有するなら common へ、実行時のやりとりは messages.ts の RPC で。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/worker/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/client/**"],
+              message:
+                "worker から client のコードは import できません。共有するなら common へ。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/common/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/worker/**", "**/client/**"],
+              message:
+                "common は worker/client に依存できません。依存方向は worker/client → common の一方向のみ。",
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
