@@ -4,8 +4,10 @@ import { defineConfig } from "vite";
 import svgr from "vite-plugin-svgr";
 
 export default defineConfig({
-  root: "./src",
-  publicDir: "../public",
+  // root は client (UI の html/css/tsx が住む場所)。worker のエントリは
+  // rollupOptions.input で root 外から直接指定する。
+  root: "./src/client",
+  publicDir: "../../public",
 
   plugins: [react(), tailwindcss(), svgr()],
 
@@ -17,13 +19,13 @@ export default defineConfig({
   },
 
   build: {
-    outDir: "../dist",
+    outDir: "../../dist",
     emptyOutDir: true,
 
     rollupOptions: {
       input: {
-        main: "./src/index.html",
-        options: "./src/options.html",
+        main: "./src/client/index.html",
+        options: "./src/client/options.html",
         background: "./src/worker/index.ts",
       },
       output: {

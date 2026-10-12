@@ -1,13 +1,13 @@
 ---
 name: pure-components
-description: Keep React components in this project pure — side effects must be injected via props from App.tsx / OptionsApp.tsx, not imported directly into components. Storybook stories pass mock implementations. The boundary of "side effect" is fuzzy (network calls and storage I/O are clearly out; browser API usage is case-by-case) — when unclear, ASK the owner before deciding. Triggers when adding/modifying components under src/components/ that need side effects.
+description: Keep React components in this project pure — side effects must be injected via props from App.tsx / OptionsApp.tsx, not imported directly into components. Storybook stories pass mock implementations. The boundary of "side effect" is fuzzy (network calls and storage I/O are clearly out; browser API usage is case-by-case) — when unclear, ASK the owner before deciding. Triggers when adding/modifying React components (src/client/ui/ or src/client/*/components/) that need side effects.
 ---
 
 # Pure Components
 
-このプロジェクトの規約: **`src/components/` 配下の React コンポーネントは
-副作用を抱えない**。副作用は `App.tsx` / `OptionsApp.tsx` で wire し、
-コンポーネントには callback prop として渡す。
+このプロジェクトの規約: **React コンポーネント (`src/client/ui/` と
+`src/client/*/components/`) は副作用を抱えない**。副作用は `App.tsx` /
+`OptionsApp.tsx` で wire し、コンポーネントには callback prop として渡す。
 
 これは Storybook を成立させるためだけではなく、コンポーネントの責務を
 「表示と入力ハンドリング」に絞り、副作用のテスト (とモック) を上位レイヤに
@@ -15,12 +15,12 @@ description: Keep React components in this project pure — side effects must be
 
 ## やってはいけないこと
 
-`src/components/` 配下のファイルで副作用を直接 import / 呼び出してはいけない:
+コンポーネントディレクトリ配下のファイルで副作用を直接 import / 呼び出してはいけない:
 
 ```ts
 // ❌ NG
-import { bookmarkHistoryStore } from "../../../infra/bookmark-history-store";
-import { requestSuggestions } from "../../../infra/word-index-client";
+import { bookmarkHistoryStore } from "../../../../common/history/store";
+import { requestSuggestions } from "../../word-index";
 chrome.runtime.sendMessage(...)
 chrome.storage.local.get(...)
 chrome.bookmarks.search(...)
@@ -44,7 +44,7 @@ interface SearchBoxProps {
 
 ```tsx
 // ✅ OK (top-level)
-import { requestSuggestions } from "./infra/word-index-client";
+import { requestSuggestions } from "./word-index";
 
 function App() {
   return <Root onRequestSuggestions={requestSuggestions} ... />;
@@ -84,7 +84,7 @@ export const Default: Story = {
 ## チェック方法
 
 ```sh
-grep -rn "chrome\.runtime\|chrome\.bookmarks\|chrome\.history\|chrome\.storage\|fetch(" src/components/
+grep -rn "chrome\.runtime\|chrome\.bookmarks\|chrome\.history\|chrome\.storage\|fetch(" src/client/ui/ src/client/*/components/
 ```
 
 ヒットがあれば、原則として注入に直すか、迷う場合はオーナーに確認する。

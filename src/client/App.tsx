@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { Root } from "./components/history/Root";
-import { t } from "./i18n";
+import { Root } from "./history/components/Root";
 import {
   getSavedQueries,
   addSavedQuery,
   removeSavedQuery,
   SavedQuery,
-} from "./savedQueries";
+} from "./history/savedQueries";
+import { t } from "./i18n";
 import { getSettings } from "./settings";
-import { requestRebuildIndex, requestSuggestions } from "./word-index-client";
+import { requestRebuildIndex, requestSuggestions } from "./word-index";
 import { searchHistories } from "../common/history/domain/searchHistories";
 import { HistoryItem } from "../common/history/domain/types";
 import { bookmarkHistoryStore } from "../common/history/store";

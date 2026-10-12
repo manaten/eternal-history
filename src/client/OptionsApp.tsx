@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { OptionsPage } from "./components/settings/OptionsPage";
 import { getSettings, resetSettings, saveSettings } from "./settings";
-import { applyTheme } from "./theme";
-import { Settings } from "./types/Settings";
-import { requestRebuildIndex } from "./word-index-client";
+import { OptionsPage } from "./settings/components/OptionsPage";
+import { applyTheme } from "./settings/theme";
+import { Settings } from "./settings/types";
+import { requestRebuildIndex } from "./word-index";
 import { bookmarkHistoryStore } from "../common/history/store";
 
 function OptionsApp() {

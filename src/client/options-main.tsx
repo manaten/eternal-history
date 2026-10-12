@@ -1,9 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import "../index.css";
+import "./index.css";
 import OptionsApp from "./OptionsApp";
-import { initializeTheme } from "./theme";
+import { initializeTheme } from "./settings/theme";
 
 initializeTheme();
 

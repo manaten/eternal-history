@@ -1,10 +1,10 @@
 import type { Preview } from "@storybook/react-vite";
 import { useEffect } from "react";
 
-import { applyTheme } from "../src/client/theme";
-import { ThemeColor } from "../src/client/types/Settings";
+import { applyTheme } from "../src/client/settings/theme";
+import { ThemeColor } from "../src/client/settings/types";
 
-import "../src/index.css";
+import "../src/client/index.css";
 
 const preview: Preview = {
   globalTypes: {
